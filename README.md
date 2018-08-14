@@ -11,6 +11,7 @@ Using Michigan as an example. In the 2012 election (after the last round of redi
 | Seats won          | 9          | 5          |
 | Total vote         | 2,086,804  | 2,327,985  |
 | Percentage of vote | 45.62%     | 50.89%     |
+
 [Data taken from Wikipedia](https://en.wikipedia.org/wiki/United_States_House_of_Representatives_elections_in_Michigan,_2012)
 
 It certainly doesn't look correct that Democratic candidates could have been voted for in stronger numbers, but won 4 fewer seats. These voters aren't been accurately represented in Congress. 
