@@ -13,7 +13,7 @@ Using Michigan as an example. In the 2012 election (after the last round of redi
 | Percentage of vote | 45.62%     | 50.89%     |
 [Data taken from Wikipedia](https://en.wikipedia.org/wiki/United_States_House_of_Representatives_elections_in_Michigan,_2012)
 
-It certainly doesn't look correct that Democratic candidates could have been voted for in stronger numbers, but won 4 fewer seats. These voters aren't been accurately represented in Congress. 
+It certainly doesn't look correct that Democratic candidates could have been voted for in stronger numbers, but won 4 fewer seats. These voters aren't being accurately represented in Congress. 
 
 #### Redistricting is biased when done by humans
 Gerrymandering is a practice that has historically been used to defend incumbents. But more recently, it has been used more effectively to lock in US congressional control.
@@ -49,7 +49,7 @@ Evenly split a state into a set number of districts by using county lines and po
 #### Keep communities together
 By using the [2010 US Census data](https://www2.census.gov/census_2010/04-Summary_File_1/Michigan/), this experiment will break up each state (starting with Michigan) into individual census blocks (the smallest population Census unit). With those blocks, form a population density map. From that map, attempt to keep population groups together by creating paths through the population map that don't break up population dense areas.
 
-The first attempts will start using [Dijkstra's_algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm). It's a method similar to those used in finding seams in [Seam Carving](https://en.wikipedia.org/wiki/Seam_carving#Computing_seams) (a image resizing method).
+The first attempts will start using [Dijkstra's_algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm). It's a method similar to those used in finding seams in [Seam Carving](https://en.wikipedia.org/wiki/Seam_carving#Computing_seams) (an image resizing method).
 
 Hopefully by doing this maps will naturally comply with the Voting Rights Act, but as mentioned before, using demographics other than location can lead to bias. So this experiment won't be using any of that information. And will leave the evaluation of the maps under the Voting Rights Act to third parties after the fact. 
 
