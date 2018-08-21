@@ -1,7 +1,9 @@
 from census import Census
 from us import states
-import apiKeys
 import math
+import csv
+from os import path
+import apiKeys
 
 
 def getCountiesInState(stateFIPSCode):
@@ -33,12 +35,19 @@ def getAllBlocksInState(countyList, maxNumberOfCounties=math.inf):
 
     return fullBlockList
 
+def saveBlockInfoToCSV(blockInfo, censusYear, stateName):
+    csvPath = path.expanduser('~/{0}-{1}-BlockInfo.csv'.format(censusYear, stateName))
+    #todo: save to csv. maybe try this code: https://gis.stackexchange.com/questions/72458/export-list-of-values-into-csv-or-txt-file
 
-censusRequest = Census(apiKeys.censusAPIKey, year=2010)
+stateAbbreviation = 'MI'
+stateInfo = states.lookup(stateAbbreviation)
+censusYear = 2010
 
-stateFIPS = states.MI.fips
+censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
-countyInfoList = getCountiesInState(stateFIPSCode=stateFIPS)
-allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
-
+countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips)
+allBlocksInState = getAllBlocksInState(countyList=countyInfoList, maxNumberOfCounties=5)
 #todo: get shapefiles or neighboring blocks for each block
+
+#save list to csv
+saveBlockInfoToCSV(blockInfo=allBlocksInState, censusYear=censusYear, stateName=stateInfo.name)
