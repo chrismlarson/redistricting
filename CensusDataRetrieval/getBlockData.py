@@ -35,6 +35,12 @@ def getAllBlocksInState(countyList, maxNumberOfCounties=math.inf):
 
     return fullBlockList
 
+def getBlockGeoData(blockInfo):
+    #todo: figure out hwo to get this info online
+    #the documentation: https://tigerweb.geo.census.gov/arcgis/sdk/rest/index.html#/Getting_started/02ss00000048000000/
+    #the likely endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14?f=json
+    temp = 0
+
 def saveBlockInfoToCSV(blockInfo, censusYear, stateName):
     csvPath = path.expanduser('~/{0}-{1}-BlockInfo.csv'.format(censusYear, stateName))
     #todo: save to csv. maybe try this code: https://gis.stackexchange.com/questions/72458/export-list-of-values-into-csv-or-txt-file
