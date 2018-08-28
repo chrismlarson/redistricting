@@ -42,6 +42,13 @@ def getBlockGeoData(blockInfo):
     # todo: figure out how to get this info online
     # the documentation: https://tigerweb.geo.census.gov/arcgis/sdk/rest/index.html#/Getting_started/02ss00000048000000/
     # the likely endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14?f=json
+
+
+    # got a map of sorts: https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/export?bbox=-15E6%2C-1E6%2C-2E6%2C1E6&bboxSR=&layers=&layerDefs=&size=800%2C800&imageSR=&format=png&transparent=false&dpi=&time=&layerTimeOptions=&dynamicLayers=&gdbVersion=&mapScale=&rotation=&datumTransformations=&layerParameterValues=&mapRangeValues=&layerRangeValues=&f=html
+    # referencing this info: https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer
+    # using this manual: http://www.esri.com/~/media/Files/Pdfs/library/whitepapers/pdfs/geoservices-rest-spec.pdf
+    #todo: figure out how to get a bounding box from lat/long or use a spacial reference
+    # "The spatial reference of the exported image The spatial reference can be specified as either a well-known ID (WKID) or a spatial reference JSON object."
     temp = 0
 
 
