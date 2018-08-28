@@ -49,6 +49,7 @@ def getBlockGeoData(blockInfo):
     # using this manual: http://www.esri.com/~/media/Files/Pdfs/library/whitepapers/pdfs/geoservices-rest-spec.pdf
     #todo: figure out how to get a bounding box from lat/long or use a spacial reference
     # "The spatial reference of the exported image The spatial reference can be specified as either a well-known ID (WKID) or a spatial reference JSON object."
+    # Sounds like we might to convert to Web Mercator units.
     temp = 0
 
 
