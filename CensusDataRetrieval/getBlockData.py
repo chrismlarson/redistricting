@@ -4,6 +4,7 @@ import math
 import csv
 from os import path
 from esridump.dumper import EsriDumper
+import time
 import apiKeys
 
 
@@ -48,9 +49,11 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
         print('*** Getting geo info on all blocks ***')
         stateFIPSCode = existingBlockData[0]['state']
 
+        startTimeForProcessingState = time.localtime()
         fullBlockListWithGeo = []
         for county in countyInfoList:
             print('Getting all geo info in {0}'.format(county['NAME']))
+            startTimeForProcessingCounty = time.localtime()
             countyFIPSCode = county['county']
 
             blockGeometries = EsriDumper(
@@ -73,6 +76,14 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
                                            item['block'] == blockGeoBlockFIPS), None)
                 matchingBlockData['geometry'] = blockGeometry['geometry']
                 fullBlockListWithGeo.append(matchingBlockData)
+
+            endTimeForProcessingCounty = time.localtime()
+            elapsedSecondsForProcessingCounty = (time.mktime(endTimeForProcessingCounty) - time.mktime(startTimeForProcessingCounty))
+            print('   {0} took {1} seconds'.format(county['NAME'], elapsedSecondsForProcessingCounty))
+
+        endTimeForProcessingState = time.localtime()
+        elapsedMinutesForProcessingState = (time.mktime(endTimeForProcessingState) - time.mktime(startTimeForProcessingState)) / 60
+        print('It took {0} total minutes to get all the requested block geo data'.format(elapsedMinutesForProcessingState))
         return fullBlockListWithGeo
     else:
         return None
@@ -95,7 +106,7 @@ censusYear = 2010
 
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
-countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf)
+countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=2)
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 
