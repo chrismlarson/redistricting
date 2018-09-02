@@ -7,10 +7,13 @@ from esridump.dumper import EsriDumper
 import apiKeys
 
 
-def getCountiesInState(stateFIPSCode):
-    allCountiesInState = censusRequest.sf1.get(fields=('NAME'), geo={'for': 'county:*',
-                                                                     'in': 'state:{0}'.format(
-                                                                         stateFIPSCode)})
+def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf):
+    allCountiesInState = censusRequest.sf1.get(fields=('NAME'),
+                                               geo={'for': 'county:*',
+                                                    'in': 'state:{0}'.format(stateFIPSCode)})
+    if(maxNumberOfCounties == math.inf):
+        maxNumberOfCounties = len(allCountiesInState)
+    allCountiesInState = allCountiesInState[:maxNumberOfCounties]
     return allCountiesInState
 
 
@@ -40,37 +43,36 @@ def getAllBlocksInState(countyList, maxNumberOfCounties=math.inf):
     return fullBlockList
 
 
-def allGeoDataForEachBlock(existingBlockData, countyInfoListForProgress):
+def allGeoDataForEachBlock(countyInfoList, existingBlockData):
     if (len(existingBlockData) > 0):
         print('*** Getting geo info on all blocks ***')
         stateFIPSCode = existingBlockData[0]['state']
-        blockGeometries = EsriDumper(
-            url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14',
-            extra_query_args={'where': 'STATE=\'{0}\''.format(stateFIPSCode),
-                              'orderByFields':'COUNTY'})
-        # https://github.com/openaddresses/pyesridump
 
         fullBlockListWithGeo = []
-        currentCounty = None
-        for blockGeometry in blockGeometries:
-            blockGeoProperties = blockGeometry['properties']
-            blockGeoStateFIPS = blockGeoProperties['STATE']
-            blockGeoCountyFIPS = blockGeoProperties['COUNTY']
-            blockGeoTractFIPS = blockGeoProperties['TRACT']
-            blockGeoBlockFIPS = blockGeoProperties['BLOCK']
+        for county in countyInfoList:
+            print('Getting all geo info in {0}'.format(county['NAME']))
+            countyFIPSCode = county['county']
 
-            if(currentCounty != blockGeoCountyFIPS):
-                currentCounty = blockGeoCountyFIPS
-                county = next((item for item in countyInfoListForProgress if item['county'] == currentCounty), None)
-                print('Getting all geo info in {0}'.format(county['NAME']))
+            blockGeometries = EsriDumper(
+                url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14',
+                extra_query_args={'where': 'STATE=\'{0}\' AND COUNTY=\'{1}\''.format(stateFIPSCode, countyFIPSCode),
+                                  'orderByFields':'TRACT, BLKGRP, BLOCK'})
+            # https://github.com/openaddresses/pyesridump
 
-            mathchingBlockData = next((item for item in existingBlockData if
-                                       item['state'] == blockGeoStateFIPS and
-                                       item['county'] == blockGeoCountyFIPS and
-                                       item['tract'] == blockGeoTractFIPS and
-                                       item['block'] == blockGeoBlockFIPS), None)
-            mathchingBlockData['geometry'] = blockGeometry['geometry']
-            fullBlockListWithGeo.append(mathchingBlockData)
+            for blockGeometry in blockGeometries:
+                blockGeoProperties = blockGeometry['properties']
+                blockGeoStateFIPS = blockGeoProperties['STATE']
+                blockGeoCountyFIPS = blockGeoProperties['COUNTY']
+                blockGeoTractFIPS = blockGeoProperties['TRACT']
+                blockGeoBlockFIPS = blockGeoProperties['BLOCK']
+
+                matchingBlockData = next((item for item in existingBlockData if
+                                           item['state'] == blockGeoStateFIPS and
+                                           item['county'] == blockGeoCountyFIPS and
+                                           item['tract'] == blockGeoTractFIPS and
+                                           item['block'] == blockGeoBlockFIPS), None)
+                matchingBlockData['geometry'] = blockGeometry['geometry']
+                fullBlockListWithGeo.append(matchingBlockData)
         return fullBlockListWithGeo
     else:
         return None
@@ -84,6 +86,8 @@ def saveBlockInfoToCSV(blockInfo, censusYear, stateName):
         dict_writer.writeheader()
         dict_writer.writerows(blockInfo)
 
+    return csvPath
+
 
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
@@ -91,9 +95,13 @@ censusYear = 2010
 
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
-countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips)
-allBlocksInState = getAllBlocksInState(countyList=countyInfoList, maxNumberOfCounties=math.inf)
-allBlockGeosInState = allGeoDataForEachBlock(existingBlockData=allBlocksInState, countyInfoListForProgress=countyInfoList)
+countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf)
+allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
+allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 
 # save list to csv
-saveBlockInfoToCSV(blockInfo=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name)
+csvPath = saveBlockInfoToCSV(blockInfo=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name)
+
+# reader = csv.reader(open(csvPath, newline='\n'), delimiter=',', quotechar='\"')
+# for row in reader:
+#     print(row)
