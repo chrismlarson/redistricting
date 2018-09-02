@@ -106,7 +106,7 @@ censusYear = 2010
 
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
-countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=2)
+countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf)
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 
