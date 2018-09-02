@@ -26,6 +26,7 @@ def getAllBlocksInState(countyList, maxNumberOfCounties=math.inf):
     fullBlockList = []
 
     # getting population counts and Block names for each county
+    print('*** Getting all blocks and population counts in state ***')
     count = 0
     for county in countyList:
         if count >= maxNumberOfCounties:
@@ -33,28 +34,36 @@ def getAllBlocksInState(countyList, maxNumberOfCounties=math.inf):
         countyFIPS = county['county']
         blocksInCounty = getBlocksInCounty(stateFIPSCode=county['state'], countyFIPSCode=countyFIPS)
         fullBlockList += blocksInCounty
-        print('Got all blocks in {0}'.format(county['NAME']))
+        print('Got all blocks and population counts in {0}'.format(county['NAME']))
         count += 1
 
     return fullBlockList
 
 
-def allGeoDataForEachBlock(existingBlockData):
+def allGeoDataForEachBlock(existingBlockData, countyInfoListForProgress):
     if (len(existingBlockData) > 0):
-        print('Getting geo info on all blocks')
+        print('*** Getting geo info on all blocks ***')
         stateFIPSCode = existingBlockData[0]['state']
         blockGeometries = EsriDumper(
             url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14',
-            extra_query_args={'where': 'STATE=\'{0}\''.format(stateFIPSCode)})
+            extra_query_args={'where': 'STATE=\'{0}\''.format(stateFIPSCode),
+                              'orderByFields':'COUNTY'})
         # https://github.com/openaddresses/pyesridump
 
         fullBlockListWithGeo = []
+        currentCounty = None
         for blockGeometry in blockGeometries:
             blockGeoProperties = blockGeometry['properties']
             blockGeoStateFIPS = blockGeoProperties['STATE']
             blockGeoCountyFIPS = blockGeoProperties['COUNTY']
             blockGeoTractFIPS = blockGeoProperties['TRACT']
             blockGeoBlockFIPS = blockGeoProperties['BLOCK']
+
+            if(currentCounty != blockGeoCountyFIPS):
+                currentCounty = blockGeoCountyFIPS
+                county = next((item for item in countyInfoListForProgress if item['county'] == currentCounty), None)
+                print('Getting all geo info in {0}'.format(county['NAME']))
+
             mathchingBlockData = next((item for item in existingBlockData if
                                        item['state'] == blockGeoStateFIPS and
                                        item['county'] == blockGeoCountyFIPS and
@@ -84,7 +93,7 @@ censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
 countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips)
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList, maxNumberOfCounties=math.inf)
-allBlockGeosInState = allGeoDataForEachBlock(existingBlockData=allBlocksInState)
+allBlockGeosInState = allGeoDataForEachBlock(existingBlockData=allBlocksInState, countyInfoListForProgress=countyInfoList)
 
 # save list to csv
 saveBlockInfoToCSV(blockInfo=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name)
