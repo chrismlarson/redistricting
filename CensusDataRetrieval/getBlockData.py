@@ -3,6 +3,7 @@ from us import states
 import math
 import csv
 from os import path
+from esridump.dumper import EsriDumper
 import apiKeys
 
 
@@ -32,25 +33,38 @@ def getAllBlocksInState(countyList, maxNumberOfCounties=math.inf):
         countyFIPS = county['county']
         blocksInCounty = getBlocksInCounty(stateFIPSCode=county['state'], countyFIPSCode=countyFIPS)
         fullBlockList += blocksInCounty
-        print('Got info on {0}'.format(county['NAME']))
+        print('Got all blocks in {0}'.format(county['NAME']))
         count += 1
 
     return fullBlockList
 
 
-def getBlockGeoData(blockInfo):
-    # todo: figure out how to get this info online
-    # the documentation: https://tigerweb.geo.census.gov/arcgis/sdk/rest/index.html#/Getting_started/02ss00000048000000/
-    # the likely endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14?f=json
+def allGeoDataForEachBlock(existingBlockData):
+    if (len(existingBlockData) > 0):
+        print('Getting geo info on all blocks')
+        stateFIPSCode = existingBlockData[0]['state']
+        blockGeometries = EsriDumper(
+            url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14',
+            extra_query_args={'where': 'STATE=\'{0}\''.format(stateFIPSCode)})
+        # https://github.com/openaddresses/pyesridump
 
-
-    # got a map of sorts: https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/export?bbox=-15E6%2C-1E6%2C-2E6%2C1E6&bboxSR=&layers=&layerDefs=&size=800%2C800&imageSR=&format=png&transparent=false&dpi=&time=&layerTimeOptions=&dynamicLayers=&gdbVersion=&mapScale=&rotation=&datumTransformations=&layerParameterValues=&mapRangeValues=&layerRangeValues=&f=html
-    # referencing this info: https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer
-    # using this manual: http://www.esri.com/~/media/Files/Pdfs/library/whitepapers/pdfs/geoservices-rest-spec.pdf
-    #todo: figure out how to get a bounding box from lat/long or use a spacial reference
-    # "The spatial reference of the exported image The spatial reference can be specified as either a well-known ID (WKID) or a spatial reference JSON object."
-    # Sounds like we might to convert to Web Mercator units.
-    temp = 0
+        fullBlockListWithGeo = []
+        for blockGeometry in blockGeometries:
+            blockGeoProperties = blockGeometry['properties']
+            blockGeoStateFIPS = blockGeoProperties['STATE']
+            blockGeoCountyFIPS = blockGeoProperties['COUNTY']
+            blockGeoTractFIPS = blockGeoProperties['TRACT']
+            blockGeoBlockFIPS = blockGeoProperties['BLOCK']
+            mathchingBlockData = next((item for item in existingBlockData if
+                                       item['state'] == blockGeoStateFIPS and
+                                       item['county'] == blockGeoCountyFIPS and
+                                       item['tract'] == blockGeoTractFIPS and
+                                       item['block'] == blockGeoBlockFIPS), None)
+            mathchingBlockData['geometry'] = blockGeometry['geometry']
+            fullBlockListWithGeo.append(mathchingBlockData)
+        return fullBlockListWithGeo
+    else:
+        return None
 
 
 def saveBlockInfoToCSV(blockInfo, censusYear, stateName):
@@ -70,7 +84,7 @@ censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
 countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips)
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList, maxNumberOfCounties=math.inf)
-# todo: get shapefiles or neighboring blocks for each block
+allBlockGeosInState = allGeoDataForEachBlock(existingBlockData=allBlocksInState)
 
 # save list to csv
-saveBlockInfoToCSV(blockInfo=allBlocksInState, censusYear=censusYear, stateName=stateInfo.name)
+saveBlockInfoToCSV(blockInfo=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name)
