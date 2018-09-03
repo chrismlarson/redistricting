@@ -93,9 +93,9 @@ def saveBlockInfoToCSV(blockInfo, censusYear, stateName):
     csvPath = path.expanduser('~/Documents/{0}-{1}-BlockInfo.csv'.format(censusYear, stateName))
     keys = blockInfo[0].keys()
     with open(csvPath, 'w') as output_file:
-        dict_writer = csv.DictWriter(output_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(blockInfo)
+        dictWriter = csv.DictWriter(output_file, keys)
+        dictWriter.writeheader()
+        dictWriter.writerows(blockInfo)
 
     return csvPath
 
@@ -112,7 +112,3 @@ allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, exis
 
 # save list to csv
 csvPath = saveBlockInfoToCSV(blockInfo=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name)
-
-# reader = csv.reader(open(csvPath, newline='\n'), delimiter=',', quotechar='\"')
-# for row in reader:
-#     print(row)
