@@ -2,6 +2,7 @@ import csv
 from os import path
 import ast
 import sys
+from tqdm import tqdm
 
 def getNumOfCSVRows(csvPath):
     setCSVLimitToMaxAcceptable()
@@ -37,15 +38,14 @@ def getRawDictData(csvPath):
 
     print('*** Collecting raw CSV data ***')
     rawDictData = []
-    currentRowNumber = 0
-    with open(csvPath, newline='\n') as csvFile:
-        dictReader = csv.DictReader(csvFile)
-        for row in dictReader:
-            rowGeometry = ast.literal_eval(row['geometry'])
-            row['geometry'] = rowGeometry
-            rawDictData.append(row)
-
-            currentRowNumber += 1
+    with tqdm(total=numOfCSVRows) as pbar:
+        with open(csvPath, newline='\n') as csvFile:
+            dictReader = csv.DictReader(csvFile)
+            for row in dictReader:
+                rowGeometry = ast.literal_eval(row['geometry'])
+                row['geometry'] = rowGeometry
+                rawDictData.append(row)
+                pbar.update(1)
 
     return rawDictData
 
