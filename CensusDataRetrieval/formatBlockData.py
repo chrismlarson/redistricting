@@ -9,13 +9,18 @@ def getNumOfCSVRows(csvPath):
 
     print('*** Getting total number of CSV rows for progress ***')
     totalNumberOfRows = 0
-    with open(csvPath, newline='\n') as csvFile:
-        dictReader = csv.DictReader(csvFile)
-        for row in dictReader:
-            totalNumberOfRows += 1
+    with tqdm() as pbar:
+        with open(csvPath, newline='\n') as csvFile:
+            dictReader = csv.DictReader(csvFile)
+            for row in dictReader:
+                totalNumberOfRows += 1
+                pbar.update(1)
+            pbar.clear()
 
+    totalNumberOfRows -= 1 #to account for the header
     print('Total number of CSV rows: {0}'.format(totalNumberOfRows))
     return totalNumberOfRows
+
 
 def setCSVLimitToMaxAcceptable():
     decrement = True
@@ -32,11 +37,12 @@ def setCSVLimitToMaxAcceptable():
             maxInt = int(maxInt / 10)
             decrement = True
 
+
 def getRawDictData(csvPath):
     setCSVLimitToMaxAcceptable()
     numOfCSVRows = getNumOfCSVRows(csvPath=csvPath)
 
-    print('*** Collecting raw CSV data ***')
+    print('*** Loading raw CSV data ***')
     rawDictData = []
     with tqdm(total=numOfCSVRows) as pbar:
         with open(csvPath, newline='\n') as csvFile:
@@ -51,9 +57,4 @@ def getRawDictData(csvPath):
 
 csvPath = path.expanduser('~/Documents/2010-Michigan-BlockInfo.csv')
 rawDictData = getRawDictData(csvPath=csvPath)
-temp = 0
-
-
-
-
 temp = 0

@@ -88,14 +88,46 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
     else:
         return None
 
+def allGeoDataForEachCounty(existingCountyData):
+    if (len(existingCountyData) > 0):
+        print('*** Getting geo info on all counties ***')
+        stateFIPSCode = existingCountyData[0]['state']
 
-def saveBlockInfoToCSV(blockInfo, censusYear, stateName):
-    csvPath = path.expanduser('~/Documents/{0}-{1}-BlockInfo.csv'.format(censusYear, stateName))
-    keys = blockInfo[0].keys()
+        startTimeForProcessingState = time.localtime()
+        fullCountyListWithGeo = []
+
+        countyGeometries = EsriDumper(
+            url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/90',
+            extra_query_args={'where': 'STATE=\'{0}\''.format(stateFIPSCode),
+                              'orderByFields':'COUNTY'})
+        # https://github.com/openaddresses/pyesridump
+
+        for countyGeometry in countyGeometries:
+            countyGeoProperties = countyGeometry['properties']
+            countyGeoStateFIPS = countyGeoProperties['STATE']
+            countyGeoCountyFIPS = countyGeoProperties['COUNTY']
+
+            matchingCountyData = next((item for item in existingCountyData if
+                                       item['state'] == countyGeoStateFIPS and
+                                       item['county'] == countyGeoCountyFIPS), None)
+            matchingCountyData['geometry'] = countyGeometry['geometry']
+            fullCountyListWithGeo.append(matchingCountyData)
+
+        endTimeForProcessingState = time.localtime()
+        elapsedMinutesForProcessingState = (time.mktime(endTimeForProcessingState) - time.mktime(startTimeForProcessingState))
+        print('It took {0} total seconds to get all the requested county geo data'.format(elapsedMinutesForProcessingState))
+        return fullCountyListWithGeo
+    else:
+        return None
+
+
+def saveInfoToCSV(info, censusYear, stateName, descriptionOfInfo):
+    csvPath = path.expanduser('~/Documents/{0}-{1}-{2}Info.csv'.format(censusYear, stateName, descriptionOfInfo))
+    keys = info[0].keys()
     with open(csvPath, 'w') as output_file:
         dictWriter = csv.DictWriter(output_file, keys)
         dictWriter.writeheader()
-        dictWriter.writerows(blockInfo)
+        dictWriter.writerows(info)
 
     return csvPath
 
@@ -107,8 +139,11 @@ censusYear = 2010
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
 countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf)
+allCountyGeosInState = allGeoDataForEachCounty(existingCountyData=countyInfoList)
+# save county data to csv
+saveInfoToCSV(info=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='County')
+
+
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
-
-# save list to csv
-csvPath = saveBlockInfoToCSV(blockInfo=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name)
+saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='Block') # save block data to csv
