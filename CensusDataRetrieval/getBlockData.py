@@ -12,7 +12,7 @@ def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf):
     allCountiesInState = censusRequest.sf1.get(fields=('NAME'),
                                                geo={'for': 'county:*',
                                                     'in': 'state:{0}'.format(stateFIPSCode)})
-    if(maxNumberOfCounties == math.inf):
+    if (maxNumberOfCounties == math.inf):
         maxNumberOfCounties = len(allCountiesInState)
     allCountiesInState = allCountiesInState[:maxNumberOfCounties]
     return allCountiesInState
@@ -59,8 +59,8 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
             blockGeometries = EsriDumper(
                 url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14',
                 extra_query_args={'where': 'STATE=\'{0}\' AND COUNTY=\'{1}\''.format(stateFIPSCode, countyFIPSCode),
-                                  'orderByFields':'TRACT, BLKGRP, BLOCK'},
-                timeout=120) #extending timeout because there were some long load times
+                                  'orderByFields': 'TRACT, BLKGRP, BLOCK'},
+                timeout=120)  # extending timeout because there were some long load times
             # https://github.com/openaddresses/pyesridump
 
             for blockGeometry in blockGeometries:
@@ -71,23 +71,27 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
                 blockGeoBlockFIPS = blockGeoProperties['BLOCK']
 
                 matchingBlockData = next((item for item in existingBlockData if
-                                           item['state'] == blockGeoStateFIPS and
-                                           item['county'] == blockGeoCountyFIPS and
-                                           item['tract'] == blockGeoTractFIPS and
-                                           item['block'] == blockGeoBlockFIPS), None)
+                                          item['state'] == blockGeoStateFIPS and
+                                          item['county'] == blockGeoCountyFIPS and
+                                          item['tract'] == blockGeoTractFIPS and
+                                          item['block'] == blockGeoBlockFIPS), None)
                 matchingBlockData['geometry'] = blockGeometry['geometry']
                 fullBlockListWithGeo.append(matchingBlockData)
 
             endTimeForProcessingCounty = time.localtime()
-            elapsedSecondsForProcessingCounty = (time.mktime(endTimeForProcessingCounty) - time.mktime(startTimeForProcessingCounty))
+            elapsedSecondsForProcessingCounty = (
+                        time.mktime(endTimeForProcessingCounty) - time.mktime(startTimeForProcessingCounty))
             print('   {0} took {1} seconds'.format(county['NAME'], elapsedSecondsForProcessingCounty))
 
         endTimeForProcessingState = time.localtime()
-        elapsedMinutesForProcessingState = (time.mktime(endTimeForProcessingState) - time.mktime(startTimeForProcessingState)) / 60
-        print('It took {0} total minutes to get all the requested block geo data'.format(elapsedMinutesForProcessingState))
+        elapsedMinutesForProcessingState = (time.mktime(endTimeForProcessingState) - time.mktime(
+            startTimeForProcessingState)) / 60
+        print('It took {0} total minutes to get all the requested block geo data'.format(
+            elapsedMinutesForProcessingState))
         return fullBlockListWithGeo
     else:
         return None
+
 
 def allGeoDataForEachCounty(existingCountyData):
     if (len(existingCountyData) > 0):
@@ -100,7 +104,7 @@ def allGeoDataForEachCounty(existingCountyData):
         countyGeometries = EsriDumper(
             url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/90',
             extra_query_args={'where': 'STATE=\'{0}\''.format(stateFIPSCode),
-                              'orderByFields':'COUNTY'})
+                              'orderByFields': 'COUNTY'})
         # https://github.com/openaddresses/pyesridump
 
         for countyGeometry in countyGeometries:
@@ -115,8 +119,10 @@ def allGeoDataForEachCounty(existingCountyData):
             fullCountyListWithGeo.append(matchingCountyData)
 
         endTimeForProcessingState = time.localtime()
-        elapsedMinutesForProcessingState = (time.mktime(endTimeForProcessingState) - time.mktime(startTimeForProcessingState))
-        print('It took {0} total seconds to get all the requested county geo data'.format(elapsedMinutesForProcessingState))
+        elapsedMinutesForProcessingState = (
+                    time.mktime(endTimeForProcessingState) - time.mktime(startTimeForProcessingState))
+        print('It took {0} total seconds to get all the requested county geo data'.format(
+            elapsedMinutesForProcessingState))
         return fullCountyListWithGeo
     else:
         return None
@@ -144,7 +150,7 @@ allCountyGeosInState = allGeoDataForEachCounty(existingCountyData=countyInfoList
 # save county data to csv
 saveInfoToCSV(info=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='County')
 
-
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
-saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='Block') # save block data to csv
+# save block data to csv
+saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='Block')
