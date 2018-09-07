@@ -59,7 +59,8 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
             blockGeometries = EsriDumper(
                 url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14',
                 extra_query_args={'where': 'STATE=\'{0}\' AND COUNTY=\'{1}\''.format(stateFIPSCode, countyFIPSCode),
-                                  'orderByFields':'TRACT, BLKGRP, BLOCK'})
+                                  'orderByFields':'TRACT, BLKGRP, BLOCK'},
+                timeout=120) #extending timeout because there were some long load times
             # https://github.com/openaddresses/pyesridump
 
             for blockGeometry in blockGeometries:
