@@ -8,14 +8,22 @@ import time
 import apiKeys
 
 
-def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf):
-    allCountiesInState = censusRequest.sf1.get(fields=('NAME'),
-                                               geo={'for': 'county:*',
-                                                    'in': 'state:{0}'.format(stateFIPSCode)})
-    if (maxNumberOfCounties == math.inf):
-        maxNumberOfCounties = len(allCountiesInState)
-    allCountiesInState = allCountiesInState[:maxNumberOfCounties]
-    return allCountiesInState
+def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf, specificCountiesOnly=None):
+    requestedCounties = censusRequest.sf1.get(fields=('NAME'),
+                                              geo={'for': 'county:*', 'in': 'state:{0}'.format(stateFIPSCode)})
+    if specificCountiesOnly != None:
+        listOfSpecificCounties = []
+        for specificCounty in specificCountiesOnly:
+            matchingCounty = next((item for item in requestedCounties if
+                                   item['NAME'] == '{0} County'.format(specificCounty)), None)
+            listOfSpecificCounties.append(matchingCounty)
+        requestedCounties = listOfSpecificCounties
+
+    if maxNumberOfCounties == math.inf:
+        maxNumberOfCounties = len(requestedCounties)
+        requestedCounties = requestedCounties[:maxNumberOfCounties]
+
+    return requestedCounties
 
 
 def getBlocksInCounty(stateFIPSCode, countyFIPSCode):
@@ -80,7 +88,7 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
 
             endTimeForProcessingCounty = time.localtime()
             elapsedSecondsForProcessingCounty = (
-                        time.mktime(endTimeForProcessingCounty) - time.mktime(startTimeForProcessingCounty))
+                    time.mktime(endTimeForProcessingCounty) - time.mktime(startTimeForProcessingCounty))
             print('   {0} took {1} seconds'.format(county['NAME'], elapsedSecondsForProcessingCounty))
 
         endTimeForProcessingState = time.localtime()
@@ -94,16 +102,23 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
 
 
 def allGeoDataForEachCounty(existingCountyData):
-    if (len(existingCountyData) > 0):
+    if len(existingCountyData) > 0:
         print('*** Getting geo info on all counties ***')
         stateFIPSCode = existingCountyData[0]['state']
 
         startTimeForProcessingState = time.localtime()
         fullCountyListWithGeo = []
 
+        whereArgument = 'STATE=\'{0}\' AND ('.format(stateFIPSCode)
+        for county in existingCountyData:
+            whereArgument = '{0}NAME=\'{1}\''.format(whereArgument, county['NAME'])
+            if existingCountyData.index(county) != len(existingCountyData) - 1:
+                whereArgument = '{0} OR '.format(whereArgument)
+        whereArgument = '{0})'.format(whereArgument)
+
         countyGeometries = EsriDumper(
             url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/90',
-            extra_query_args={'where': 'STATE=\'{0}\''.format(stateFIPSCode),
+            extra_query_args={'where': whereArgument,
                               'orderByFields': 'COUNTY'})
         # https://github.com/openaddresses/pyesridump
 
@@ -120,7 +135,7 @@ def allGeoDataForEachCounty(existingCountyData):
 
         endTimeForProcessingState = time.localtime()
         elapsedMinutesForProcessingState = (
-                    time.mktime(endTimeForProcessingState) - time.mktime(startTimeForProcessingState))
+                time.mktime(endTimeForProcessingState) - time.mktime(startTimeForProcessingState))
         print('It took {0} total seconds to get all the requested county geo data'.format(
             elapsedMinutesForProcessingState))
         return fullCountyListWithGeo
@@ -145,12 +160,14 @@ censusYear = 2010
 
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
-countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf)
+countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf,
+                                    specificCountiesOnly={'Huron', 'Tuscola', 'Sanilac'})
 allCountyGeosInState = allGeoDataForEachCounty(existingCountyData=countyInfoList)
 # save county data to csv
-saveInfoToCSV(info=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='County')
+saveInfoToCSV(info=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name,
+              descriptionOfInfo='ThumbCounty')
 
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 # save block data to csv
-saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='Block')
+saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='ThumbBlock')

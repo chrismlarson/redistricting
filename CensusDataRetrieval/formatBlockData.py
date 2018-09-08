@@ -55,6 +55,9 @@ def getRawDictData(csvPath):
 
     return rawDictData
 
-csvPath = path.expanduser('~/Documents/2010-Michigan-BlockInfo.csv')
-rawDictData = getRawDictData(csvPath=csvPath)
+countyCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbCountyInfo.csv')
+rawCountyData = getRawDictData(csvPath=countyCSVPath)
+
+blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbBlockInfo.csv')
+rawBlockData = getRawDictData(csvPath=blockCSVPath)
 temp = 0
