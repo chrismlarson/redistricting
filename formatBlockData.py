@@ -3,6 +3,7 @@ from os import path
 import ast
 import sys
 from tqdm import tqdm
+import counties
 
 def getNumOfCSVRows(csvPath):
     setCSVLimitToMaxAcceptable()
@@ -60,5 +61,7 @@ rawCountyData = getRawDictData(csvPath=countyCSVPath)
 
 blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbBlockInfo.csv')
 rawBlockData = getRawDictData(csvPath=blockCSVPath)
+
+counties = counties.createCountiesFromRawData(rawCountyData=rawCountyData)
 
 temp = 0
