@@ -60,4 +60,5 @@ rawCountyData = getRawDictData(csvPath=countyCSVPath)
 
 blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbBlockInfo.csv')
 rawBlockData = getRawDictData(csvPath=blockCSVPath)
+
 temp = 0
