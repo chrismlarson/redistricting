@@ -63,7 +63,8 @@ rawCountyData = getRawDictData(csvPath=countyCSVPath)
 blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbBlockInfo.csv')
 rawBlockData = getRawDictData(csvPath=blockCSVPath)
 
-counties = counties.createCountiesFromRawData(rawCountyData=rawCountyData)
-exportData.exportCountiesToShapefile(counties)
+countyList = counties.createCountiesFromRawData(rawCountyData=rawCountyData)
+counties.setBorderingCountiesForCounties(countyList=countyList)
+#exportData.exportCountiesToShapefile(counties)
 
 temp = 0

@@ -14,6 +14,9 @@ class County:
         self.name = countyName
         self.FIPS = countyFIPS
         self.geometry = convertGeoJSONToShapely(countyGeoJSONGeometry)
+        self.borderingCounties = []
+
+
 
 
 def createCountiesFromRawData(rawCountyData):
@@ -28,3 +31,11 @@ def createCountiesFromRawData(rawCountyData):
 def convertGeoJSONToShapely(geoJSON):
     shapelyShape = shape(geoJSON)
     return shapelyShape
+
+
+def setBorderingCountiesForCounties(countyList):
+    for countyToCheck in countyList:
+        for countyToCheckAgainst in countyList:
+            if countyToCheck != countyToCheckAgainst:
+                if countyToCheck.geometry.intersects(countyToCheckAgainst.geometry):
+                    countyToCheck.borderingCounties.append(countyToCheckAgainst)

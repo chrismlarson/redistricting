@@ -13,9 +13,9 @@ def exportCountiesToShapefile(countyList):
 
     # Write a new Shapefile
     with fiona.open(countyShapeDataPath, 'w', 'ESRI Shapefile', schema) as c:
-        for county in countyList:
+        for countyToExport in countyList:
             c.write({
-                'geometry': mapping(county.geometry),
-                'properties': {'id': county.FIPS},
+                'geometry': mapping(countyToExport.geometry),
+                'properties': {'id': countyToExport.FIPS},
             })
 
