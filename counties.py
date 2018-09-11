@@ -1,4 +1,4 @@
-import shapely
+from shapely.geometry import shape
 # On Windows, I needed to install Shapely manually
 # Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 # And then ran:
@@ -26,6 +26,5 @@ def createCountiesFromRawData(rawCountyData):
 
 
 def convertGeoJSONToShapely(geoJSON):
-    # todo: implement
-    # try http://www.mhermans.net/geojson-shapely-geocoding.html : polygon = shape(feature['geometry'])
-    return geoJSON
+    shapelyShape = shape(geoJSON)
+    return shapelyShape
