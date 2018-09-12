@@ -50,6 +50,9 @@ def getRawDictData(csvPath):
         with open(csvPath, newline='\n') as csvFile:
             dictReader = csv.DictReader(csvFile)
             for row in dictReader:
+                if 'P0010001' in row:
+                    population = row.pop('P0010001', None)
+                    row['population'] = population
                 rowGeometry = ast.literal_eval(row['geometry'])
                 row['geometry'] = rowGeometry
                 rawDictData.append(row)
@@ -65,6 +68,6 @@ rawBlockData = getRawDictData(csvPath=blockCSVPath)
 
 countyList = counties.createCountiesFromRawData(rawCountyData=rawCountyData)
 counties.setBorderingCountiesForCounties(countyList=countyList)
-#exportData.exportCountiesToShapefile(counties)
+exportData.exportCountiesToShapefile(countyList)
 
 temp = 0
