@@ -10,7 +10,6 @@ class CensusBlocks:
         self.blockFIPS = blockFIPS
         self.population = population
         self.geometry = geographyHelper.convertGeoJSONToShapely(geoJSONGeometry)
-        self.borderingCounties = []
         CensusBlocks.blockList.append(self)
         self.parentCounty = counties.getCountyWithFIPS(countyFIPS=countyFIPS)
 
@@ -22,6 +21,8 @@ class CensusBlocks:
     def parentCounty(self, parentCounty):
         self.__parentCounty = parentCounty
         parentCounty.blocks.append(self)
+        if geographyHelper.isBoundaryGeometry(parent=parentCounty, child=self):
+            parentCounty.borderBlocks.append(self)
 
     blockList = []
 

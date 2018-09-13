@@ -17,5 +17,13 @@ def setBorderingCountiesForCounties(countyList):
     for countyToCheck in countyList:
         for countyToCheckAgainst in countyList:
             if countyToCheck != countyToCheckAgainst:
-                if countyToCheck.geometry.intersects(countyToCheckAgainst.geometry):
+                if intersectingGeometries(countyToCheck, countyToCheckAgainst):
                     countyToCheck.borderingCounties.append(countyToCheckAgainst)
+
+
+def intersectingGeometries(a,b):
+    return a.geometry.intersects(b.geometry)
+
+
+def isBoundaryGeometry(parent,child):
+    return parent.geometry.boundary.intersects(child.geometry.boundary)

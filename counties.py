@@ -7,6 +7,7 @@ class County:
         self.FIPS = countyFIPS
         self.geometry = geographyHelper.convertGeoJSONToShapely(countyGeoJSONGeometry)
         self.blocks = []
+        self.borderBlocks = []
         self.borderingCounties = []
         County.countyList.append(self)
 
