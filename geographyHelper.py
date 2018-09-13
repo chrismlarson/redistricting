@@ -11,3 +11,11 @@ from shapely.geometry import shape
 def convertGeoJSONToShapely(geoJSON):
     shapelyShape = shape(geoJSON)
     return shapelyShape
+
+
+def setBorderingCountiesForCounties(countyList):
+    for countyToCheck in countyList:
+        for countyToCheckAgainst in countyList:
+            if countyToCheck != countyToCheckAgainst:
+                if countyToCheck.geometry.intersects(countyToCheckAgainst.geometry):
+                    countyToCheck.borderingCounties.append(countyToCheckAgainst)

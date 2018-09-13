@@ -1,11 +1,15 @@
 import geographyHelper
 
+
 class County:
     def __init__(self, countyName, countyFIPS, countyGeoJSONGeometry):
         self.name = countyName
         self.FIPS = countyFIPS
         self.geometry = geographyHelper.convertGeoJSONToShapely(countyGeoJSONGeometry)
         self.borderingCounties = []
+        County.countyList.append(self)
+
+    countyList = []
 
 
 def createCountiesFromRawData(rawCountyData):
@@ -14,12 +18,9 @@ def createCountiesFromRawData(rawCountyData):
         counties.append(County(countyName=rawCounty['NAME'],
                                countyFIPS=rawCounty['county'],
                                countyGeoJSONGeometry=rawCounty['geometry']))
+    geographyHelper.setBorderingCountiesForCounties(countyList=counties)
     return counties
 
 
-def setBorderingCountiesForCounties(countyList):
-    for countyToCheck in countyList:
-        for countyToCheckAgainst in countyList:
-            if countyToCheck != countyToCheckAgainst:
-                if countyToCheck.geometry.intersects(countyToCheckAgainst.geometry):
-                    countyToCheck.borderingCounties.append(countyToCheckAgainst)
+def getCountyWithFIPS(countyFIPS):
+    return next((item for item in County.countyList if item.FIPS == countyFIPS), None)

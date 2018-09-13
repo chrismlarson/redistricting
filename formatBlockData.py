@@ -5,7 +5,7 @@ import sys
 from tqdm import tqdm
 import counties
 import censusBlocks
-import exportData
+#import exportData
 
 def getNumOfCSVRows(csvPath):
     setCSVLimitToMaxAcceptable()
@@ -68,9 +68,8 @@ blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbBlockInfo.csv')
 rawBlockData = getRawDictData(csvPath=blockCSVPath)
 
 countyList = counties.createCountiesFromRawData(rawCountyData=rawCountyData)
-counties.setBorderingCountiesForCounties(countyList=countyList)
-exportData.exportCountiesToShapefile(countyList)
+#exportData.exportCountiesToShapefile(countyList)
 
-countyList = censusBlocks.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
+blockList = censusBlocks.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
 
 temp = 0
