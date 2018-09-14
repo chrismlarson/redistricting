@@ -1,5 +1,5 @@
 import geographyHelper
-
+from tqdm import tqdm
 
 class County:
     def __init__(self, countyName, countyFIPS, countyGeoJSONGeometry):
@@ -16,10 +16,13 @@ class County:
 
 def createCountiesFromRawData(rawCountyData):
     counties = []
-    for rawCounty in rawCountyData:
-        counties.append(County(countyName=rawCounty['NAME'],
-                               countyFIPS=rawCounty['county'],
-                               countyGeoJSONGeometry=rawCounty['geometry']))
+    print('*** Creating Counties from raw data ***')
+    with tqdm(total=len(rawCountyData)) as pbar:
+        for rawCounty in rawCountyData:
+            counties.append(County(countyName=rawCounty['NAME'],
+                                   countyFIPS=rawCounty['county'],
+                                   countyGeoJSONGeometry=rawCounty['geometry']))
+            pbar.update(1)
     geographyHelper.setBorderingCountiesForCounties(countyList=counties)
     return counties
 

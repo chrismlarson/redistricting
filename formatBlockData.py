@@ -5,7 +5,7 @@ import sys
 from tqdm import tqdm
 import counties
 import censusBlocks
-#import exportData
+import exportData
 
 def getNumOfCSVRows(csvPath):
     setCSVLimitToMaxAcceptable()
@@ -18,7 +18,6 @@ def getNumOfCSVRows(csvPath):
             for row in dictReader:
                 totalNumberOfRows += 1
                 pbar.update(1)
-            pbar.clear()
 
     totalNumberOfRows -= 1 #to account for the header
     print('Total number of CSV rows: {0}'.format(totalNumberOfRows))
@@ -45,7 +44,7 @@ def getRawDictData(csvPath):
     setCSVLimitToMaxAcceptable()
     numOfCSVRows = getNumOfCSVRows(csvPath=csvPath)
 
-    print('*** Loading raw CSV data ***')
+    print('*** Loading CSV data ***')
     rawDictData = []
     with tqdm(total=numOfCSVRows) as pbar:
         with open(csvPath, newline='\n') as csvFile:
@@ -61,14 +60,14 @@ def getRawDictData(csvPath):
 
     return rawDictData
 
-countyCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbCountyInfo.csv')
+countyCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamCountyInfo.csv')
 rawCountyData = getRawDictData(csvPath=countyCSVPath)
 
-blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbBlockInfo.csv')
+blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockInfo.csv')
 rawBlockData = getRawDictData(csvPath=blockCSVPath)
 
 countyList = counties.createCountiesFromRawData(rawCountyData=rawCountyData)
-#exportData.exportCountiesToShapefile(countyList)
+exportData.exportCountiesToShapefile(countyList)
 
 blockList = censusBlocks.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
 

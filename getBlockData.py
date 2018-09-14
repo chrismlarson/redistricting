@@ -161,13 +161,13 @@ censusYear = 2010
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
 countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf,
-                                    specificCountiesOnly={'Huron', 'Tuscola', 'Sanilac'})
+                                    specificCountiesOnly={'Huron', 'Tuscola', 'Sanilac', 'Ingham'})
 allCountyGeosInState = allGeoDataForEachCounty(existingCountyData=countyInfoList)
 # save county data to csv
 saveInfoToCSV(info=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-              descriptionOfInfo='ThumbCounty')
+              descriptionOfInfo='ThumbPlusInghamCounty')
 
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 # save block data to csv
-saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='ThumbBlock')
+saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='ThumbPlusInghamBlock')

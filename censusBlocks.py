@@ -1,5 +1,6 @@
 import geographyHelper
 import counties
+from tqdm import tqdm
 
 
 class CensusBlocks:
@@ -33,10 +34,13 @@ def uniqueBlockIdentifierFromFIPS(countyFIPS, tractFIPS, blockFIPS):
 
 def createCensusBlocksFromRawData(rawBlockData):
     censusBlocks = []
-    for rawBlock in rawBlockData:
-        censusBlocks.append(CensusBlocks(countyFIPS=rawBlock['county'],
-                                         tractFIPS=rawBlock['tract'],
-                                         blockFIPS=rawBlock['block'],
-                                         population=rawBlock['population'],
-                                         geoJSONGeometry=rawBlock['geometry']))
+    print('*** Creating Blocks from raw data ***')
+    with tqdm(total=len(rawBlockData)) as pbar:
+        for rawBlock in rawBlockData:
+            censusBlocks.append(CensusBlocks(countyFIPS=rawBlock['county'],
+                                             tractFIPS=rawBlock['tract'],
+                                             blockFIPS=rawBlock['block'],
+                                             population=rawBlock['population'],
+                                             geoJSONGeometry=rawBlock['geometry']))
+            pbar.update(1)
     return censusBlocks
