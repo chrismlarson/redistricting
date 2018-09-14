@@ -3,8 +3,8 @@ from os import path
 import ast
 import sys
 from tqdm import tqdm
-import counties
-import censusBlocks
+import censusCounty
+import censusBlock
 import exportData
 
 def getNumOfCSVRows(csvPath):
@@ -66,9 +66,9 @@ rawCountyData = getRawDictData(csvPath=countyCSVPath)
 blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockInfo.csv')
 rawBlockData = getRawDictData(csvPath=blockCSVPath)
 
-countyList = counties.createCountiesFromRawData(rawCountyData=rawCountyData)
+countyList = censusCounty.createCountiesFromRawData(rawCountyData=rawCountyData)
 exportData.exportCountiesToShapefile(countyList)
 
-blockList = censusBlocks.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
+blockList = censusBlock.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
 
 temp = 0

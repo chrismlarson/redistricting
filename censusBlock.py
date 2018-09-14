@@ -1,18 +1,18 @@
 import geographyHelper
-import counties
+import censusCounty
 from tqdm import tqdm
+from censusGeography import CensusGeography
 
 
-class CensusBlocks:
+class CensusBlock(CensusGeography):
     def __init__(self, countyFIPS, tractFIPS, blockFIPS, population, geoJSONGeometry):
-        self.id = uniqueBlockIdentifierFromFIPS(countyFIPS, tractFIPS, blockFIPS)
+        CensusGeography.__init__(self, FIPS=blockFIPS, geoJSONGeometry=geoJSONGeometry)
+        self.id = uniqueBlockIdentifierFromFIPS(countyFIPS, tractFIPS, self.FIPS)
         self.countyFIPS = countyFIPS
         self.tractFIPS = tractFIPS
-        self.blockFIPS = blockFIPS
         self.population = population
-        self.geometry = geographyHelper.convertGeoJSONToShapely(geoJSONGeometry)
-        CensusBlocks.blockList.append(self)
-        self.parentCounty = counties.getCountyWithFIPS(countyFIPS=countyFIPS)
+        CensusBlock.blockList.append(self)
+        self.parentCounty = censusCounty.getCountyWithFIPS(countyFIPS=countyFIPS)
 
     @property
     def parentCounty(self):
@@ -37,10 +37,10 @@ def createCensusBlocksFromRawData(rawBlockData):
     print('*** Creating Blocks from raw data ***')
     with tqdm(total=len(rawBlockData)) as pbar:
         for rawBlock in rawBlockData:
-            censusBlocks.append(CensusBlocks(countyFIPS=rawBlock['county'],
-                                             tractFIPS=rawBlock['tract'],
-                                             blockFIPS=rawBlock['block'],
-                                             population=rawBlock['population'],
-                                             geoJSONGeometry=rawBlock['geometry']))
+            censusBlocks.append(CensusBlock(countyFIPS=rawBlock['county'],
+                                            tractFIPS=rawBlock['tract'],
+                                            blockFIPS=rawBlock['block'],
+                                            population=rawBlock['population'],
+                                            geoJSONGeometry=rawBlock['geometry']))
             pbar.update(1)
     return censusBlocks

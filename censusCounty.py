@@ -1,11 +1,11 @@
 import geographyHelper
 from tqdm import tqdm
+from censusGeography import CensusGeography
 
-class County:
+class County(CensusGeography):
     def __init__(self, countyName, countyFIPS, countyGeoJSONGeometry):
+        CensusGeography.__init__(self, FIPS=countyFIPS, geoJSONGeometry=countyGeoJSONGeometry)
         self.name = countyName
-        self.FIPS = countyFIPS
-        self.geometry = geographyHelper.convertGeoJSONToShapely(countyGeoJSONGeometry)
         self.blocks = []
         self.borderBlocks = []
         self.borderingCounties = []
