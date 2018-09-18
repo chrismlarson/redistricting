@@ -26,7 +26,7 @@ def createCensusBlocksFromRawData(rawBlockData):
             censusBlocks.append(CensusBlock(countyFIPS=rawBlock['county'],
                                             tractFIPS=rawBlock['tract'],
                                             blockFIPS=rawBlock['block'],
-                                            population=rawBlock['population'],
+                                            population=int(rawBlock['population']),
                                             geoJSONGeometry=rawBlock['geometry']))
             pbar.update(1)
     return censusBlocks
@@ -34,3 +34,7 @@ def createCensusBlocksFromRawData(rawBlockData):
 
 def populationFromBlocks(blockList):
     return sum(block.population for block in blockList)
+
+
+def getAllBlocksWithCountyFIPS(countyFIPS):
+    return [block for block in CensusBlock.blockList if block.countyFIPS == countyFIPS]

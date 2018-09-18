@@ -14,12 +14,12 @@ def convertGeoJSONToShapely(geoJSON):
     return shapelyShape
 
 
-def setBorderingCountiesForCounties(countyList):
-    for countyToCheck in countyList:
-        for countyToCheckAgainst in countyList:
-            if countyToCheck != countyToCheckAgainst:
-                if intersectingGeometries(countyToCheck, countyToCheckAgainst):
-                    countyToCheck.borderingCounties.append(countyToCheckAgainst)
+def setBorderingRedistrictingGroups(redistrictingGroupList):
+    for redistrictingGroupToCheck in redistrictingGroupList:
+        for redistrictingGroupToCheckAgainst in redistrictingGroupList:
+            if redistrictingGroupToCheck != redistrictingGroupToCheckAgainst:
+                if intersectingGeometries(redistrictingGroupToCheck, redistrictingGroupToCheckAgainst):
+                    redistrictingGroupToCheck.neighboringGroups.append(redistrictingGroupToCheckAgainst)
 
 
 def intersectingGeometries(a,b):
@@ -30,6 +30,6 @@ def isBoundaryGeometry(parent,child):
     return parent.geometry.boundary.intersects(child.geometry.boundary)
 
 
-def geographyFromBlocks(blockList):
+def geometryFromBlocks(blockList):
     polygons = [block.geometry for block in blockList]
     return cascaded_union(polygons)

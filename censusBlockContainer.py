@@ -1,5 +1,6 @@
 import geographyHelper
 import censusBlock
+from tqdm import tqdm
 
 class CensusBlockContainer:
     def __init__(self):
@@ -13,7 +14,7 @@ class CensusBlockContainer:
     @blocks.setter
     def blocks(self, blocks):
         self.__blocks = blocks
-        self.geography = geographyHelper.geographyFromBlocks(self.blocks)
+        self.geometry = geographyHelper.geometryFromBlocks(self.blocks)
         self.population = censusBlock.populationFromBlocks(self.blocks)
         self.__findBorderBlocks()
 

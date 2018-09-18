@@ -70,6 +70,8 @@ countyList = censusCounty.createCountiesFromRawData(rawCountyData=rawCountyData)
 #exportData.exportGeographiesToShapefile(geographyList=countyList, descriptionOfInfo='Counties')
 
 blockList = censusBlock.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
+
+initialRedistrictingGroups = censusCounty.createRedistrictingGroupsFromCounties()
 #exportData.exportGeographiesToShapefile(geographyList=blockList, descriptionOfInfo='Blocks')
 
 temp = 0
