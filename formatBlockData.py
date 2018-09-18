@@ -67,8 +67,9 @@ blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockIn
 rawBlockData = getRawDictData(csvPath=blockCSVPath)
 
 countyList = censusCounty.createCountiesFromRawData(rawCountyData=rawCountyData)
-exportData.exportCountiesToShapefile(countyList)
+exportData.exportGeographiesToShapefile(geographyList=countyList, descriptionOfInfo='Counties')
 
 blockList = censusBlock.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
+exportData.exportGeographiesToShapefile(geographyList=blockList, descriptionOfInfo='Blocks')
 
 temp = 0
