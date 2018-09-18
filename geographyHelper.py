@@ -1,4 +1,5 @@
 from shapely.geometry import shape
+from shapely.ops import cascaded_union
 # On Windows, I needed to install Shapely manually
 # Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 # And then ran:
@@ -27,3 +28,8 @@ def intersectingGeometries(a,b):
 
 def isBoundaryGeometry(parent,child):
     return parent.geometry.boundary.intersects(child.geometry.boundary)
+
+
+def geographyFromBlocks(blockList):
+    polygons = [block.geometry for block in blockList]
+    return cascaded_union(polygons)

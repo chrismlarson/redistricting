@@ -1,5 +1,3 @@
-import geographyHelper
-import censusCounty
 from tqdm import tqdm
 from censusGeography import CensusGeography
 
@@ -12,18 +10,6 @@ class CensusBlock(CensusGeography):
         self.tractFIPS = tractFIPS
         self.population = population
         CensusBlock.blockList.append(self)
-        self.parentCounty = censusCounty.getCountyWithFIPS(countyFIPS=countyFIPS)
-
-    @property
-    def parentCounty(self):
-        return self.__parentCounty
-
-    @parentCounty.setter
-    def parentCounty(self, parentCounty):
-        self.__parentCounty = parentCounty
-        parentCounty.blocks.append(self)
-        if geographyHelper.isBoundaryGeometry(parent=parentCounty, child=self):
-            parentCounty.borderBlocks.append(self)
 
     blockList = []
 
@@ -44,3 +30,7 @@ def createCensusBlocksFromRawData(rawBlockData):
                                             geoJSONGeometry=rawBlock['geometry']))
             pbar.update(1)
     return censusBlocks
+
+
+def populationFromBlocks(blockList):
+    return sum(block.population for block in blockList)

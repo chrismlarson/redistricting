@@ -1,13 +1,13 @@
 import geographyHelper
 from tqdm import tqdm
 from censusGeography import CensusGeography
+from censusBlockContainer import CensusBlockContainer
 
-class County(CensusGeography):
+class County(CensusGeography, CensusBlockContainer):
     def __init__(self, countyName, countyFIPS, countyGeoJSONGeometry):
         CensusGeography.__init__(self, FIPS=countyFIPS, geoJSONGeometry=countyGeoJSONGeometry)
+        CensusBlockContainer.__init__(self)
         self.name = countyName
-        self.blocks = []
-        self.borderBlocks = []
         self.borderingCounties = []
         County.countyList.append(self)
 
@@ -23,7 +23,7 @@ def createCountiesFromRawData(rawCountyData):
                                    countyFIPS=rawCounty['county'],
                                    countyGeoJSONGeometry=rawCounty['geometry']))
             pbar.update(1)
-    geographyHelper.setBorderingCountiesForCounties(countyList=counties)
+    #geographyHelper.setBorderingCountiesForCounties(countyList=counties)
     return counties
 
 
