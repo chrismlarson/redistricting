@@ -14,14 +14,6 @@ def convertGeoJSONToShapely(geoJSON):
     return shapelyShape
 
 
-def setBorderingRedistrictingGroups(redistrictingGroupList):
-    for redistrictingGroupToCheck in redistrictingGroupList:
-        for redistrictingGroupToCheckAgainst in redistrictingGroupList:
-            if redistrictingGroupToCheck != redistrictingGroupToCheckAgainst:
-                if intersectingGeometries(redistrictingGroupToCheck, redistrictingGroupToCheckAgainst):
-                    redistrictingGroupToCheck.neighboringGroups.append(redistrictingGroupToCheckAgainst)
-
-
 def intersectingGeometries(a,b):
     return a.geometry.intersects(b.geometry)
 

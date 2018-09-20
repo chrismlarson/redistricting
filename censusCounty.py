@@ -1,9 +1,6 @@
-import geographyHelper
 from tqdm import tqdm
 from censusGeography import CensusGeography
 from censusBlockContainer import CensusBlockContainer
-from censusBlock import getAllBlocksWithCountyFIPS
-from redistrictingGroup import RedistrictingGroup
 
 class County(CensusGeography, CensusBlockContainer):
     def __init__(self, countyName, countyFIPS, countyGeoJSONGeometry):
@@ -31,15 +28,3 @@ def createCountiesFromRawData(rawCountyData):
 def getCountyWithFIPS(countyFIPS):
     return next((item for item in County.countyList if item.FIPS == countyFIPS), None)
 
-
-def createRedistrictingGroupsFromCounties():
-    redistrictingGroupList = []
-    tqdm.write('*** Creating Redistricting Groups from Counties ***')
-    with tqdm(total=len(County.countyList)) as pbar:
-        for county in County.countyList:
-            blocksInCounty = getAllBlocksWithCountyFIPS(county.FIPS)
-            redistrictingGroupList.append(RedistrictingGroup(childrenBlocks=blocksInCounty))
-            pbar.update(1)
-
-    geographyHelper.setBorderingRedistrictingGroups(redistrictingGroupList=redistrictingGroupList)
-    return redistrictingGroupList

@@ -5,6 +5,7 @@ import sys
 from tqdm import tqdm
 import censusCounty
 import censusBlock
+import redistrictingGroup
 import exportData
 
 def getNumOfCSVRows(csvPath):
@@ -71,7 +72,7 @@ countyList = censusCounty.createCountiesFromRawData(rawCountyData=rawCountyData)
 
 blockList = censusBlock.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
 
-initialRedistrictingGroups = censusCounty.createRedistrictingGroupsFromCounties()
+initialRedistrictingGroups = redistrictingGroup.createRedistrictingGroupsFromCounties()
 #exportData.exportGeographiesToShapefile(geographyList=blockList, descriptionOfInfo='Blocks')
 
 temp = 0
