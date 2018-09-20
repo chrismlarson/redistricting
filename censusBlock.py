@@ -9,6 +9,7 @@ class CensusBlock(CensusGeography):
         self.countyFIPS = countyFIPS
         self.tractFIPS = tractFIPS
         self.population = population
+        self.neighboringBlocks = []
         CensusBlock.blockList.append(self)
 
     blockList = []

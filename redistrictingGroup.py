@@ -5,4 +5,11 @@ class RedistrictingGroup(CensusBlockContainer):
         CensusBlockContainer.__init__(self)
         self.blocks = childrenBlocks
         self.neighboringGroups = []
+        RedistrictingGroup.redistrictingGroupList.append(self)
+
+    redistrictingGroupList = []
+
+
+def assignNeighboringBlocksToEveryBlock():
+    temp = 0
 
