@@ -23,4 +23,4 @@ class CensusBlockContainer:
         self.borderBlocks = []
         for block in self.blocks:
             if geographyHelper.isBoundaryGeometry(parent=self, child=block):
-                self.borderBlocks.append(self)
+                self.borderBlocks.append(block)
