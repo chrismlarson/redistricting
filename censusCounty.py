@@ -1,13 +1,11 @@
 from tqdm import tqdm
 from censusGeography import CensusGeography
-from censusBlockContainer import CensusBlockContainer
 
-class County(CensusGeography, CensusBlockContainer):
+class County(CensusGeography):
     def __init__(self, countyName, countyFIPS, countyGeoJSONGeometry):
         CensusGeography.__init__(self, FIPS=countyFIPS, geoJSONGeometry=countyGeoJSONGeometry)
-        CensusBlockContainer.__init__(self)
         self.name = countyName
-        self.borderingCounties = []
+        self.blocks = []
         County.countyList.append(self)
 
     countyList = []

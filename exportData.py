@@ -13,9 +13,14 @@ def exportGeographiesToShapefile(geographyList, descriptionOfInfo):
 
     # Write a new Shapefile
     with fiona.open(countyShapeDataPath, 'w', 'ESRI Shapefile', schema) as c:
+        id = 0
         for geoToExport in geographyList:
+            if hasattr(geoToExport, 'FIPS'):
+                id = geoToExport.FIPS
+            else:
+                id = id+1
             c.write({
                 'geometry': mapping(geoToExport.geometry),
-                'properties': {'id': geoToExport.FIPS},
+                'properties': {'id': id},
             })
 
