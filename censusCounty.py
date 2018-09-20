@@ -18,7 +18,7 @@ class County(CensusGeography, CensusBlockContainer):
 
 def createCountiesFromRawData(rawCountyData):
     counties = []
-    print('*** Creating Counties from raw data ***')
+    tqdm.write('*** Creating Counties from raw data ***')
     with tqdm(total=len(rawCountyData)) as pbar:
         for rawCounty in rawCountyData:
             counties.append(County(countyName=rawCounty['NAME'],
@@ -34,7 +34,7 @@ def getCountyWithFIPS(countyFIPS):
 
 def createRedistrictingGroupsFromCounties():
     redistrictingGroupList = []
-    print('*** Creating Redistricting Groups from Counties ***')
+    tqdm.write('*** Creating Redistricting Groups from Counties ***')
     with tqdm(total=len(County.countyList)) as pbar:
         for county in County.countyList:
             blocksInCounty = getAllBlocksWithCountyFIPS(county.FIPS)

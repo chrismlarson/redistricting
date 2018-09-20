@@ -20,7 +20,7 @@ def uniqueBlockIdentifierFromFIPS(countyFIPS, tractFIPS, blockFIPS):
 
 def createCensusBlocksFromRawData(rawBlockData):
     censusBlocks = []
-    print('*** Creating Blocks from raw data ***')
+    tqdm.write('*** Creating Blocks from raw data ***')
     with tqdm(total=len(rawBlockData)) as pbar:
         for rawBlock in rawBlockData:
             censusBlocks.append(CensusBlock(countyFIPS=rawBlock['county'],

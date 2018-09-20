@@ -10,7 +10,7 @@ import exportData
 def getNumOfCSVRows(csvPath):
     setCSVLimitToMaxAcceptable()
 
-    print('*** Getting total number of CSV rows for progress ***')
+    tqdm.write('*** Getting total number of CSV rows for progress ***')
     totalNumberOfRows = 0
     with tqdm() as pbar:
         with open(csvPath, newline='\n') as csvFile:
@@ -20,7 +20,7 @@ def getNumOfCSVRows(csvPath):
                 pbar.update(1)
 
     totalNumberOfRows -= 1 #to account for the header
-    print('Total number of CSV rows: {0}'.format(totalNumberOfRows))
+    tqdm.write('Total number of CSV rows: {0}'.format(totalNumberOfRows))
     return totalNumberOfRows
 
 
@@ -44,7 +44,7 @@ def getRawDictData(csvPath):
     setCSVLimitToMaxAcceptable()
     numOfCSVRows = getNumOfCSVRows(csvPath=csvPath)
 
-    print('*** Loading CSV data ***')
+    tqdm.write('*** Loading CSV data ***')
     rawDictData = []
     with tqdm(total=numOfCSVRows) as pbar:
         with open(csvPath, newline='\n') as csvFile:
