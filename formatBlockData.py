@@ -68,11 +68,11 @@ blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockIn
 rawBlockData = getRawDictData(csvPath=blockCSVPath)
 
 countyList = censusCounty.createCountiesFromRawData(rawCountyData=rawCountyData)
-exportData.exportGeographiesToShapefile(geographyList=countyList, descriptionOfInfo='Counties')
+#exportData.exportGeographiesToShapefile(geographyList=countyList, descriptionOfInfo='Counties')
 
 blockList = censusBlock.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
 
 initialRedistrictingGroups = redistrictingGroup.createRedistrictingGroupsFromCounties()
-#exportData.exportGeographiesToShapefile(geographyList=blockList, descriptionOfInfo='Blocks')
+exportData.exportGeographiesToShapefile(geographyList=initialRedistrictingGroups, descriptionOfInfo='InitialRedistrictingGroups')
 
 temp = 0

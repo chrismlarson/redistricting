@@ -18,6 +18,12 @@ def intersectingGeometries(a,b):
     return a.geometry.intersects(b.geometry)
 
 
+def containingGeometries(a,b):
+    aContainsBBoundary = a.geometry.boundary.within(b.geometry.boundary)
+    bContainsABoundary = b.geometry.boundary.within(a.geometry.boundary)
+    return aContainsBBoundary or bContainsABoundary
+
+
 def isBoundaryGeometry(parent,child):
     return parent.geometry.boundary.intersects(child.geometry.boundary)
 
