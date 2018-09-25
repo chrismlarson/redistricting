@@ -1,6 +1,6 @@
 import geographyHelper
-import censusBlock
-from tqdm import tqdm
+from censusData import censusBlock
+
 
 class CensusBlockContainer:
     def __init__(self):

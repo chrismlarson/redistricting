@@ -3,10 +3,10 @@ from os import path
 import ast
 import sys
 from tqdm import tqdm
-import censusCounty
-import censusBlock
-import redistrictingGroup
-import exportData
+from censusData import censusCounty, censusBlock
+from formatData import redistrictingGroup
+from exportData import exportData
+
 
 def getNumOfCSVRows(csvPath):
     setCSVLimitToMaxAcceptable()

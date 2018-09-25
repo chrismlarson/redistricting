@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from censusGeography import CensusGeography
+from censusData.censusGeography import CensusGeography
 
 
 class CensusBlock(CensusGeography):

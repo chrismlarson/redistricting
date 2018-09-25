@@ -5,7 +5,7 @@ import csv
 from os import path
 from esridump.dumper import EsriDumper
 import time
-import apiKeys
+from censusData import apiKeys
 
 
 def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf, specificCountiesOnly=None):
