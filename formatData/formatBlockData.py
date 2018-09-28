@@ -6,6 +6,7 @@ from censusData import censusCounty, censusBlock
 import csvHelper
 from formatData import redistrictingGroup
 from exportData import exportData
+from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusDataCSV
 
 
 def getRawDictData(csvPath):
@@ -29,18 +30,21 @@ def getRawDictData(csvPath):
     return rawDictData
 
 
-countyCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamCountyInfo.csv')
-rawCountyData = getRawDictData(csvPath=countyCSVPath)
+# countyCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamCountyInfo.csv')
+# rawCountyData = getRawDictData(csvPath=countyCSVPath)
+#
+# blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockInfo.csv')
+# rawBlockData = getRawDictData(csvPath=blockCSVPath)
+#
+# countyList = censusCounty.createCountiesFromRawData(rawCountyData=rawCountyData)
+# #exportData.exportGeographiesToShapefile(geographyList=countyList, descriptionOfInfo='Counties')
+#
+# blockList = censusBlock.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
+#
+# initialRedistrictingGroups = redistrictingGroup.createRedistrictingGroupsFromCounties()
+# exportData.exportGeographiesToShapefile(geographyList=initialRedistrictingGroups, descriptionOfInfo='InitialRedistrictingGroups')
 
 blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockInfo.csv')
-rawBlockData = getRawDictData(csvPath=blockCSVPath)
-
-countyList = censusCounty.createCountiesFromRawData(rawCountyData=rawCountyData)
-#exportData.exportGeographiesToShapefile(geographyList=countyList, descriptionOfInfo='Counties')
-
-blockList = censusBlock.createCensusBlocksFromRawData(rawBlockData=rawBlockData)
-
-initialRedistrictingGroups = redistrictingGroup.createRedistrictingGroupsFromCounties()
-exportData.exportGeographiesToShapefile(geographyList=initialRedistrictingGroups, descriptionOfInfo='InitialRedistrictingGroups')
+redistrictingGroupList = createRedistrictingGroupsFromCensusDataCSV(csvPath=blockCSVPath)
 
 temp = 0

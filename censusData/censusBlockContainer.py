@@ -7,6 +7,11 @@ class CensusBlockContainer:
         self.blocks = []
         self.borderBlocks = []
 
+    def updateBlockContainerData(self):
+        self.geometry = geographyHelper.geometryFromBlocks(self.blocks)
+        self.population = censusBlock.populationFromBlocks(self.blocks)
+        self.__findBorderBlocks()
+
     @property
     def blocks(self):
         return self.__blocks
@@ -14,9 +19,7 @@ class CensusBlockContainer:
     @blocks.setter
     def blocks(self, blocks):
         self.__blocks = blocks
-        self.geometry = geographyHelper.geometryFromBlocks(self.blocks)
-        self.population = censusBlock.populationFromBlocks(self.blocks)
-        self.__findBorderBlocks()
+        self.updateBlockContainerData()
 
 
     def __findBorderBlocks(self):
