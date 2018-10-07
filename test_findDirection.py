@@ -1,6 +1,6 @@
 from unittest import TestCase
 from geographyHelper import findDirection, CardinalDirection
-from shapely.geometry import shape, Point
+from shapely.geometry import Point
 
 
 class TestFindDirection(TestCase):
@@ -102,3 +102,9 @@ class TestFindDirection(TestCase):
         westsouthwest = Point(-10.0, -1.0)
         direction = findDirection(westsouthwest, center)
         self.assertEqual(direction, CardinalDirection.east)
+
+    def test_findDirection_samePoint(self):
+        center = Point(0.0, 0.0)
+        dupe = Point(0.0, 0.0)
+        direction = findDirection(center, dupe)
+        self.assertEqual(direction, CardinalDirection.north)

@@ -1,4 +1,4 @@
-from shapely.geometry import shape, Point
+from shapely.geometry import shape
 from shapely.ops import cascaded_union
 from enum import Enum
 from math import atan2, degrees, pi
@@ -42,9 +42,12 @@ class CardinalDirection(Enum):
     south = 4
 
 
-def findDirection(basePoint, interestPoint):
-    xDiff = interestPoint.x - basePoint.x
-    yDiff = interestPoint.y - basePoint.y
+def findDirection(basePoint, targetPoint):
+    if basePoint == targetPoint:
+        return CardinalDirection.north
+
+    xDiff = targetPoint.x - basePoint.x
+    yDiff = targetPoint.y - basePoint.y
     radianDiff = atan2(yDiff, xDiff)
 
     # rotate 90 degrees for easier angle matching
@@ -63,3 +66,10 @@ def findDirection(basePoint, interestPoint):
         return CardinalDirection.east
     else:
         return CardinalDirection.north
+
+
+def findDirectionOfShape(baseShape, targetShape):
+    basePoint = baseShape.centroid
+    targetPoint = targetShape.centroid
+    direction = findDirection(basePoint=basePoint, targetPoint=targetPoint)
+    return direction
