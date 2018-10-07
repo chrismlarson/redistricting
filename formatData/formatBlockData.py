@@ -6,7 +6,7 @@ from censusData import censusCounty, censusBlock
 import csvHelper
 from formatData import redistrictingGroup
 from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusDataCSV
-from exportData import exportData
+#from exportData import exportData
 
 #
 # def getRawDictData(csvPath):

@@ -1,4 +1,4 @@
-from formatData.censusBlockContainer import CensusBlockContainer
+from formatData.blockGraph import BlockGraph
 from censusData import censusBlock
 import geographyHelper
 import csvHelper
@@ -7,9 +7,9 @@ import ast
 from tqdm import tqdm
 
 
-class RedistrictingGroup(CensusBlockContainer):
+class RedistrictingGroup(BlockGraph):
     def __init__(self, childrenBlocks):
-        CensusBlockContainer.__init__(self)
+        BlockGraph.__init__(self)
         self.blocks = childrenBlocks
         self.neighboringGroups = []
         RedistrictingGroup.redistrictingGroupList.append(self)

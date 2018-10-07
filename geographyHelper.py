@@ -73,3 +73,9 @@ def findDirectionOfShape(baseShape, targetShape):
     targetPoint = targetShape.centroid
     direction = findDirection(basePoint=basePoint, targetPoint=targetPoint)
     return direction
+
+
+def findDirectionOfShapeFromPoint(basePoint, targetShape):
+    targetPoint = targetShape.centroid
+    direction = findDirection(basePoint=basePoint, targetPoint=targetPoint)
+    return direction

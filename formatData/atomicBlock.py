@@ -1,4 +1,4 @@
-from censusData.censusBlockContainer import CensusBlockContainer
+from formatData.censusBlockContainer import CensusBlockContainer
 
 
 class AtomicBlock(CensusBlockContainer):
