@@ -3,12 +3,13 @@ from censusData.censusGeography import CensusGeography
 
 
 class CensusBlock(CensusGeography):
-    def __init__(self, countyFIPS, tractFIPS, blockFIPS, population, geoJSONGeometry):
+    def __init__(self, countyFIPS, tractFIPS, blockFIPS, population, isWater, geoJSONGeometry):
         CensusGeography.__init__(self, FIPS=blockFIPS, geoJSONGeometry=geoJSONGeometry)
         self.id = uniqueBlockIdentifierFromFIPS(countyFIPS, tractFIPS, self.FIPS)
         self.countyFIPS = countyFIPS
         self.tractFIPS = tractFIPS
         self.population = population
+        self.isWater = isWater
         self.neighboringBlocks = []
         CensusBlock.blockList.append(self)
 

@@ -1,5 +1,4 @@
-from censusData.censusBlockContainer import CensusBlockContainer
-from censusData.censusCounty import County
+from formatData.censusBlockContainer import CensusBlockContainer
 from censusData import censusBlock
 import geographyHelper
 import csvHelper
@@ -69,10 +68,14 @@ def createRedistrictingGroupsFromCensusDataCSV(csvPath):
                     redistrictingGroupWithCountyFIPS.FIPS = row['county']
                     redistrictingGroupList.append(redistrictingGroupWithCountyFIPS)
 
+                isWater = False
+                if row['block'][0] == '0':
+                    isWater = True
                 blockFromCSV = censusBlock.CensusBlock(countyFIPS=row['county'],
                                                        tractFIPS=row['tract'],
                                                        blockFIPS=row['block'],
                                                        population=int(row['P0010001']),
+                                                       isWater=isWater,
                                                        geoJSONGeometry=ast.literal_eval(row['geometry']))
                 redistrictingGroupWithCountyFIPS.blocks.append(blockFromCSV)
                 pbar.update(1)
