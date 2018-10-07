@@ -1,5 +1,7 @@
-from shapely.geometry import shape
+from shapely.geometry import shape, Point
 from shapely.ops import cascaded_union
+from enum import Enum
+from math import atan2, degrees, pi
 # On Windows, I needed to install Shapely manually
 # Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 # And then ran:
@@ -31,3 +33,33 @@ def isBoundaryGeometry(parent,child):
 def geometryFromBlocks(blockList):
     polygons = [block.geometry for block in blockList]
     return cascaded_union(polygons)
+
+
+class CardinalDirection(Enum):
+    north = 1
+    west = 3
+    east = 0
+    south = 4
+
+
+def findDirection(basePoint, interestPoint):
+    xDiff = interestPoint.x - basePoint.x
+    yDiff = interestPoint.y - basePoint.y
+    radianDiff = atan2(yDiff, xDiff)
+
+    # rotate 90 degrees for easier angle matching
+    radianDiff = radianDiff - (pi/2)
+
+    if radianDiff < 0:
+        radianDiff = radianDiff + (2 * pi)
+
+    degDiff = degrees(radianDiff)
+
+    if 45 <= degDiff and degDiff < 135:
+        return CardinalDirection.west
+    elif 135 <= degDiff and degDiff < 225:
+        return CardinalDirection.south
+    elif 225 <= degDiff and degDiff < 315:
+        return CardinalDirection.east
+    else:
+        return CardinalDirection.north
