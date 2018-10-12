@@ -1,3 +1,4 @@
+from formatData.atomicBlock import createAtomicBlocksFromBlockList
 from formatData.blockGraph import BlockGraph
 from censusData import censusBlock
 import geographyHelper
@@ -52,6 +53,16 @@ def getRedistrictingGroupWithCountyFIPS(countyFIPS):
 #     return redistrictingGroupList
 
 
+def convertAllCensusBlocksToAtomicBlocks():
+    tqdm.write('*** Converting All Census Blocks to Atomic Blocks ***')
+    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
+        for blockContainer in RedistrictingGroup.redistrictingGroupList:
+            atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.blocks)
+            blockContainer.blocks = atomicBlocksForGroup #this triggers a block container update
+            pbar.update(1)
+
+
+
 def createRedistrictingGroupsFromCensusDataCSV(csvPath):
     csvHelper.setCSVLimitToMaxAcceptable()
     numOfCSVRows = csvHelper.getNumOfCSVRows(csvPath=csvPath)
@@ -80,8 +91,8 @@ def createRedistrictingGroupsFromCensusDataCSV(csvPath):
                 redistrictingGroupWithCountyFIPS.blocks.append(blockFromCSV)
                 pbar.update(1)
 
-    #setting parent geometries and populations
-    updateAllBlockContainersData()
+    #convert census blocks to atomic blocks
+    convertAllCensusBlocksToAtomicBlocks()
 
     #find and set neighboring geometries
     setBorderingRedistrictingGroups(redistrictingGroupList=redistrictingGroupList)

@@ -20,10 +20,15 @@ def intersectingGeometries(a,b):
     return a.geometry.intersects(b.geometry)
 
 
-def containingGeometries(a,b):
-    aContainsBBoundary = a.geometry.boundary.within(b.geometry.boundary)
-    bContainsABoundary = b.geometry.boundary.within(a.geometry.boundary)
+def doesEitherGeographyContainTheOther(a,b):
+    aContainsBBoundary = doesGeographyContainTheOther(container=a, target=b)
+    bContainsABoundary = doesGeographyContainTheOther(container=b, target=a)
     return aContainsBBoundary or bContainsABoundary
+
+
+def doesGeographyContainTheOther(container, target):
+    containsTargetBoundary = target.geometry.boundary.within(container.geometry.boundary)
+    return containsTargetBoundary
 
 
 def isBoundaryGeometry(parent,child):
