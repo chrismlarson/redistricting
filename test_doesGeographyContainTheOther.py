@@ -61,3 +61,24 @@ class TestDoesGeographyContainTheOther(TestCase):
                                          'coordinates': [[[-1, 1], [1, 1], [1, -1], [-1, -1]]]})
         isContained = doesGeographyContainTheOther(container=a, target=b)
         self.assertFalse(isContained)
+
+    def test_containsTheOther_BnotInAwithHole(self):
+        exterior = [[-10, 10], [10, 10], [10, -10], [-10, -10]]
+        hole = [[-1, 1], [1, 1], [1, -1], [-1, -1]]
+
+        a = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [exterior, hole]})
+        b = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[100, 100], [101, 100], [101, 99], [100, 99]]]})
+        isContained = doesGeographyContainTheOther(container=a, target=b)
+        self.assertFalse(isContained)
