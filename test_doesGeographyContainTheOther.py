@@ -5,19 +5,41 @@ from geographyHelper import doesGeographyContainTheOther
 
 class TestDoesGeographyContainTheOther(TestCase):
 
-
     def test_containsTheOther_BinA(self):
         a = CensusBlock(countyFIPS='01',
                         tractFIPS='01',
                         blockFIPS='01',
                         population=int('1'),
                         isWater=False,
-                        geoJSONGeometry={'type': 'Polygon', 'coordinates': [[[-10, 10], [10, 10], [10, -10], [-10, -10]]]})
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[-10, 10], [10, 10], [10, -10], [-10, -10]]]})
         b = CensusBlock(countyFIPS='01',
                         tractFIPS='01',
                         blockFIPS='01',
                         population=int('1'),
                         isWater=False,
-                        geoJSONGeometry={'type': 'Polygon', 'coordinates': [[[-1, 1], [1, 1], [1, -1], [-1, -1]]]})
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[-1, 1], [1, 1], [1, -1], [-1, -1]]]})
+        isContained = doesGeographyContainTheOther(container=a, target=b)
+        self.assertTrue(isContained)
+
+    def test_containsTheOther_BinAwithHole(self):
+        exterior = [[-10, 10], [10, 10], [10, -10], [-10, -10]]
+        hole = [[-1, 1], [1, 1], [1, -1], [-1, -1]]
+
+        a = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [exterior, hole]})
+        b = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [hole]})
         isContained = doesGeographyContainTheOther(container=a, target=b)
         self.assertTrue(isContained)

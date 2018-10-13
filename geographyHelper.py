@@ -2,6 +2,8 @@ from shapely.geometry import shape
 from shapely.ops import cascaded_union
 from enum import Enum
 from math import atan2, degrees, pi
+
+
 # On Windows, I needed to install Shapely manually
 # Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 # And then ran:
@@ -16,22 +18,25 @@ def convertGeoJSONToShapely(geoJSON):
     return shapelyShape
 
 
-def intersectingGeometries(a,b):
+def intersectingGeometries(a, b):
     return a.geometry.intersects(b.geometry)
 
 
-def doesEitherGeographyContainTheOther(a,b):
+def doesEitherGeographyContainTheOther(a, b):
     aContainsBBoundary = doesGeographyContainTheOther(container=a, target=b)
     bContainsABoundary = doesGeographyContainTheOther(container=b, target=a)
     return aContainsBBoundary or bContainsABoundary
 
 
 def doesGeographyContainTheOther(container, target):
-    containsTargetBoundary = target.geometry.boundary.within(container.geometry.boundary)
+    if container.geometry.interiors:
+        containsTargetBoundary = container.geometry.boundary.contains(target.geometry.boundary)
+    else:
+        containsTargetBoundary = container.geometry.contains(target.geometry)
     return containsTargetBoundary
 
 
-def isBoundaryGeometry(parent,child):
+def isBoundaryGeometry(parent, child):
     return parent.geometry.boundary.intersects(child.geometry.boundary)
 
 
@@ -56,7 +61,7 @@ def findDirection(basePoint, targetPoint):
     radianDiff = atan2(yDiff, xDiff)
 
     # rotate 90 degrees for easier angle matching
-    radianDiff = radianDiff - (pi/2)
+    radianDiff = radianDiff - (pi / 2)
 
     if radianDiff < 0:
         radianDiff = radianDiff + (2 * pi)
