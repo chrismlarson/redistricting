@@ -20,8 +20,10 @@ class TestDoesGeographyContainTheOther(TestCase):
                         isWater=False,
                         geoJSONGeometry={'type': 'Polygon',
                                          'coordinates': [[[-1, 1], [1, 1], [1, -1], [-1, -1]]]})
-        isContained = doesGeographyContainTheOther(container=a, target=b)
-        self.assertTrue(isContained)
+        aContainsB = doesGeographyContainTheOther(container=a, target=b)
+        self.assertTrue(aContainsB)
+        bContainsA = doesGeographyContainTheOther(container=b, target=a)
+        self.assertFalse(bContainsA)
 
     def test_containsTheOther_BinAwithHole(self):
         exterior = [[-10, 10], [10, 10], [10, -10], [-10, -10]]
@@ -41,8 +43,10 @@ class TestDoesGeographyContainTheOther(TestCase):
                         isWater=False,
                         geoJSONGeometry={'type': 'Polygon',
                                          'coordinates': [hole]})
-        isContained = doesGeographyContainTheOther(container=a, target=b)
-        self.assertTrue(isContained)
+        aContainsB = doesGeographyContainTheOther(container=a, target=b)
+        self.assertTrue(aContainsB)
+        bContainsA = doesGeographyContainTheOther(container=b, target=a)
+        self.assertFalse(bContainsA)
 
     def test_containsTheOther_BnotInA(self):
         a = CensusBlock(countyFIPS='01',
@@ -59,8 +63,10 @@ class TestDoesGeographyContainTheOther(TestCase):
                         isWater=False,
                         geoJSONGeometry={'type': 'Polygon',
                                          'coordinates': [[[-1, 1], [1, 1], [1, -1], [-1, -1]]]})
-        isContained = doesGeographyContainTheOther(container=a, target=b)
-        self.assertFalse(isContained)
+        aContainsB = doesGeographyContainTheOther(container=a, target=b)
+        self.assertFalse(aContainsB)
+        bContainsA = doesGeographyContainTheOther(container=b, target=a)
+        self.assertFalse(bContainsA)
 
     def test_containsTheOther_BnotInAwithHole(self):
         exterior = [[-10, 10], [10, 10], [10, -10], [-10, -10]]
@@ -80,5 +86,7 @@ class TestDoesGeographyContainTheOther(TestCase):
                         isWater=False,
                         geoJSONGeometry={'type': 'Polygon',
                                          'coordinates': [[[100, 100], [101, 100], [101, 99], [100, 99]]]})
-        isContained = doesGeographyContainTheOther(container=a, target=b)
-        self.assertFalse(isContained)
+        aContainsB = doesGeographyContainTheOther(container=a, target=b)
+        self.assertFalse(aContainsB)
+        bContainsA = doesGeographyContainTheOther(container=b, target=a)
+        self.assertFalse(bContainsA)
