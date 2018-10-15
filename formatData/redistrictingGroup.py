@@ -22,6 +22,7 @@ def updateAllBlockContainersData():
     tqdm.write('*** Updating All Block Container Data ***')
     with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
         for blockContainer in RedistrictingGroup.redistrictingGroupList:
+            tqdm.write('   *** One more ***')
             blockContainer.updateBlockContainerData()
             pbar.update(1)
 
@@ -55,11 +56,9 @@ def getRedistrictingGroupWithCountyFIPS(countyFIPS):
 
 def convertAllCensusBlocksToAtomicBlocks():
     tqdm.write('*** Converting All Census Blocks to Atomic Blocks ***')
-    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
-        for blockContainer in RedistrictingGroup.redistrictingGroupList:
-            atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.blocks)
-            blockContainer.blocks = atomicBlocksForGroup #this triggers a block container update
-            pbar.update(1)
+    for blockContainer in RedistrictingGroup.redistrictingGroupList:
+        atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.blocks)
+        blockContainer.blocks = atomicBlocksForGroup #this triggers a block container update
 
 
 
