@@ -1,7 +1,8 @@
-from shapely.geometry import shape
+from shapely.geometry import shape, mapping
 from shapely.ops import cascaded_union
 from enum import Enum
 from math import atan2, degrees, pi
+from json import dumps
 
 
 # On Windows, I needed to install Shapely manually
@@ -89,3 +90,9 @@ def findDirectionOfShapeFromPoint(basePoint, targetShape):
     targetPoint = targetShape.centroid
     direction = findDirection(basePoint=basePoint, targetPoint=targetPoint)
     return direction
+
+
+def shapelyGeometryToGeoJSON(geometry):
+    geoDict = mapping(geometry)
+    geoString = dumps(geoDict)
+    return geoString
