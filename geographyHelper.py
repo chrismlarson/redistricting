@@ -1,4 +1,4 @@
-from shapely.geometry import shape, mapping
+from shapely.geometry import shape, mapping, MultiPolygon
 from shapely.ops import cascaded_union
 from enum import Enum
 from math import atan2, degrees, pi
@@ -30,10 +30,17 @@ def doesEitherGeographyContainTheOther(a, b):
 
 
 def doesGeographyContainTheOther(container, target):
-    if container.geometry.interiors:
-        containsTargetBoundary = container.geometry.boundary.contains(target.geometry.boundary)
+    if type(container.geometry) is MultiPolygon:
+        containerPolygons = list(container.geometry)
     else:
-        containsTargetBoundary = container.geometry.contains(target.geometry)
+        containerPolygons = [container.geometry]
+
+    containsTargetBoundary = False
+    for containerPolygon in containerPolygons:
+        if containerPolygon.interiors:
+            containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(target.geometry.boundary)
+        else:
+            containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target.geometry)
     return containsTargetBoundary
 
 
