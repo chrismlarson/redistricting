@@ -1,11 +1,10 @@
 from census import Census
 from us import states
 import math
-import csv
-from os import path
 from esridump.dumper import EsriDumper
 import time
 from censusData import apiKeys
+from exportData.exportData import saveInfoToCSV
 
 
 def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf, specificCountiesOnly=None):
@@ -143,17 +142,6 @@ def allGeoDataForEachCounty(existingCountyData):
         return None
 
 
-def saveInfoToCSV(info, censusYear, stateName, descriptionOfInfo):
-    csvPath = path.expanduser('~/Documents/{0}-{1}-{2}Info.csv'.format(censusYear, stateName, descriptionOfInfo))
-    keys = info[0].keys()
-    with open(csvPath, 'w') as output_file:
-        dictWriter = csv.DictWriter(output_file, keys)
-        dictWriter.writeheader()
-        dictWriter.writerows(info)
-
-    return csvPath
-
-
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
 censusYear = 2010
@@ -170,4 +158,5 @@ saveInfoToCSV(info=allCountyGeosInState, censusYear=censusYear, stateName=stateI
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 # save block data to csv
-saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name, descriptionOfInfo='ThumbPlusInghamBlock')
+saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name,
+              descriptionOfInfo='ThumbPlusInghamBlock')
