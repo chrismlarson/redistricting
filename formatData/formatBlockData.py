@@ -4,9 +4,11 @@ import ast
 from tqdm import tqdm
 from censusData import censusCounty, censusBlock
 import csvHelper
+from exportData.exportData import saveInfoToCSV, exportGeographiesToShapefile
 from formatData import redistrictingGroup
-from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusDataCSV
-#from exportData import exportData
+from formatData.atomicBlock import AtomicBlock
+from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusDataCSV, \
+    getExportableListOfRedistrictingGroups
 
 #
 # def getRawDictData(csvPath):
@@ -46,5 +48,11 @@ from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusDat
 
 blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockInfo.csv')
 redistrictingGroupList = createRedistrictingGroupsFromCensusDataCSV(csvPath=blockCSVPath)
+
+exportGeographiesToShapefile(geographyList=AtomicBlock.atomicBlockList, descriptionOfInfo='AtomicGroups')
+
+exportableListOfRedistrictingGroups = getExportableListOfRedistrictingGroups()
+saveInfoToCSV(info=exportableListOfRedistrictingGroups, censusYear='2010', stateName='Michigan',
+              descriptionOfInfo='ThumbPlusInghamRedistrictingGroups')
 
 temp = 0

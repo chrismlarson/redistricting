@@ -102,6 +102,13 @@ def createRedistrictingGroupsFromCensusDataCSV(csvPath):
 
     return redistrictingGroupList
 
+
+def getExportableListOfRedistrictingGroups():
+    exportableList = []
+    for group in RedistrictingGroup.redistrictingGroupList:
+        exportableList.append({'redistrictingGroup': group})
+    return exportableList
+
 #
 # def findCandidateNeighborsForBlock(block, parentGroup):
 #     # todo: maybe speed this up by finding close by objects (tracts?)
