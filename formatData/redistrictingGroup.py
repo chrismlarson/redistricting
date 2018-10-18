@@ -3,9 +3,6 @@ from formatData.atomicBlock import createAtomicBlocksFromBlockList
 from formatData.blockGraph import BlockGraph
 from censusData import censusBlock
 import geographyHelper
-import csvHelper
-import csv
-import ast
 from tqdm import tqdm
 
 
@@ -41,31 +38,21 @@ def getRedistrictingGroupWithCountyFIPS(countyFIPS):
     return next((item for item in RedistrictingGroup.redistrictingGroupList if item.FIPS == countyFIPS), None)
 
 
-# def createRedistrictingGroupsFromCounties():
-#     redistrictingGroupList = []
-#     tqdm.write('*** Creating Redistricting Groups from Counties ***')
-#     with tqdm(total=len(County.countyList)) as pbar:
-#         for county in County.countyList:
-#             blocksInCounty = censusBlock.getAllBlocksWithCountyFIPS(county.FIPS)
-#             redistrictingGroupList.append(RedistrictingGroup(childrenBlocks=blocksInCounty))
-#             pbar.update(1)
-#
-#     setBorderingRedistrictingGroups(redistrictingGroupList=redistrictingGroupList)
-#     assignNeighboringBlocksToEveryBlock()
-#     return redistrictingGroupList
-
-
 def convertAllCensusBlocksToAtomicBlocks():
+    tqdm.write('\n')
     tqdm.write('*** Converting All Census Blocks to Atomic Blocks ***')
+    count = 1
     for blockContainer in RedistrictingGroup.redistrictingGroupList:
+        tqdm.write('\n')
+        tqdm.write('    *** Converting to Atomic Blocks for Redistricting Group {0} of {1} ***'
+                   .format(count, len(RedistrictingGroup.redistrictingGroupList)))
         atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.blocks)
-        blockContainer.blocks = atomicBlocksForGroup #this triggers a block container update
-
+        blockContainer.blocks = atomicBlocksForGroup  # this triggers a block container update
 
 
 def createRedistrictingGroupsFromCensusData(filePath):
-
     censusData = loadDataFromFile(filePath=filePath)
+    tqdm.write('\n')
     tqdm.write('*** Creating Redistricting Groups from Census Data ***')
     redistrictingGroupList = []
     with tqdm(total=len(censusData)) as pbar:
@@ -88,65 +75,14 @@ def createRedistrictingGroupsFromCensusData(filePath):
             redistrictingGroupWithCountyFIPS.blocks.append(blockFromCSV)
             pbar.update(1)
 
-    #convert census blocks to atomic blocks
+    # convert census blocks to atomic blocks
     convertAllCensusBlocksToAtomicBlocks()
 
-    #find and set neighboring geometries
+    # find and set neighboring geometries
     setBorderingRedistrictingGroups(redistrictingGroupList=redistrictingGroupList)
 
-    #remove FIPS info from the groups to not pollute data later
+    # remove FIPS info from the groups to not pollute data later
     for redistrictingGroup in redistrictingGroupList:
         del redistrictingGroup.FIPS
 
     return redistrictingGroupList
-
-
-def getExportableListOfRedistrictingGroups():
-    exportableList = []
-    for group in RedistrictingGroup.redistrictingGroupList:
-        exportableList.append({'redistrictingGroup': group.blocks})
-    return exportableList
-
-#
-# def findCandidateNeighborsForBlock(block, parentGroup):
-#     # todo: maybe speed this up by finding close by objects (tracts?)
-#     candidateNeighbors = parentGroup.blocks.copy()
-#     if block in parentGroup.borderBlocks:
-#         for neighborGroup in parentGroup.neighboringGroups:
-#             if geographyHelper.intersectingGeometries(neighborGroup, block):
-#                 candidateNeighbors = candidateNeighbors + neighborGroup.borderBlocks
-#     return candidateNeighbors
-#
-#
-# def findNeighboringBlocksFromCandidatesForBlock(block, candidates):
-#     neighboringBlocks = []
-#     for candidate in candidates:
-#         if block is not candidate:
-#             if geographyHelper.intersectingGeometries(block, candidate):
-#                 if geographyHelper.containingGeometries(block, candidate):
-#                     # containingBlocks = [block, candidate]
-#                     # exportData.exportGeographiesToShapefile(geographyList=containingBlocks,
-#                     #                                         descriptionOfInfo='ContainingBlocks')
-#                     # todo: ignore for now, but need to group these all together earlier
-#                     temp = 0
-#                 else:
-#                     # intersectingBlocks = [block, candidate]
-#                     # exportData.exportGeographiesToShapefile(geographyList=intersectingBlocks,
-#                     #                                         descriptionOfInfo='IntersectingBlocks')
-#                     neighboringBlocks.append(candidate)
-#     return neighboringBlocks
-#
-#
-# def assignNeighboringBlocksToEveryBlock():
-#     for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
-#         tqdm.write('*** Finding Neighboring Blocks within Group {0} of {1} ***'.format(
-#             RedistrictingGroup.redistrictingGroupList.index(redistrictingGroup) + 1,
-#             len(RedistrictingGroup.redistrictingGroupList)))
-#
-#         with tqdm(total=len(redistrictingGroup.blocks)) as pbar:
-#             for block in redistrictingGroup.blocks:
-#                 candidateNeighbors = findCandidateNeighborsForBlock(block=block, parentGroup=redistrictingGroup)
-#                 neighboringBlocks = findNeighboringBlocksFromCandidatesForBlock(block=block,
-#                                                                                 candidates=candidateNeighbors)
-#                 block.neighboringBlocks = neighboringBlocks
-#                 pbar.update(1)
