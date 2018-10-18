@@ -1,14 +1,7 @@
-import csv
 from os import path
-import ast
-from tqdm import tqdm
-from censusData import censusCounty, censusBlock
-import csvHelper
-from exportData.exportData import saveInfoToCSV, exportGeographiesToShapefile
-from formatData import redistrictingGroup
+from exportData.exportData import saveDataToFile, exportGeographiesToShapefile
 from formatData.atomicBlock import AtomicBlock
-from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusDataCSV, \
-    getExportableListOfRedistrictingGroups
+from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusData
 
 #
 # def getRawDictData(csvPath):
@@ -46,13 +39,10 @@ from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusDat
 # initialRedistrictingGroups = redistrictingGroup.createRedistrictingGroupsFromCounties()
 # exportData.exportGeographiesToShapefile(geographyList=initialRedistrictingGroups, descriptionOfInfo='InitialRedistrictingGroups')
 
-blockCSVPath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockInfo.csv')
-redistrictingGroupList = createRedistrictingGroupsFromCensusDataCSV(csvPath=blockCSVPath)
-
+blockFilePath = path.expanduser('~/Documents/2010-Michigan-ThumbPlusInghamBlockInfo.redistdata')
+redistrictingGroupList = createRedistrictingGroupsFromCensusData(filePath=blockFilePath)
 exportGeographiesToShapefile(geographyList=AtomicBlock.atomicBlockList, descriptionOfInfo='AtomicGroups')
-
-exportableListOfRedistrictingGroups = getExportableListOfRedistrictingGroups()
-saveInfoToCSV(info=exportableListOfRedistrictingGroups, censusYear='2010', stateName='Michigan',
-              descriptionOfInfo='ThumbPlusInghamRedistrictingGroups')
+saveDataToFile(data=redistrictingGroupList, censusYear='2010', stateName='Michigan',
+               descriptionOfInfo='ThumbPlusInghamRedistrictingGroups')
 
 temp = 0

@@ -4,7 +4,7 @@ import math
 from esridump.dumper import EsriDumper
 import time
 from censusData import apiKeys
-from exportData.exportData import saveInfoToCSV
+from exportData.exportData import saveDataToFile
 
 
 def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf, specificCountiesOnly=None):
@@ -152,11 +152,11 @@ countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCou
                                     specificCountiesOnly={'Huron', 'Tuscola', 'Sanilac', 'Ingham'})
 allCountyGeosInState = allGeoDataForEachCounty(existingCountyData=countyInfoList)
 # save county data to csv
-saveInfoToCSV(info=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-              descriptionOfInfo='ThumbPlusInghamCounty')
+saveDataToFile(data=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name,
+               descriptionOfInfo='ThumbPlusInghamCounty')
 
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 # save block data to csv
-saveInfoToCSV(info=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-              descriptionOfInfo='ThumbPlusInghamBlock')
+saveDataToFile(data=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name,
+               descriptionOfInfo='ThumbPlusInghamBlock')

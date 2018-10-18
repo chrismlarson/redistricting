@@ -1,3 +1,4 @@
+from exportData.exportData import loadDataFromFile
 from formatData.atomicBlock import createAtomicBlocksFromBlockList
 from formatData.blockGraph import BlockGraph
 from censusData import censusBlock
@@ -62,33 +63,30 @@ def convertAllCensusBlocksToAtomicBlocks():
 
 
 
-def createRedistrictingGroupsFromCensusDataCSV(csvPath):
-    csvHelper.setCSVLimitToMaxAcceptable()
-    numOfCSVRows = csvHelper.getNumOfCSVRows(csvPath=csvPath)
+def createRedistrictingGroupsFromCensusData(filePath):
 
-    tqdm.write('*** Loading Census CSV as Redistricting Groups ***')
+    censusData = loadDataFromFile(filePath=filePath)
+    tqdm.write('*** Creating Redistricting Groups from Census Data ***')
     redistrictingGroupList = []
-    with tqdm(total=numOfCSVRows) as pbar:
-        with open(csvPath, newline='\n') as csvFile:
-            dictReader = csv.DictReader(csvFile)
-            for row in dictReader:
-                redistrictingGroupWithCountyFIPS = getRedistrictingGroupWithCountyFIPS(row['county'])
-                if redistrictingGroupWithCountyFIPS is None:
-                    redistrictingGroupWithCountyFIPS = RedistrictingGroup(childrenBlocks=[])
-                    redistrictingGroupWithCountyFIPS.FIPS = row['county']
-                    redistrictingGroupList.append(redistrictingGroupWithCountyFIPS)
+    with tqdm(total=len(censusData)) as pbar:
+        for censusBlockDict in censusData:
+            redistrictingGroupWithCountyFIPS = getRedistrictingGroupWithCountyFIPS(censusBlockDict['county'])
+            if redistrictingGroupWithCountyFIPS is None:
+                redistrictingGroupWithCountyFIPS = RedistrictingGroup(childrenBlocks=[])
+                redistrictingGroupWithCountyFIPS.FIPS = censusBlockDict['county']
+                redistrictingGroupList.append(redistrictingGroupWithCountyFIPS)
 
-                isWater = False
-                if row['block'][0] == '0':
-                    isWater = True
-                blockFromCSV = censusBlock.CensusBlock(countyFIPS=row['county'],
-                                                       tractFIPS=row['tract'],
-                                                       blockFIPS=row['block'],
-                                                       population=int(row['P0010001']),
-                                                       isWater=isWater,
-                                                       geoJSONGeometry=ast.literal_eval(row['geometry']))
-                redistrictingGroupWithCountyFIPS.blocks.append(blockFromCSV)
-                pbar.update(1)
+            isWater = False
+            if censusBlockDict['block'][0] == '0':
+                isWater = True
+            blockFromCSV = censusBlock.CensusBlock(countyFIPS=censusBlockDict['county'],
+                                                   tractFIPS=censusBlockDict['tract'],
+                                                   blockFIPS=censusBlockDict['block'],
+                                                   population=int(censusBlockDict['P0010001']),
+                                                   isWater=isWater,
+                                                   geoJSONGeometry=censusBlockDict['geometry'])
+            redistrictingGroupWithCountyFIPS.blocks.append(blockFromCSV)
+            pbar.update(1)
 
     #convert census blocks to atomic blocks
     convertAllCensusBlocksToAtomicBlocks()
@@ -106,7 +104,7 @@ def createRedistrictingGroupsFromCensusDataCSV(csvPath):
 def getExportableListOfRedistrictingGroups():
     exportableList = []
     for group in RedistrictingGroup.redistrictingGroupList:
-        exportableList.append({'redistrictingGroup': group})
+        exportableList.append({'redistrictingGroup': group.blocks})
     return exportableList
 
 #

@@ -1,6 +1,6 @@
 from shapely.geometry import mapping
 from os import path
-import csv
+import pickle
 import fiona
 
 def exportGeographiesToShapefile(geographyList, descriptionOfInfo):
@@ -26,12 +26,11 @@ def exportGeographiesToShapefile(geographyList, descriptionOfInfo):
             })
 
 
-def saveInfoToCSV(info, censusYear, stateName, descriptionOfInfo):
-    csvPath = path.expanduser('~/Documents/{0}-{1}-{2}Info.csv'.format(censusYear, stateName, descriptionOfInfo))
-    keys = info[0].keys()
-    with open(csvPath, 'w') as output_file:
-        dictWriter = csv.DictWriter(output_file, keys)
-        dictWriter.writeheader()
-        dictWriter.writerows(info)
+def saveDataToFile(data, censusYear, stateName, descriptionOfInfo):
+    filePath = path.expanduser('~/Documents/{0}-{1}-{2}Info.redistdata'.format(censusYear, stateName, descriptionOfInfo))
+    pickle.dump(data, open(filePath, 'wb'))
 
-    return csvPath
+
+def loadDataFromFile(filePath):
+    data = pickle.load(open(filePath, 'rb'))
+    return data
