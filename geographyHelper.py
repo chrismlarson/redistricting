@@ -50,7 +50,9 @@ def isBoundaryGeometry(parent, child):
 
 def geometryFromBlocks(blockList):
     polygons = [block.geometry for block in blockList]
-    return cascaded_union(polygons)
+    union = cascaded_union(polygons)
+    union = union.simplify(tolerance=0.0) #to remove excessive points
+    return union
 
 
 class CardinalDirection(Enum):
