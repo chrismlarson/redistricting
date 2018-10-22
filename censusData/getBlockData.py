@@ -149,14 +149,14 @@ censusYear = 2010
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
 
 countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf,
-                                    specificCountiesOnly={'Huron', 'Tuscola', 'Sanilac', 'Ingham'})
+                                    specificCountiesOnly={'Mackinac'})
 allCountyGeosInState = allGeoDataForEachCounty(existingCountyData=countyInfoList)
 # save county data to csv
 saveDataToFile(data=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-               descriptionOfInfo='ThumbPlusInghamCounty')
+               descriptionOfInfo='MackinacCounty')
 
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 # save block data to csv
 saveDataToFile(data=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-               descriptionOfInfo='ThumbPlusInghamBlock')
+               descriptionOfInfo='MackinacBlock')

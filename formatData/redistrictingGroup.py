@@ -1,3 +1,4 @@
+from exportData.displayShapes import plotBlocksFromRedistrictingGroup
 from exportData.exportData import loadDataFromFile
 from formatData.atomicBlock import createAtomicBlocksFromBlockList
 from formatData.blockGraph import BlockGraph

@@ -7,11 +7,13 @@ class AtomicBlock(CensusBlockContainer):
     def __init__(self, childrenBlocks):
         CensusBlockContainer.__init__(self)
         self.blocks = childrenBlocks
+        self.isWater = False
         AtomicBlock.atomicBlockList.append(self)
 
 
     def importCensusBlock(self, censusBlock):
         self.blocks.append(censusBlock)
+        self.isWater = all(block.isWater for block in self.blocks)
         self.updateBlockContainerData()
 
 

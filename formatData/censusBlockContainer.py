@@ -5,6 +5,8 @@ from censusData import censusBlock
 class CensusBlockContainer:
     def __init__(self):
         self.blocks = []
+        self.geometry = None
+        self.population = None
 
     def updateBlockContainerData(self):
         self.geometry = geometryFromBlocks(self.blocks)
