@@ -11,6 +11,6 @@ exportGeographiesToShapefile(geographyList=AtomicBlock.atomicBlockList, descript
 saveDataToFile(data=redistrictingGroupList, censusYear='2010', stateName='Michigan',
                descriptionOfInfo='MackinacRedistrictingGroups')
 
-for redistGroup in redistrictingGroupList:
-    plotBlocksFromRedistrictingGroup(redistrictingGroup=redistGroup)
+for redistrictingGroup in redistrictingGroupList:
+    plotBlocksFromRedistrictingGroup(redistrictingGroup=redistrictingGroup)
 temp = 0
