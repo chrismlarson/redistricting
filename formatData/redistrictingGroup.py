@@ -1,4 +1,3 @@
-from exportData.displayShapes import plotBlocksFromRedistrictingGroup
 from exportData.exportData import loadDataFromFile
 from formatData.atomicBlock import createAtomicBlocksFromBlockList
 from formatData.blockGraph import BlockGraph
@@ -17,6 +16,14 @@ class RedistrictingGroup(BlockGraph):
     redistrictingGroupList = []
 
 
+    def removeWaterBlocks(self):
+        nonWaterBlocks = [block for block in self.blocks if block.isWater == False]
+        waterBlocks = [block for block in self.blocks if block.isWater == True]
+        if any([waterBlock for waterBlock in waterBlocks if waterBlock.population > 0]):
+            raise ValueError('Water block had a population')
+        self.blocks = nonWaterBlocks
+
+
 def updateAllBlockContainersData():
     tqdm.write('*** Updating All Block Container Data ***')
     with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
@@ -24,6 +31,11 @@ def updateAllBlockContainersData():
             tqdm.write('   *** One more ***')
             blockContainer.updateBlockContainerData()
             pbar.update(1)
+
+
+def removeWaterBlocksFromAllRedistrictingGroups():
+    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+        redistrictingGroup.removeWaterBlocks()
 
 
 def setBorderingRedistrictingGroups(redistrictingGroupList):
@@ -78,6 +90,9 @@ def createRedistrictingGroupsFromCensusData(filePath):
 
     # convert census blocks to atomic blocks
     convertAllCensusBlocksToAtomicBlocks()
+
+    # remove water blocks
+    removeWaterBlocksFromAllRedistrictingGroups()
 
     # find and set neighboring geometries
     setBorderingRedistrictingGroups(redistrictingGroupList=redistrictingGroupList)
