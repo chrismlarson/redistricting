@@ -5,11 +5,11 @@ from formatData.atomicBlock import AtomicBlock
 from formatData.redistrictingGroup import createRedistrictingGroupsFromCensusData
 
 
-blockFilePath = path.expanduser('~/Documents/2010-Michigan-MackinacBlockInfo.redistdata')
+blockFilePath = path.expanduser('~/Documents/2010-Michigan-KeweenawBlockInfo.redistdata')
 redistrictingGroupList = createRedistrictingGroupsFromCensusData(filePath=blockFilePath)
 exportGeographiesToShapefile(geographyList=AtomicBlock.atomicBlockList, descriptionOfInfo='AtomicGroups')
 saveDataToFile(data=redistrictingGroupList, censusYear='2010', stateName='Michigan',
-               descriptionOfInfo='MackinacRedistrictingGroups')
+               descriptionOfInfo='KeweenawRedistrictingGroups')
 
 for redistrictingGroup in redistrictingGroupList:
     plotBlocksFromRedistrictingGroup(redistrictingGroup=redistrictingGroup)
