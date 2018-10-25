@@ -2,7 +2,7 @@ from geographyHelper import isBoundaryGeometry, findDirectionOfShapeFromPoint, C
 from formatData.censusBlockContainer import CensusBlockContainer
 
 
-class BlockGraph(CensusBlockContainer):
+class BlockBorderGraph(CensusBlockContainer):
     def __init__(self):
         CensusBlockContainer.__init__(self)
         self.__northernChildBlocks = []
@@ -11,7 +11,7 @@ class BlockGraph(CensusBlockContainer):
         self.__southernChildBlocks = []
 
     def updateBlockContainerData(self):
-        super(BlockGraph, self).updateBlockContainerData()
+        super(BlockBorderGraph, self).updateBlockContainerData()
         self.__findBorderBlocks()
 
     def __findBorderBlocks(self):

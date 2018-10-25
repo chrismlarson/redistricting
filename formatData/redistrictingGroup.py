@@ -1,14 +1,14 @@
 from exportData.exportData import loadDataFromFile
 from formatData.atomicBlock import createAtomicBlocksFromBlockList
-from formatData.blockGraph import BlockGraph
+from formatData.blockBorderGraph import BlockBorderGraph
 from censusData import censusBlock
 import geographyHelper
 from tqdm import tqdm
 
 
-class RedistrictingGroup(BlockGraph):
+class RedistrictingGroup(BlockBorderGraph):
     def __init__(self, childrenBlocks):
-        BlockGraph.__init__(self)
+        BlockBorderGraph.__init__(self)
         self.blocks = childrenBlocks
         self.neighboringGroups = []
         RedistrictingGroup.redistrictingGroupList.append(self)
