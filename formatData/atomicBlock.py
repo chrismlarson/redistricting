@@ -1,14 +1,23 @@
+from formatData.blockGraphObject import BlockGraphObject
 from formatData.censusBlockContainer import CensusBlockContainer
-from geographyHelper import doesGeographyContainTheOther, shapelyGeometryToGeoJSON
+from geographyHelper import doesGeographyContainTheOther, intersectingGeometries
 from tqdm import tqdm
 
 
-class AtomicBlock(CensusBlockContainer):
+class AtomicBlock(CensusBlockContainer, BlockGraphObject):
     def __init__(self, childrenBlocks):
         CensusBlockContainer.__init__(self)
         self.blocks = childrenBlocks
+        BlockGraphObject.__init__(self, self.geometry.centroid)
         self.isWater = self.getWaterPropertyFromBlocks()
         AtomicBlock.atomicBlockList.append(self)
+
+    atomicBlockList = []
+
+
+    def updateBlockContainerData(self):
+        super(AtomicBlock, self).updateBlockContainerData()
+        self.updateCenterOfObject(self.geometry.centroid)
 
 
     def importCensusBlock(self, censusBlock):
@@ -21,7 +30,15 @@ class AtomicBlock(CensusBlockContainer):
         return all(block.isWater for block in self.blocks)
 
 
-    atomicBlockList = []
+    def assignNeighborBlocksFromCandiateBlocks(self, candidateBlocks):
+        neighborBlocks = []
+        for candidateBlock in candidateBlocks:
+            if candidateBlock is not self:
+                if intersectingGeometries(self, candidateBlock):
+                    if candidateBlock == self:
+                        temp=0
+                    neighborBlocks.append(candidateBlock)
+        self.addNeighborBlocks(neighborBlocks=neighborBlocks)
 
 
 def createAtomicBlockFromCensusBlock(censusBlock):

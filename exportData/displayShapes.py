@@ -11,7 +11,7 @@ def plotBlocksFromRedistrictingGroup(redistrictingGroup):
     font = {'family': 'serif',
             'color': 'darkred',
             'weight': 'normal',
-            'size': 9,
+            'size': 6,
             }
     for block in redistrictingGroup.blocks:
         if block.isWater:
