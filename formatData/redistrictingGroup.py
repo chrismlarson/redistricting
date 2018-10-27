@@ -78,7 +78,7 @@ def assignNeghboringBlocksToBlocksForAllRedistrictingGroups():
         count += 1
 
 
-def setBorderingRedistrictingGroupsForAllRedistrictingGroups():
+def setNeighborRedistrictingGroupsForAllRedistrictingGroups():
     for redistrictingGroupToCheck in RedistrictingGroup.redistrictingGroupList:
         for redistrictingGroupToCheckAgainst in RedistrictingGroup.redistrictingGroupList:
             if redistrictingGroupToCheck != redistrictingGroupToCheckAgainst:
@@ -104,8 +104,7 @@ def convertAllCensusBlocksToAtomicBlocks():
         count += 1
 
 
-def createRedistrictingGroupsWithAtomicBlocksFromCensusData(filePath):
-    censusData = loadDataFromFile(filePath=filePath)
+def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
     tqdm.write('\n')
     tqdm.write('*** Creating Redistricting Groups from Census Data ***')
     with tqdm(total=len(censusData)) as pbar:
@@ -148,9 +147,9 @@ def prepareGraphsForAllRedistrictingGroups():
     attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
 
     # split non-contiguous redistricting groups
-    splitNonContiguousRedistrictingGroups()
+    #splitNonContiguousRedistrictingGroups()
 
     # find and set neighboring geometries
-    setBorderingRedistrictingGroupsForAllRedistrictingGroups()
+    #setNeighborRedistrictingGroupsForAllRedistrictingGroups()
 
     return RedistrictingGroup.redistrictingGroupList

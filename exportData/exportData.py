@@ -35,6 +35,11 @@ def saveDataToFile(data, censusYear, stateName, descriptionOfInfo):
     tqdm.write('*** Saved: {0} ***'.format(filePath))
 
 
+def loadDataFromFileWithDescription(censusYear, stateName, descriptionOfInfo):
+    filePath = path.expanduser('~/Documents/{0}-{1}-{2}Info.redistdata'.format(censusYear, stateName, descriptionOfInfo))
+    return loadDataFromFile(filePath)
+
+
 def loadDataFromFile(filePath):
     data = pickle.load(open(filePath, 'rb'))
     return data

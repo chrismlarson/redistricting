@@ -147,16 +147,15 @@ stateInfo = states.lookup(stateAbbreviation)
 censusYear = 2010
 
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
-
 countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf,
-                                    specificCountiesOnly={'Keweenaw', 'Mackinac'})
+                                    specificCountiesOnly={'Keweenaw', 'Huron', 'Sanilac', 'Tuscola'})
 allCountyGeosInState = allGeoDataForEachCounty(existingCountyData=countyInfoList)
 # save county data to file
 saveDataToFile(data=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-               descriptionOfInfo='KeweenawAndMackinacCounty')
+               descriptionOfInfo='KeweenawAndTheThumbCounty')
 
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 # save block data to file
 saveDataToFile(data=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-               descriptionOfInfo='KeweenawAndMackinacBlock')
+               descriptionOfInfo='KeweenawAndTheThumbBlock')

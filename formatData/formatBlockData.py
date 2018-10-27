@@ -1,30 +1,45 @@
 from os import path
+from us import states
 from exportData.displayShapes import plotBlocksForRedistrictingGroups
-from exportData.exportData import saveDataToFile, loadDataFromFile#, exportGeographiesToShapefile
+from exportData.exportData import saveDataToFile, loadDataFromFileWithDescription  # , exportGeographiesToShapefile
 from formatData.atomicBlock import AtomicBlock
 from formatData.redistrictingGroup import createRedistrictingGroupsWithAtomicBlocksFromCensusData, \
     prepareGraphsForAllRedistrictingGroups, RedistrictingGroup
 
-# blockFilePath = path.expanduser('~/Documents/2010-Michigan-KeweenawAndMackinacBlockInfo.redistdata')
-#
-# redistrictingGroupList = createRedistrictingGroupsWithAtomicBlocksFromCensusData(filePath=blockFilePath)
-# #exportGeographiesToShapefile(geographyList=AtomicBlock.atomicBlockList, descriptionOfInfo='AtomicGroups')
-# saveDataToFile(data=AtomicBlock.atomicBlockList, censusYear='2010', stateName='Michigan',
-#                descriptionOfInfo='KeweenawAndMackinacAtomicBlocksPreGraph')
-# saveDataToFile(data=redistrictingGroupList, censusYear='2010', stateName='Michigan',
-#                descriptionOfInfo='KeweenawAndMackinacRedistrictingGroupsPreGraph')
+stateAbbreviation = 'MI'
+stateInfo = states.lookup(stateAbbreviation)
+censusYear = 2010
 
+# censusData = loadDataFromFileWithDescription(censusYear=censusYear,
+#                                              stateName=stateInfo.name,
+#                                              descriptionOfInfo='KeweenawAndTheThumbBlock')
+# redistrictingGroupList = createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData=censusData)
+# # exportGeographiesToShapefile(geographyList=AtomicBlock.atomicBlockList, descriptionOfInfo='AtomicGroups')
+# saveDataToFile(data=AtomicBlock.atomicBlockList,
+#                censusYear=censusYear,
+#                stateName=stateInfo.name,
+#                descriptionOfInfo='KeweenawAndTheThumbAtomicBlockPreGraph')
+# saveDataToFile(data=redistrictingGroupList,
+#                censusYear=censusYear,
+#                stateName=stateInfo.name,
+#                descriptionOfInfo='KeweenawAndTheThumbRedistrictingGroupPreGraph')
 
-redistGroupsFilePath = path.expanduser('~/Documents/2010-Michigan-KeweenawAndMackinacRedistrictingGroupsPreGraphInfo.redistdata')
-RedistrictingGroup.redistrictingGroupList = loadDataFromFile(filePath=redistGroupsFilePath)
+redistrictingGroupList = loadDataFromFileWithDescription(censusYear=censusYear,
+                                                         stateName=stateInfo.name,
+                                                         descriptionOfInfo='KeweenawAndTheThumbRedistrictingGroupPreGraph')
+RedistrictingGroup.redistrictingGroupList = redistrictingGroupList
 redistrictingGroupList = prepareGraphsForAllRedistrictingGroups()
-saveDataToFile(data=AtomicBlock.atomicBlockList, censusYear='2010', stateName='Michigan',
-               descriptionOfInfo='KeweenawAndMackinacAtomicBlocks')
-saveDataToFile(data=redistrictingGroupList, censusYear='2010', stateName='Michigan',
-               descriptionOfInfo='KeweenawAndMackinacRedistrictingGroups')
+saveDataToFile(data=AtomicBlock.atomicBlockList,
+               censusYear=censusYear,
+               stateName=stateInfo.name,
+               descriptionOfInfo='KeweenawAndTheThumbAtomicBlock')
+saveDataToFile(data=redistrictingGroupList,
+               censusYear=censusYear,
+               stateName=stateInfo.name,
+               descriptionOfInfo='KeweenawAndTheThumbRedistrictingGroup')
 
-
-redistGroupsFilePath = path.expanduser('~/Documents/2010-Michigan-KeweenawAndMackinacRedistrictingGroupsInfo.redistdata')
-redistrictingGroups = loadDataFromFile(filePath=redistGroupsFilePath)
+redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
+                                                      stateName=stateInfo.name,
+                                                      descriptionOfInfo='KeweenawAndTheThumbRedistrictingGroup')
 plotBlocksForRedistrictingGroups(redistrictingGroups=redistrictingGroups, showPopulationCounts=True)
-temp =0
+temp = 0
