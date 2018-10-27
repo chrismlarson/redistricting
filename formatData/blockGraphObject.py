@@ -9,14 +9,35 @@ class BlockGraphObject:
         self.__southernNeighborBlocks = []
         self.updateCenterOfObject(centerOfObject)
 
+    @property
+    def hasNeighbors(self):
+        if self.__northernNeighborBlocks or \
+                self.__westernNeighborBlocks or \
+                self.__easternNeighborBlocks or \
+                self.__southernNeighborBlocks:
+            return True
+        else:
+            return False
+
     def updateCenterOfObject(self, center):
         self.__centerOfObject = center
 
-    def addNeighborBlocks(self, neighborBlocks):
+    def isNeighbor(self, block):
+        if block in self.__northernNeighborBlocks or \
+           block in self.__westernNeighborBlocks or \
+           block in self.__easternNeighborBlocks or \
+           block in self.__southernNeighborBlocks:
+            return True
+        else:
+            return False
+
+    def clearNeighborBlocks(self):
         self.__northernNeighborBlocks = []
         self.__westernNeighborBlocks = []
         self.__easternNeighborBlocks = []
         self.__southernNeighborBlocks = []
+
+    def addNeighborBlocks(self, neighborBlocks):
         for neighborBlock in neighborBlocks:
             direction = findDirectionOfShapeFromPoint(basePoint=self.__centerOfObject,
                                                       targetShape=neighborBlock.geometry)

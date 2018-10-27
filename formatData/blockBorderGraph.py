@@ -14,6 +14,12 @@ class BlockBorderGraph(CensusBlockContainer):
         super(BlockBorderGraph, self).updateBlockContainerData()
         self.__findBorderBlocks()
 
+    def isBorderBlock(self, block):
+        return block in self.__northernChildBlocks or \
+               block in self.__westernChildBlocks or \
+               block in self.__easternChildBlocks or \
+               block in self.__southernChildBlocks
+
     def __findBorderBlocks(self):
         self.__northernChildBlocks = []
         self.__westernChildBlocks = []
@@ -24,7 +30,6 @@ class BlockBorderGraph(CensusBlockContainer):
             if isBoundaryGeometry(parent=self, child=block):
                 direction = findDirectionOfShapeFromPoint(basePoint=centerOfContainer, targetShape=block.geometry)
                 self.__addBorderBlocks(block=block, direction=direction)
-
 
     def __addBorderBlocks(self, block, direction):
         if direction == CardinalDirection.north:

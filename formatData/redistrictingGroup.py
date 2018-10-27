@@ -15,13 +15,27 @@ class RedistrictingGroup(BlockBorderGraph):
 
     redistrictingGroupList = []
 
-
     def removeWaterBlocks(self):
         nonWaterBlocks = [block for block in self.blocks if block.isWater == False]
         waterBlocks = [block for block in self.blocks if block.isWater == True]
         if any([waterBlock for waterBlock in waterBlocks if waterBlock.population > 0]):
             raise ValueError('Water block had a population')
         self.blocks = nonWaterBlocks
+
+    def attachOrphanBlocksToClosestNeighbor(self):
+        orphanBlocks = self.findOrphanBlocks()
+        for orphanBlock in orphanBlocks:
+            closestBlock = orphanBlock.findClosestBlockToBlocks(otherBlocks=self.blocks)
+            orphanBlock.addNeighborBlocks(neighborBlocks=[closestBlock])
+            closestBlock.addNeighborBlocks(neighborBlocks=[orphanBlock])
+
+    def findOrphanBlocks(self):
+        return [block for block in self.blocks if block.hasNeighbors is False]
+
+
+def attachOrphanBlocksToClosestNeighborFromAllRedistrictingGroups():
+    for blockContainer in RedistrictingGroup.redistrictingGroupList:
+        blockContainer.attachOrphanBlocksToClosestNeighbor()
 
 
 def updateAllBlockContainersData():
@@ -83,25 +97,23 @@ def createRedistrictingGroupsFromCensusData(filePath):
     censusData = loadDataFromFile(filePath=filePath)
     tqdm.write('\n')
     tqdm.write('*** Creating Redistricting Groups from Census Data ***')
-    redistrictingGroupList = []
     with tqdm(total=len(censusData)) as pbar:
         for censusBlockDict in censusData:
             redistrictingGroupWithCountyFIPS = getRedistrictingGroupWithCountyFIPS(censusBlockDict['county'])
             if redistrictingGroupWithCountyFIPS is None:
                 redistrictingGroupWithCountyFIPS = RedistrictingGroup(childrenBlocks=[])
                 redistrictingGroupWithCountyFIPS.FIPS = censusBlockDict['county']
-                redistrictingGroupList.append(redistrictingGroupWithCountyFIPS)
 
             isWater = False
             if censusBlockDict['block'][0] == '0':
                 isWater = True
-            blockFromCSV = censusBlock.CensusBlock(countyFIPS=censusBlockDict['county'],
-                                                   tractFIPS=censusBlockDict['tract'],
-                                                   blockFIPS=censusBlockDict['block'],
-                                                   population=int(censusBlockDict['P0010001']),
-                                                   isWater=isWater,
-                                                   geoJSONGeometry=censusBlockDict['geometry'])
-            redistrictingGroupWithCountyFIPS.blocks.append(blockFromCSV)
+            blockFromData = censusBlock.CensusBlock(countyFIPS=censusBlockDict['county'],
+                                                    tractFIPS=censusBlockDict['tract'],
+                                                    blockFIPS=censusBlockDict['block'],
+                                                    population=int(censusBlockDict['P0010001']),
+                                                    isWater=isWater,
+                                                    geoJSONGeometry=censusBlockDict['geometry'])
+            redistrictingGroupWithCountyFIPS.blocks.append(blockFromData)
             pbar.update(1)
 
     # convert census blocks to atomic blocks
@@ -113,11 +125,14 @@ def createRedistrictingGroupsFromCensusData(filePath):
     # assign neighboring blocks to atomic blocks
     assignNeghboringBlocksToBlocksInAllRedistrictingGroups()
 
+    # find single orphaned atomic blocks and attach them to the closest neighbor
+    attachOrphanBlocksToClosestNeighborFromAllRedistrictingGroups()
+
     # find and set neighboring geometries
-    setBorderingRedistrictingGroups(redistrictingGroupList=redistrictingGroupList)
+    setBorderingRedistrictingGroups(redistrictingGroupList=RedistrictingGroup.redistrictingGroupList)
 
     # remove FIPS info from the groups to not pollute data later
-    for redistrictingGroup in redistrictingGroupList:
+    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
         del redistrictingGroup.FIPS
 
-    return redistrictingGroupList
+    return RedistrictingGroup.redistrictingGroupList
