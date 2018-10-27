@@ -109,3 +109,36 @@ def shapelyGeometryToGeoJSON(geometry):
 
 def distanceBetweenBlocks(a,b):
     return a.geometry.distance(b.geometry)
+
+
+def findContiguousGroupsOfAtomicBlocks(allBlocks):
+    if allBlocks:
+        remainingBlocks = allBlocks.copy()
+        contiguousBlockGroups = []
+        while len(remainingBlocks) > 0:
+            floodFilledBlocks = []
+            contiguousBlockGroups.append(
+                floodFillAtomicBlock(atomicBlock=remainingBlocks[0],
+                                     floodFilledBlocks=floodFilledBlocks,
+                                     remainingBlocks=remainingBlocks))
+        return contiguousBlockGroups
+    else:
+        return []
+
+
+def floodFillAtomicBlock(atomicBlock, floodFilledBlocks, remainingBlocks):
+    floodFilledBlocks.append(atomicBlock)
+    remainingBlocks.remove(atomicBlock)
+
+    directionSets = [atomicBlock.northernNeighborBlocks,
+                     atomicBlock.westernNeighborBlocks,
+                     atomicBlock.easternNeighborBlocks,
+                     atomicBlock.southernNeighborBlocks]
+    for directionSet in directionSets:
+        for neighborBlock in directionSet:
+            if neighborBlock in remainingBlocks:
+                floodFillAtomicBlock(atomicBlock=neighborBlock,
+                                     floodFilledBlocks=floodFilledBlocks,
+                                     remainingBlocks=remainingBlocks)
+
+    return floodFilledBlocks

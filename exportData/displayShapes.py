@@ -2,19 +2,20 @@ from matplotlib import pyplot
 from descartes import PolygonPatch
 
 
-def plotBlocksForRedistrictingGroup(redistrictingGroup, shouldShowText=False):
-    plotBlocksForRedistrictingGroups([redistrictingGroup], shouldShowText)
+def plotBlocksForRedistrictingGroup(redistrictingGroup, showPopulationCounts=False):
+    plotBlocksForRedistrictingGroups([redistrictingGroup], showPopulationCounts)
 
 
-def plotBlocksForRedistrictingGroups(redistrictingGroups, shouldShowText=False):
+def plotBlocksForRedistrictingGroups(redistrictingGroups, showPopulationCounts=False):
     blueColor = '#6699cc'
     greenColor = '#66cc78'
     purpleColor = '#b266cc'
+    grayColor = '#636363'
     fig = pyplot.figure()
     ax = fig.gca()
 
     font = {'family': 'serif',
-            'color': 'darkred',
+            'color': grayColor,
             'weight': 'normal',
             'size': 6,
             }
@@ -29,7 +30,7 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups, shouldShowText=False):
                     ax.add_patch(PolygonPatch(block.geometry, fc=greenColor, ec=greenColor, alpha=0.5, zorder=2))
             centerOfBlock = block.geometry.centroid
 
-            if shouldShowText:
+            if showPopulationCounts:
                 ax.text(x=centerOfBlock.x, y=centerOfBlock.y, s=block.population, fontdict=font)
 
     ax.axis('scaled')

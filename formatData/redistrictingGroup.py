@@ -1,6 +1,7 @@
 from exportData.exportData import loadDataFromFile
 from formatData.atomicBlock import createAtomicBlocksFromBlockList
 from formatData.blockBorderGraph import BlockBorderGraph
+from geographyHelper import findContiguousGroupsOfAtomicBlocks
 from censusData import censusBlock
 import geographyHelper
 from tqdm import tqdm
@@ -50,6 +51,16 @@ def updateAllBlockContainersData():
 def removeWaterBlocksFromAllRedistrictingGroups():
     for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
         redistrictingGroup.removeWaterBlocks()
+
+
+def splitNonContiguousRedistrictingGroups():
+    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+        contiguousGroups = findContiguousGroupsOfAtomicBlocks(redistrictingGroup.blocks)
+
+        if len(contiguousGroups) > 1:
+            RedistrictingGroup.redistrictingGroupList.remove(redistrictingGroup)
+            for contiguousGroup in contiguousGroups:
+                RedistrictingGroup(childrenBlocks=contiguousGroup)
 
 
 def assignNeghboringBlocksToBlocksForAllRedistrictingGroups():
@@ -135,6 +146,9 @@ def prepareGraphsForAllRedistrictingGroups():
 
     # find single orphaned atomic blocks and attach them to the closest neighbor
     attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
+
+    # split non-contiguous redistricting groups
+    splitNonContiguousRedistrictingGroups()
 
     # find and set neighboring geometries
     setBorderingRedistrictingGroupsForAllRedistrictingGroups()

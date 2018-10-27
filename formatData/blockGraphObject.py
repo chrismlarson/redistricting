@@ -3,18 +3,18 @@ from geographyHelper import findDirectionOfShapeFromPoint, CardinalDirection
 
 class BlockGraphObject:
     def __init__(self, centerOfObject):
-        self.__northernNeighborBlocks = []
-        self.__westernNeighborBlocks = []
-        self.__easternNeighborBlocks = []
-        self.__southernNeighborBlocks = []
+        self.northernNeighborBlocks = []
+        self.westernNeighborBlocks = []
+        self.easternNeighborBlocks = []
+        self.southernNeighborBlocks = []
         self.updateCenterOfObject(centerOfObject)
 
     @property
     def hasNeighbors(self):
-        if self.__northernNeighborBlocks or \
-                self.__westernNeighborBlocks or \
-                self.__easternNeighborBlocks or \
-                self.__southernNeighborBlocks:
+        if self.northernNeighborBlocks or \
+                self.westernNeighborBlocks or \
+                self.easternNeighborBlocks or \
+                self.southernNeighborBlocks:
             return True
         else:
             return False
@@ -23,19 +23,19 @@ class BlockGraphObject:
         self.__centerOfObject = center
 
     def isNeighbor(self, block):
-        if block in self.__northernNeighborBlocks or \
-           block in self.__westernNeighborBlocks or \
-           block in self.__easternNeighborBlocks or \
-           block in self.__southernNeighborBlocks:
+        if block in self.northernNeighborBlocks or \
+           block in self.westernNeighborBlocks or \
+           block in self.easternNeighborBlocks or \
+           block in self.southernNeighborBlocks:
             return True
         else:
             return False
 
     def clearNeighborBlocks(self):
-        self.__northernNeighborBlocks = []
-        self.__westernNeighborBlocks = []
-        self.__easternNeighborBlocks = []
-        self.__southernNeighborBlocks = []
+        self.northernNeighborBlocks = []
+        self.westernNeighborBlocks = []
+        self.easternNeighborBlocks = []
+        self.southernNeighborBlocks = []
 
     def addNeighborBlocks(self, neighborBlocks):
         for neighborBlock in neighborBlocks:
@@ -45,10 +45,10 @@ class BlockGraphObject:
 
     def addNeighborBlock(self, block, direction):
         if direction == CardinalDirection.north:
-            self.__northernNeighborBlocks.append(block)
+            self.northernNeighborBlocks.append(block)
         elif direction == CardinalDirection.west:
-            self.__westernNeighborBlocks.append(block)
+            self.westernNeighborBlocks.append(block)
         elif direction == CardinalDirection.east:
-            self.__easternNeighborBlocks.append(block)
+            self.easternNeighborBlocks.append(block)
         elif direction == CardinalDirection.south:
-            self.__southernNeighborBlocks.append(block)
+            self.southernNeighborBlocks.append(block)
