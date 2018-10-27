@@ -33,7 +33,7 @@ class RedistrictingGroup(BlockBorderGraph):
         return [block for block in self.blocks if block.hasNeighbors is False]
 
 
-def attachOrphanBlocksToClosestNeighborFromAllRedistrictingGroups():
+def attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups():
     for blockContainer in RedistrictingGroup.redistrictingGroupList:
         blockContainer.attachOrphanBlocksToClosestNeighbor()
 
@@ -52,7 +52,7 @@ def removeWaterBlocksFromAllRedistrictingGroups():
         redistrictingGroup.removeWaterBlocks()
 
 
-def assignNeghboringBlocksToBlocksInAllRedistrictingGroups():
+def assignNeghboringBlocksToBlocksForAllRedistrictingGroups():
     tqdm.write('\n')
     tqdm.write('*** Assigning Neighbors To All Census Blocks ***')
     count = 1
@@ -67,9 +67,9 @@ def assignNeghboringBlocksToBlocksInAllRedistrictingGroups():
         count += 1
 
 
-def setBorderingRedistrictingGroups(redistrictingGroupList):
-    for redistrictingGroupToCheck in redistrictingGroupList:
-        for redistrictingGroupToCheckAgainst in redistrictingGroupList:
+def setBorderingRedistrictingGroupsForAllRedistrictingGroups():
+    for redistrictingGroupToCheck in RedistrictingGroup.redistrictingGroupList:
+        for redistrictingGroupToCheckAgainst in RedistrictingGroup.redistrictingGroupList:
             if redistrictingGroupToCheck != redistrictingGroupToCheckAgainst:
                 if geographyHelper.intersectingGeometries(redistrictingGroupToCheck, redistrictingGroupToCheckAgainst):
                     redistrictingGroupToCheck.neighboringGroups.append(redistrictingGroupToCheckAgainst)
@@ -93,7 +93,7 @@ def convertAllCensusBlocksToAtomicBlocks():
         count += 1
 
 
-def createRedistrictingGroupsFromCensusData(filePath):
+def createRedistrictingGroupsWithAtomicBlocksFromCensusData(filePath):
     censusData = loadDataFromFile(filePath=filePath)
     tqdm.write('\n')
     tqdm.write('*** Creating Redistricting Groups from Census Data ***')
@@ -116,23 +116,27 @@ def createRedistrictingGroupsFromCensusData(filePath):
             redistrictingGroupWithCountyFIPS.blocks.append(blockFromData)
             pbar.update(1)
 
+    # remove FIPS info from the groups to not pollute data later
+    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+        del redistrictingGroup.FIPS
+
     # convert census blocks to atomic blocks
     convertAllCensusBlocksToAtomicBlocks()
 
+    return RedistrictingGroup.redistrictingGroupList
+
+
+def prepareGraphsForAllRedistrictingGroups():
     # remove water blocks
     removeWaterBlocksFromAllRedistrictingGroups()
 
     # assign neighboring blocks to atomic blocks
-    assignNeghboringBlocksToBlocksInAllRedistrictingGroups()
+    assignNeghboringBlocksToBlocksForAllRedistrictingGroups()
 
     # find single orphaned atomic blocks and attach them to the closest neighbor
-    attachOrphanBlocksToClosestNeighborFromAllRedistrictingGroups()
+    attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
 
     # find and set neighboring geometries
-    setBorderingRedistrictingGroups(redistrictingGroupList=RedistrictingGroup.redistrictingGroupList)
-
-    # remove FIPS info from the groups to not pollute data later
-    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
-        del redistrictingGroup.FIPS
+    setBorderingRedistrictingGroupsForAllRedistrictingGroups()
 
     return RedistrictingGroup.redistrictingGroupList
