@@ -105,3 +105,7 @@ def shapelyGeometryToGeoJSON(geometry):
     geoDict = mapping(geometry)
     geoString = dumps(geoDict)
     return geoString
+
+
+def distanceBetweenBlocks(a,b):
+    return a.geometry.distance(b.geometry)

@@ -12,7 +12,7 @@ class BlockBorderGraph(CensusBlockContainer):
 
     def updateBlockContainerData(self):
         super(BlockBorderGraph, self).updateBlockContainerData()
-        #self.__findBorderBlocks()
+        self.__findBorderBlocks()
 
     def isBorderBlock(self, block):
         return block in self.__northernChildBlocks or \
