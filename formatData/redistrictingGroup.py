@@ -1,14 +1,14 @@
 from exportData.exportData import loadDataFromFile
 from formatData.atomicBlock import createAtomicBlocksFromBlockList
-from formatData.blockGraph import BlockGraph
+from formatData.blockBorderGraph import BlockBorderGraph
 from censusData import censusBlock
 import geographyHelper
 from tqdm import tqdm
 
 
-class RedistrictingGroup(BlockGraph):
+class RedistrictingGroup(BlockBorderGraph):
     def __init__(self, childrenBlocks):
-        BlockGraph.__init__(self)
+        BlockBorderGraph.__init__(self)
         self.blocks = childrenBlocks
         self.neighboringGroups = []
         RedistrictingGroup.redistrictingGroupList.append(self)
@@ -38,6 +38,21 @@ def removeWaterBlocksFromAllRedistrictingGroups():
         redistrictingGroup.removeWaterBlocks()
 
 
+def assignNeghboringBlocksToBlocksInAllRedistrictingGroups():
+    tqdm.write('\n')
+    tqdm.write('*** Assigning Neighbors To All Census Blocks ***')
+    count = 1
+    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+        tqdm.write('\n')
+        tqdm.write('    *** Assigning Neighbors To All Census Blocks for Redistricting Group {0} of {1} ***'
+                   .format(count, len(RedistrictingGroup.redistrictingGroupList)))
+        with tqdm(total=len(redistrictingGroup.blocks)) as pbar:
+            for atomicBlock in redistrictingGroup.blocks:
+                atomicBlock.assignNeighborBlocksFromCandiateBlocks(candidateBlocks=redistrictingGroup.blocks)
+                pbar.update(1)
+        count += 1
+
+
 def setBorderingRedistrictingGroups(redistrictingGroupList):
     for redistrictingGroupToCheck in redistrictingGroupList:
         for redistrictingGroupToCheckAgainst in redistrictingGroupList:
@@ -61,6 +76,7 @@ def convertAllCensusBlocksToAtomicBlocks():
                    .format(count, len(RedistrictingGroup.redistrictingGroupList)))
         atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.blocks)
         blockContainer.blocks = atomicBlocksForGroup  # this triggers a block container update
+        count += 1
 
 
 def createRedistrictingGroupsFromCensusData(filePath):
@@ -93,6 +109,9 @@ def createRedistrictingGroupsFromCensusData(filePath):
 
     # remove water blocks
     removeWaterBlocksFromAllRedistrictingGroups()
+
+    # assign neighboring blocks to atomic blocks
+    assignNeghboringBlocksToBlocksInAllRedistrictingGroups()
 
     # find and set neighboring geometries
     setBorderingRedistrictingGroups(redistrictingGroupList=redistrictingGroupList)

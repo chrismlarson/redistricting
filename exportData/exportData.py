@@ -2,6 +2,7 @@ from shapely.geometry import mapping
 from os import path
 import pickle
 import fiona
+import sys
 
 def exportGeographiesToShapefile(geographyList, descriptionOfInfo):
     # Define a polygon feature geometry with one attribute
@@ -27,8 +28,10 @@ def exportGeographiesToShapefile(geographyList, descriptionOfInfo):
 
 
 def saveDataToFile(data, censusYear, stateName, descriptionOfInfo):
+    sys.setrecursionlimit(100000)
     filePath = path.expanduser('~/Documents/{0}-{1}-{2}Info.redistdata'.format(censusYear, stateName, descriptionOfInfo))
-    pickle.dump(data, open(filePath, 'wb'))
+    temp = pickle.HIGHEST_PROTOCOL
+    pickle.dump(data, open(filePath, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def loadDataFromFile(filePath):

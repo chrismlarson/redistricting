@@ -16,7 +16,7 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups, shouldShowText=False):
     font = {'family': 'serif',
             'color': 'darkred',
             'weight': 'normal',
-            'size': 9,
+            'size': 6,
             }
     for redistrictingGroup in redistrictingGroups:
         for block in redistrictingGroup.blocks:
