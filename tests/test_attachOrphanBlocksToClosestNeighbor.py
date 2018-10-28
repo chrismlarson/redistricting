@@ -1,8 +1,8 @@
 from unittest import TestCase
 from censusData.censusBlock import CensusBlock
 from formatData.redistrictingGroup import RedistrictingGroup, convertAllCensusBlocksToAtomicBlocks, \
-    assignNeghboringBlocksToBlocksInAllRedistrictingGroups, \
-    attachOrphanBlocksToClosestNeighborFromAllRedistrictingGroups
+    assignNeghboringBlocksToBlocksForAllRedistrictingGroups, \
+    attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups
 
 
 class TestAttachOrphanBlocksToClosestNeighbor(TestCase):
@@ -24,9 +24,9 @@ class TestAttachOrphanBlocksToClosestNeighbor(TestCase):
 
         testRedistGroup = RedistrictingGroup(childrenBlocks=[a,b])
         convertAllCensusBlocksToAtomicBlocks()
-        assignNeghboringBlocksToBlocksInAllRedistrictingGroups()
+        assignNeghboringBlocksToBlocksForAllRedistrictingGroups()
 
-        attachOrphanBlocksToClosestNeighborFromAllRedistrictingGroups()
+        attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
 
         self.assertTrue(testRedistGroup.blocks[0].isNeighbor(testRedistGroup.blocks[1]))
         self.assertTrue(testRedistGroup.blocks[1].isNeighbor(testRedistGroup.blocks[0]))
