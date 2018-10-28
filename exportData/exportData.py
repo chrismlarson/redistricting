@@ -31,7 +31,8 @@ import sys
 def saveDataToFile(data, censusYear, stateName, descriptionOfInfo):
     sys.setrecursionlimit(100000)
     filePath = path.expanduser('~/Documents/{0}-{1}-{2}Info.redistdata'.format(censusYear, stateName, descriptionOfInfo))
-    pickle.dump(data, open(filePath, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+    with open(filePath, 'wb') as file:
+        pickle.dump(data, file, protocol=pickle.HIGHEST_PROTOCOL)
     tqdm.write('*** Saved: {0} ***'.format(filePath))
 
 
@@ -41,5 +42,6 @@ def loadDataFromFileWithDescription(censusYear, stateName, descriptionOfInfo):
 
 
 def loadDataFromFile(filePath):
-    data = pickle.load(open(filePath, 'rb'))
+    with open(filePath, 'rb') as file:
+        data = pickle.load(file)
     return data
