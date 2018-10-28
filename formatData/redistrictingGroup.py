@@ -1,13 +1,13 @@
-from exportData.exportData import loadDataFromFile
 from formatData.atomicBlock import createAtomicBlocksFromBlockList
 from formatData.blockBorderGraph import BlockBorderGraph
+from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfAtomicBlocks
 from censusData import censusBlock
 import geographyHelper
 from tqdm import tqdm
 
 
-class RedistrictingGroup(BlockBorderGraph):
+class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def __init__(self, childrenBlocks):
         BlockBorderGraph.__init__(self)
         self.blocks = childrenBlocks
@@ -15,6 +15,10 @@ class RedistrictingGroup(BlockBorderGraph):
         RedistrictingGroup.redistrictingGroupList.append(self)
 
     redistrictingGroupList = []
+
+    def updateBlockContainerData(self):
+        super(RedistrictingGroup, self).updateBlockContainerData()
+        self.updateCenterOfObject(self.geometry.centroid)
 
     def removeWaterBlocks(self):
         nonWaterBlocks = [block for block in self.blocks if block.isWater == False]

@@ -1,14 +1,14 @@
-from formatData.blockGraphObject import BlockGraphObject
+from formatData.graphObject import GraphObject
 from formatData.censusBlockContainer import CensusBlockContainer
 from geographyHelper import doesGeographyContainTheOther, intersectingGeometries, distanceBetweenBlocks
 from tqdm import tqdm
 
 
-class AtomicBlock(CensusBlockContainer, BlockGraphObject):
+class AtomicBlock(CensusBlockContainer, GraphObject):
     def __init__(self, childrenBlocks):
         CensusBlockContainer.__init__(self)
         self.blocks = childrenBlocks
-        BlockGraphObject.__init__(self, self.geometry.centroid)
+        GraphObject.__init__(self, self.geometry.centroid)
         self.isWater = self.getWaterPropertyFromBlocks()
         AtomicBlock.atomicBlockList.append(self)
 
