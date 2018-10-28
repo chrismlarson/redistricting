@@ -116,29 +116,29 @@ def findContiguousGroupsOfAtomicBlocks(allBlocks):
         remainingBlocks = allBlocks.copy()
         contiguousBlockGroups = []
         while len(remainingBlocks) > 0:
-            floodFilledBlocks = []
-            contiguousBlockGroups.append(
-                floodFillAtomicBlock(atomicBlock=remainingBlocks[0],
-                                     floodFilledBlocks=floodFilledBlocks,
-                                     remainingBlocks=remainingBlocks))
+            contiguousBlockGroups.append(floodFillAtomicBlock(remainingBlocks=remainingBlocks))
         return contiguousBlockGroups
     else:
         return []
 
 
-def floodFillAtomicBlock(atomicBlock, floodFilledBlocks, remainingBlocks):
-    floodFilledBlocks.append(atomicBlock)
-    remainingBlocks.remove(atomicBlock)
+def floodFillAtomicBlock(remainingBlocks):
+    floodFilledBlocks = []
+    floodQueue = []
+    floodQueue.append(remainingBlocks[0])
 
-    directionSets = [atomicBlock.northernNeighborBlocks,
-                     atomicBlock.westernNeighborBlocks,
-                     atomicBlock.easternNeighborBlocks,
-                     atomicBlock.southernNeighborBlocks]
-    for directionSet in directionSets:
-        for neighborBlock in directionSet:
-            if neighborBlock in remainingBlocks:
-                floodFillAtomicBlock(atomicBlock=neighborBlock,
-                                     floodFilledBlocks=floodFilledBlocks,
-                                     remainingBlocks=remainingBlocks)
+    while len(floodQueue) > 0:
+        atomicBlock = floodQueue.pop(0)
+        remainingBlocks.remove(atomicBlock)
+        floodFilledBlocks.append(atomicBlock)
+
+        directionSets = [atomicBlock.northernNeighborBlocks,
+                         atomicBlock.westernNeighborBlocks,
+                         atomicBlock.easternNeighborBlocks,
+                         atomicBlock.southernNeighborBlocks]
+        for directionSet in directionSets:
+            for neighborBlock in directionSet:
+                if neighborBlock in remainingBlocks and neighborBlock not in floodQueue:
+                    floodQueue.append(neighborBlock)
 
     return floodFilledBlocks

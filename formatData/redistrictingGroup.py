@@ -147,9 +147,9 @@ def prepareGraphsForAllRedistrictingGroups():
     attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
 
     # split non-contiguous redistricting groups
-    #splitNonContiguousRedistrictingGroups()
+    splitNonContiguousRedistrictingGroups()
 
     # find and set neighboring geometries
-    #setNeighborRedistrictingGroupsForAllRedistrictingGroups()
+    setNeighborRedistrictingGroupsForAllRedistrictingGroups()
 
     return RedistrictingGroup.redistrictingGroupList
