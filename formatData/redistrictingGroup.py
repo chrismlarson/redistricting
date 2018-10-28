@@ -1,9 +1,9 @@
 from formatData.atomicBlock import createAtomicBlocksFromBlockList
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
-from geographyHelper import findContiguousGroupsOfAtomicBlocks
+from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, \
+    geometryFromMultipleGeometries
 from censusData import censusBlock
-import geographyHelper
 from tqdm import tqdm
 
 
@@ -11,7 +11,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def __init__(self, childrenBlocks):
         BlockBorderGraph.__init__(self)
         self.blocks = childrenBlocks
-        self.neighboringGroups = []
+        GraphObject.__init__(self, centerOfObject=self.geometry.centroid)
         RedistrictingGroup.redistrictingGroupList.append(self)
 
     redistrictingGroupList = []
@@ -30,7 +30,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def attachOrphanBlocksToClosestNeighbor(self):
         orphanBlocks = self.findOrphanBlocks()
         for orphanBlock in orphanBlocks:
-            closestBlock = orphanBlock.findClosestBlockToBlocks(otherBlocks=self.blocks)
+            closestBlock = findClosestGeometry(originGeometry=self, otherGeometries=self.blocks)
             orphanBlock.addNeighbors(neighbors=[closestBlock])
             closestBlock.addNeighbors(neighbors=[orphanBlock])
 
@@ -59,7 +59,7 @@ def removeWaterBlocksFromAllRedistrictingGroups():
 
 def splitNonContiguousRedistrictingGroups():
     for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
-        contiguousGroups = findContiguousGroupsOfAtomicBlocks(redistrictingGroup.blocks)
+        contiguousGroups = findContiguousGroupsOfGraphObjects(redistrictingGroup.blocks)
 
         if len(contiguousGroups) > 1:
             RedistrictingGroup.redistrictingGroupList.remove(redistrictingGroup)
@@ -67,7 +67,7 @@ def splitNonContiguousRedistrictingGroups():
                 RedistrictingGroup(childrenBlocks=contiguousGroup)
 
 
-def assignNeghboringBlocksToBlocksForAllRedistrictingGroups():
+def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
     tqdm.write('\n')
     tqdm.write('*** Assigning Neighbors To All Census Blocks ***')
     count = 1
@@ -81,13 +81,39 @@ def assignNeghboringBlocksToBlocksForAllRedistrictingGroups():
                 pbar.update(1)
         count += 1
 
+    # find single orphaned atomic blocks and attach them to the closest neighbor.
+    # That way we don't have too small of redistricting groups for splitting them in the next step.
+    attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
 
-def setNeighborRedistrictingGroupsForAllRedistrictingGroups():
+
+def attachOrphanRedistrictingGroupsToClosestNeighbor():
+    contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
+
+    for isolatedRegion in contiguousRegions:
+        closestRegion = findClosestGeometry(originGeometry=isolatedRegion,
+                                            otherGeometries=[region for region in contiguousRegions if
+                                                             region is not isolatedRegion])
+
+
+        closestGroupInIsolatedRegion = findClosestGeometry(originGeometry=closestRegion,
+                                                           otherGeometries=isolatedRegion)
+        closestGroupInClosestRegion = findClosestGeometry(originGeometry=isolatedRegion,
+                                                           otherGeometries=closestRegion)
+
+        #these two may already be neighbors from a previous iteration of this loop, so we check
+        if not closestGroupInIsolatedRegion.isNeighbor(closestGroupInClosestRegion):
+            closestGroupInIsolatedRegion.addNeighbors(neighbors=[closestGroupInClosestRegion])
+            closestGroupInClosestRegion.addNeighbors(neighbors=[closestGroupInIsolatedRegion])
+
+
+def assignNeighboringRedistrictingGroupsForAllRedistrictingGroups():
     for redistrictingGroupToCheck in RedistrictingGroup.redistrictingGroupList:
         for redistrictingGroupToCheckAgainst in RedistrictingGroup.redistrictingGroupList:
             if redistrictingGroupToCheck != redistrictingGroupToCheckAgainst:
-                if geographyHelper.intersectingGeometries(redistrictingGroupToCheck, redistrictingGroupToCheckAgainst):
-                    redistrictingGroupToCheck.neighboringGroups.append(redistrictingGroupToCheckAgainst)
+                if intersectingGeometries(redistrictingGroupToCheck, redistrictingGroupToCheckAgainst):
+                    redistrictingGroupToCheck.addNeighbors([redistrictingGroupToCheckAgainst])
+
+    attachOrphanRedistrictingGroupsToClosestNeighbor()
 
 
 def getRedistrictingGroupWithCountyFIPS(countyFIPS):
@@ -145,15 +171,12 @@ def prepareGraphsForAllRedistrictingGroups():
     removeWaterBlocksFromAllRedistrictingGroups()
 
     # assign neighboring blocks to atomic blocks
-    assignNeghboringBlocksToBlocksForAllRedistrictingGroups()
-
-    # find single orphaned atomic blocks and attach them to the closest neighbor
-    attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
+    assignNeighboringBlocksToBlocksForAllRedistrictingGroups()
 
     # split non-contiguous redistricting groups
     splitNonContiguousRedistrictingGroups()
 
     # find and set neighboring geometries
-    setNeighborRedistrictingGroupsForAllRedistrictingGroups()
+    assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
 
     return RedistrictingGroup.redistrictingGroupList

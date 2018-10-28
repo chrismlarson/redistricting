@@ -38,16 +38,16 @@ class GraphObject:
     def updateCenterOfObject(self, center):
         self.__centerOfObject = center
 
-    def isNeighbor(self, block):
-        if block in self.northernNeighbors or \
-                block in self.westernNeighbors or \
-                block in self.easternNeighbors or \
-                block in self.southernNeighbors:
+    def isNeighbor(self, graphObject):
+        if graphObject in self.northernNeighbors or \
+                graphObject in self.westernNeighbors or \
+                graphObject in self.easternNeighbors or \
+                graphObject in self.southernNeighbors:
             return True
         else:
             return False
 
-    def clearNeighborBlocks(self):
+    def clearNeighborGraphObjects(self):
         self.__northernNeighbors = []
         self.__westernNeighbors = []
         self.__easternNeighbors = []
@@ -57,14 +57,14 @@ class GraphObject:
         for neighbor in neighbors:
             direction = findDirectionOfShapeFromPoint(basePoint=self.__centerOfObject,
                                                       targetShape=neighbor.geometry)
-            self.addNeighbor(block=neighbor, direction=direction)
+            self.addNeighbor(graphObject=neighbor, direction=direction)
 
-    def addNeighbor(self, block, direction):
+    def addNeighbor(self, graphObject, direction):
         if direction == CardinalDirection.north:
-            self.__northernNeighbors.append(block)
+            self.__northernNeighbors.append(graphObject)
         elif direction == CardinalDirection.west:
-            self.__westernNeighbors.append(block)
+            self.__westernNeighbors.append(graphObject)
         elif direction == CardinalDirection.east:
-            self.__easternNeighbors.append(block)
+            self.__easternNeighbors.append(graphObject)
         elif direction == CardinalDirection.south:
-            self.__southernNeighbors.append(block)
+            self.__southernNeighbors.append(graphObject)

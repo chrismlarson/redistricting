@@ -1,4 +1,5 @@
 from shapely.geometry import shape, mapping, MultiPolygon
+from shapely.geometry.base import BaseGeometry
 from shapely.ops import cascaded_union
 from enum import Enum
 from math import atan2, degrees, pi
@@ -48,8 +49,8 @@ def isBoundaryGeometry(parent, child):
     return parent.geometry.boundary.intersects(child.geometry.boundary)
 
 
-def geometryFromBlocks(blockList):
-    polygons = [block.geometry for block in blockList]
+def geometryFromMultipleGeometries(geometryList):
+    polygons = [geometry.geometry for geometry in geometryList]
     union = cascaded_union(polygons)
     union = union.simplify(tolerance=0.0) #to remove excessive points
     return union
@@ -107,38 +108,58 @@ def shapelyGeometryToGeoJSON(geometry):
     return geoString
 
 
-def distanceBetweenBlocks(a,b):
-    return a.geometry.distance(b.geometry)
+def distanceBetweenGeometries(a, b):
+    if type(a) is list:
+        a = geometryFromMultipleGeometries(a)
+    else:
+        a = a.geometry
+
+    if type(b) is list:
+        b = geometryFromMultipleGeometries(b)
+    else:
+        b = b.geometry
+    return a.distance(b)
 
 
-def findContiguousGroupsOfAtomicBlocks(allBlocks):
-    if allBlocks:
-        remainingBlocks = allBlocks.copy()
-        contiguousBlockGroups = []
-        while len(remainingBlocks) > 0:
-            contiguousBlockGroups.append(floodFillAtomicBlock(remainingBlocks=remainingBlocks))
-        return contiguousBlockGroups
+def findClosestGeometry(originGeometry, otherGeometries):
+    candidateGeometries = [block for block in otherGeometries if block is not originGeometry]
+    distanceDict = {}
+    for candidateGeometry in candidateGeometries:
+        distance = distanceBetweenGeometries(originGeometry, candidateGeometry)
+        distanceDict[distance] = candidateGeometry
+    shortestDistance = min(distanceDict.keys())
+    closestGeometry = distanceDict[shortestDistance]
+    return closestGeometry
+
+
+def findContiguousGroupsOfGraphObjects(graphObjects):
+    if graphObjects:
+        remainingObjects = graphObjects.copy()
+        contiguousObjectGroups = []
+        while len(remainingObjects) > 0:
+            contiguousObjectGroups.append(floodFillGraphObject(remainingObjects=remainingObjects))
+        return contiguousObjectGroups
     else:
         return []
 
 
-def floodFillAtomicBlock(remainingBlocks):
-    floodFilledBlocks = []
+def floodFillGraphObject(remainingObjects):
+    floodFilledObjects = []
     floodQueue = []
-    floodQueue.append(remainingBlocks[0])
+    floodQueue.append(remainingObjects[0])
 
     while len(floodQueue) > 0:
-        atomicBlock = floodQueue.pop(0)
-        remainingBlocks.remove(atomicBlock)
-        floodFilledBlocks.append(atomicBlock)
+        graphObject = floodQueue.pop(0)
+        remainingObjects.remove(graphObject)
+        floodFilledObjects.append(graphObject)
 
-        directionSets = [atomicBlock.northernNeighborBlocks,
-                         atomicBlock.westernNeighborBlocks,
-                         atomicBlock.easternNeighborBlocks,
-                         atomicBlock.southernNeighborBlocks]
+        directionSets = [graphObject.northernNeighbors,
+                         graphObject.westernNeighbors,
+                         graphObject.easternNeighbors,
+                         graphObject.southernNeighbors]
         for directionSet in directionSets:
-            for neighborBlock in directionSet:
-                if neighborBlock in remainingBlocks and neighborBlock not in floodQueue:
-                    floodQueue.append(neighborBlock)
+            for neighborObject in directionSet:
+                if neighborObject in remainingObjects and neighborObject not in floodQueue:
+                    floodQueue.append(neighborObject)
 
-    return floodFilledBlocks
+    return floodFilledObjects

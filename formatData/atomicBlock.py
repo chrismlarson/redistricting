@@ -1,6 +1,6 @@
 from formatData.graphObject import GraphObject
 from formatData.censusBlockContainer import CensusBlockContainer
-from geographyHelper import doesGeographyContainTheOther, intersectingGeometries, distanceBetweenBlocks
+from geographyHelper import doesGeographyContainTheOther, intersectingGeometries, distanceBetweenGeometries
 from tqdm import tqdm
 
 
@@ -18,17 +18,6 @@ class AtomicBlock(CensusBlockContainer, GraphObject):
     def updateBlockContainerData(self):
         super(AtomicBlock, self).updateBlockContainerData()
         self.updateCenterOfObject(self.geometry.centroid)
-
-
-    def findClosestBlockToBlocks(self, otherBlocks):
-        candidateBlocks = [block for block in otherBlocks if block is not self]
-        distanceDict = {}
-        for candidateBlock in candidateBlocks:
-            distance = distanceBetweenBlocks(self, candidateBlock)
-            distanceDict[distance] = candidateBlock
-        shortestDistance = min(distanceDict.keys())
-        closestBlock = distanceDict[shortestDistance]
-        return closestBlock
 
 
     def importCensusBlock(self, censusBlock):
