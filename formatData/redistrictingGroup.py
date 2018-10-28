@@ -31,8 +31,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         orphanBlocks = self.findOrphanBlocks()
         for orphanBlock in orphanBlocks:
             closestBlock = orphanBlock.findClosestBlockToBlocks(otherBlocks=self.blocks)
-            orphanBlock.addNeighborBlocks(neighborBlocks=[closestBlock])
-            closestBlock.addNeighborBlocks(neighborBlocks=[orphanBlock])
+            orphanBlock.addNeighbors(neighbors=[closestBlock])
+            closestBlock.addNeighbors(neighbors=[orphanBlock])
 
     def findOrphanBlocks(self):
         return [block for block in self.blocks if block.hasNeighbors is False]

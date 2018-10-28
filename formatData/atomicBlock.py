@@ -47,7 +47,7 @@ class AtomicBlock(CensusBlockContainer, GraphObject):
             if candidateBlock is not self:
                 if intersectingGeometries(self, candidateBlock):
                     neighborBlocks.append(candidateBlock)
-        self.addNeighborBlocks(neighborBlocks=neighborBlocks)
+        self.addNeighbors(neighbors=neighborBlocks)
 
 
 def createAtomicBlockFromCensusBlock(censusBlock):
