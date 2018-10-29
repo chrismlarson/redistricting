@@ -153,10 +153,7 @@ def floodFillGraphObject(remainingObjects):
         remainingObjects.remove(graphObject)
         floodFilledObjects.append(graphObject)
 
-        directionSets = [graphObject.northernNeighbors,
-                         graphObject.westernNeighbors,
-                         graphObject.easternNeighbors,
-                         graphObject.southernNeighbors]
+        directionSets = graphObject.directionSets
         for directionSet in directionSets:
             for neighborObject in directionSet:
                 if neighborObject in remainingObjects and neighborObject not in floodQueue:

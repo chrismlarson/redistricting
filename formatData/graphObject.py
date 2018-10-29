@@ -35,6 +35,13 @@ class GraphObject:
     def southernNeighbors(self):
         return self.__southernNeighbors
 
+    @property
+    def directionSets(self):
+        return [self.northernNeighbors,
+                self.westernNeighbors,
+                self.easternNeighbors,
+                self.southernNeighbors]
+
     def updateCenterOfObject(self, center):
         self.__centerOfObject = center
 
@@ -68,3 +75,10 @@ class GraphObject:
             self.__easternNeighbors.append(graphObject)
         elif direction == CardinalDirection.south:
             self.__southernNeighbors.append(graphObject)
+
+
+    def validateNeighborLists(self):
+        directionSets = self.directionSets
+        for directionSet in directionSets:
+            if len(directionSet) != len(set(directionSet)):
+                raise ValueError('Found a duplicate neighbor for GraphObject:{0}'.format(directionSet))

@@ -70,3 +70,7 @@ def createAtomicBlocksFromBlockList(blockList):
             pbar.update(1)
 
     return atomicBlockList
+
+def validateAllAtomicBlocks():
+    for atomicBlock in AtomicBlock.atomicBlockList:
+        atomicBlock.validateNeighborLists()

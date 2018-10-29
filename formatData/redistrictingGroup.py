@@ -1,8 +1,7 @@
-from formatData.atomicBlock import createAtomicBlocksFromBlockList
+from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
-from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, \
-    geometryFromMultipleGeometries
+from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries
 from censusData import censusBlock
 from tqdm import tqdm
 
@@ -94,13 +93,12 @@ def attachOrphanRedistrictingGroupsToClosestNeighbor():
                                             otherGeometries=[region for region in contiguousRegions if
                                                              region is not isolatedRegion])
 
-
         closestGroupInIsolatedRegion = findClosestGeometry(originGeometry=closestRegion,
                                                            otherGeometries=isolatedRegion)
         closestGroupInClosestRegion = findClosestGeometry(originGeometry=isolatedRegion,
-                                                           otherGeometries=closestRegion)
+                                                          otherGeometries=closestRegion)
 
-        #these two may already be neighbors from a previous iteration of this loop, so we check
+        # these two may already be neighbors from a previous iteration of this loop, so we check
         if not closestGroupInIsolatedRegion.isNeighbor(closestGroupInClosestRegion):
             closestGroupInIsolatedRegion.addNeighbors(neighbors=[closestGroupInClosestRegion])
             closestGroupInClosestRegion.addNeighbors(neighbors=[closestGroupInIsolatedRegion])
@@ -132,6 +130,15 @@ def convertAllCensusBlocksToAtomicBlocks():
         atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.blocks)
         blockContainer.blocks = atomicBlocksForGroup  # this triggers a block container update
         count += 1
+
+
+def validateAllRedistrictingGroups():
+    contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
+    if len(contiguousRegions) > 1:
+        raise ValueError("Don't have a contiguous set of RedictingGroups")
+
+    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+        redistrictingGroup.validateNeighborLists()
 
 
 def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
@@ -178,5 +185,8 @@ def prepareGraphsForAllRedistrictingGroups():
 
     # find and set neighboring geometries
     assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
+
+    validateAllRedistrictingGroups()
+    validateAllAtomicBlocks()
 
     return RedistrictingGroup.redistrictingGroupList
