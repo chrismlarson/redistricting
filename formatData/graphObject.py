@@ -7,6 +7,7 @@ class GraphObject:
         self.__westernNeighbors = []
         self.__easternNeighbors = []
         self.__southernNeighbors = []
+        self.populationEnergy = 0
         self.updateCenterOfObject(centerOfObject)
 
     @property
