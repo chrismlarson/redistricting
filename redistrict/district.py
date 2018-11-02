@@ -7,3 +7,15 @@ class District(BlockBorderGraph):
         District.districtList.append(self)
 
     districtList = []
+
+
+def createDistrictFromRedistrictingGroups(redistrictingGroups):
+    initialDistrict = District(childrenGroups=redistrictingGroups)
+    return initialDistrict
+
+
+def splitDistrict(districtToSplit, numberOfDistricts):
+    if numberOfDistricts == 1:
+        return [districtToSplit]
+    else:
+        raise NotImplementedError('splitDistrict not yet implemented')
