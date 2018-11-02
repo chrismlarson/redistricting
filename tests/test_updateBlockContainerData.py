@@ -1,7 +1,7 @@
 from unittest import TestCase
 from shapely.geometry import Polygon, Point
 from censusData.censusBlock import CensusBlock
-from formatData.censusBlockContainer import CensusBlockContainer
+from formatData.censusContainer import CensusContainer
 
 
 class TestCensusBlockContainer(TestCase):
@@ -23,8 +23,8 @@ class TestCensusBlockContainer(TestCase):
                                          'coordinates': [[[-1, 1], [-1, 2], [1, 2], [1, 1]]]})
 
         blocks = [a,b]
-        blockContainer = CensusBlockContainer()
-        blockContainer.blocks = blocks
+        blockContainer = CensusContainer()
+        blockContainer.children = blocks
 
         self.assertEqual(blockContainer.population, 2)
 
@@ -57,8 +57,8 @@ class TestCensusBlockContainer(TestCase):
                             ]
                         })
         blocks = [a, b]
-        blockContainer = CensusBlockContainer()
-        blockContainer.blocks = blocks
+        blockContainer = CensusContainer()
+        blockContainer.children = blocks
 
         self.assertEqual(blockContainer.population, 2)
         self.assertEqual(blockContainer.geometry, Polygon(exterior))
@@ -77,8 +77,8 @@ class TestCensusBlockContainer(TestCase):
         a.geometry = circle
 
         blocks = [a]
-        blockContainer = CensusBlockContainer()
-        blockContainer.blocks = blocks
+        blockContainer = CensusContainer()
+        blockContainer.children = blocks
 
         self.assertEqual(blockContainer.population, 1)
         self.assertEqual(blockContainer.geometry, circle)

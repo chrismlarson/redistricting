@@ -28,5 +28,5 @@ class TestAttachOrphanBlocksToClosestNeighbor(TestCase):
 
         attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
 
-        self.assertTrue(testRedistGroup.blocks[0].isNeighbor(testRedistGroup.blocks[1]))
-        self.assertTrue(testRedistGroup.blocks[1].isNeighbor(testRedistGroup.blocks[0]))
+        self.assertTrue(testRedistGroup.children[0].isNeighbor(testRedistGroup.children[1]))
+        self.assertTrue(testRedistGroup.children[1].isNeighbor(testRedistGroup.children[0]))

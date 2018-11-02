@@ -1,13 +1,13 @@
 from formatData.graphObject import GraphObject
-from formatData.censusBlockContainer import CensusBlockContainer
+from formatData.censusContainer import CensusContainer
 from geographyHelper import doesGeographyContainTheOther, intersectingGeometries, distanceBetweenGeometries
 from tqdm import tqdm
 
 
-class AtomicBlock(CensusBlockContainer, GraphObject):
+class AtomicBlock(CensusContainer, GraphObject):
     def __init__(self, childrenBlocks):
-        CensusBlockContainer.__init__(self)
-        self.blocks = childrenBlocks
+        CensusContainer.__init__(self)
+        self.children = childrenBlocks
         GraphObject.__init__(self, self.geometry.centroid)
         self.isWater = self.getWaterPropertyFromBlocks()
         AtomicBlock.atomicBlockList.append(self)
@@ -21,13 +21,13 @@ class AtomicBlock(CensusBlockContainer, GraphObject):
 
 
     def importCensusBlock(self, censusBlock):
-        self.blocks.append(censusBlock)
+        self.children.append(censusBlock)
         self.isWater = self.getWaterPropertyFromBlocks()
         self.updateBlockContainerData()
 
 
     def getWaterPropertyFromBlocks(self):
-        return all(block.isWater for block in self.blocks)
+        return all(block.isWater for block in self.children)
 
 
     def assignNeighborBlocksFromCandiateBlocks(self, candidateBlocks):
@@ -45,7 +45,7 @@ def createAtomicBlockFromCensusBlock(censusBlock):
 
 
 def atomicBlockWithBlock(block, atomicBlockList):
-    return next((atomicBlock for atomicBlock in atomicBlockList if block in atomicBlock.blocks), None)
+    return next((atomicBlock for atomicBlock in atomicBlockList if block in atomicBlock.children), None)
 
 
 def createAtomicBlocksFromBlockList(blockList):

@@ -9,7 +9,7 @@ from tqdm import tqdm
 class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def __init__(self, childrenBlocks):
         BlockBorderGraph.__init__(self)
-        self.blocks = childrenBlocks
+        self.children = childrenBlocks
         GraphObject.__init__(self, centerOfObject=self.geometry.centroid)
         RedistrictingGroup.redistrictingGroupList.append(self)
 
@@ -20,21 +20,21 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         self.updateCenterOfObject(self.geometry.centroid)
 
     def removeWaterBlocks(self):
-        nonWaterBlocks = [block for block in self.blocks if block.isWater == False]
-        waterBlocks = [block for block in self.blocks if block.isWater == True]
+        nonWaterBlocks = [block for block in self.children if block.isWater == False]
+        waterBlocks = [block for block in self.children if block.isWater == True]
         if any([waterBlock for waterBlock in waterBlocks if waterBlock.population > 0]):
             raise ValueError('Water block had a population')
-        self.blocks = nonWaterBlocks
+        self.children = nonWaterBlocks
 
     def attachOrphanBlocksToClosestNeighbor(self):
         orphanBlocks = self.findOrphanBlocks()
         for orphanBlock in orphanBlocks:
-            closestBlock = findClosestGeometry(originGeometry=self, otherGeometries=self.blocks)
+            closestBlock = findClosestGeometry(originGeometry=self, otherGeometries=self.children)
             orphanBlock.addNeighbors(neighbors=[closestBlock])
             closestBlock.addNeighbors(neighbors=[orphanBlock])
 
     def findOrphanBlocks(self):
-        return [block for block in self.blocks if block.hasNeighbors is False]
+        return [block for block in self.children if block.hasNeighbors is False]
 
 
 def attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups():
@@ -58,7 +58,7 @@ def removeWaterBlocksFromAllRedistrictingGroups():
 
 def splitNonContiguousRedistrictingGroups():
     for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
-        contiguousGroups = findContiguousGroupsOfGraphObjects(redistrictingGroup.blocks)
+        contiguousGroups = findContiguousGroupsOfGraphObjects(redistrictingGroup.children)
 
         if len(contiguousGroups) > 1:
             RedistrictingGroup.redistrictingGroupList.remove(redistrictingGroup)
@@ -74,9 +74,9 @@ def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
         tqdm.write('\n')
         tqdm.write('    *** Assigning Neighbors To All Census Blocks for Redistricting Group {0} of {1} ***'
                    .format(count, len(RedistrictingGroup.redistrictingGroupList)))
-        with tqdm(total=len(redistrictingGroup.blocks)) as pbar:
-            for atomicBlock in redistrictingGroup.blocks:
-                atomicBlock.assignNeighborBlocksFromCandiateBlocks(candidateBlocks=redistrictingGroup.blocks)
+        with tqdm(total=len(redistrictingGroup.children)) as pbar:
+            for atomicBlock in redistrictingGroup.children:
+                atomicBlock.assignNeighborBlocksFromCandiateBlocks(candidateBlocks=redistrictingGroup.children)
                 pbar.update(1)
         count += 1
 
@@ -127,8 +127,8 @@ def convertAllCensusBlocksToAtomicBlocks():
         tqdm.write('\n')
         tqdm.write('    *** Converting to Atomic Blocks for Redistricting Group {0} of {1} ***'
                    .format(count, len(RedistrictingGroup.redistrictingGroupList)))
-        atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.blocks)
-        blockContainer.blocks = atomicBlocksForGroup  # this triggers a block container update
+        atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.children)
+        blockContainer.children = atomicBlocksForGroup  # this triggers a block container update
         count += 1
 
 
@@ -160,7 +160,7 @@ def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
                                                     population=int(censusBlockDict['P0010001']),
                                                     isWater=isWater,
                                                     geoJSONGeometry=censusBlockDict['geometry'])
-            redistrictingGroupWithCountyFIPS.blocks.append(blockFromData)
+            redistrictingGroupWithCountyFIPS.children.append(blockFromData)
             pbar.update(1)
 
     # remove FIPS info from the groups to not pollute data later
@@ -181,12 +181,12 @@ def prepareGraphsForAllRedistrictingGroups():
     assignNeighboringBlocksToBlocksForAllRedistrictingGroups()
 
     # split non-contiguous redistricting groups
-    splitNonContiguousRedistrictingGroups()
+    #splitNonContiguousRedistrictingGroups()
 
     # find and set neighboring geometries
-    assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
+    #assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
 
-    validateAllRedistrictingGroups()
-    validateAllAtomicBlocks()
+    #validateAllRedistrictingGroups()
+    #validateAllAtomicBlocks()
 
     return RedistrictingGroup.redistrictingGroupList

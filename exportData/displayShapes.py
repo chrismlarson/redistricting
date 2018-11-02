@@ -20,7 +20,7 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups, showPopulationCounts=F
             'size': 6,
             }
     for redistrictingGroup in redistrictingGroups:
-        for block in redistrictingGroup.blocks:
+        for block in redistrictingGroup.children:
             if block.isWater:
                 ax.add_patch(PolygonPatch(block.geometry, fc=blueColor, ec=blueColor, alpha=0.5, zorder=2 ))
             else:
