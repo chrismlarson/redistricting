@@ -181,12 +181,12 @@ def prepareGraphsForAllRedistrictingGroups():
     assignNeighboringBlocksToBlocksForAllRedistrictingGroups()
 
     # split non-contiguous redistricting groups
-    #splitNonContiguousRedistrictingGroups()
+    splitNonContiguousRedistrictingGroups()
 
     # find and set neighboring geometries
-    #assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
+    assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
 
-    #validateAllRedistrictingGroups()
-    #validateAllAtomicBlocks()
+    validateAllRedistrictingGroups()
+    validateAllAtomicBlocks()
 
     return RedistrictingGroup.redistrictingGroupList
