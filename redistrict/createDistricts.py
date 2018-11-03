@@ -14,5 +14,5 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                           descriptionToWorkWith))
 
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
-districts = splitDistrict(districtToSplit=initialDistrict, numberOfDistricts=1)
+districts = splitDistrict(districtToSplit=initialDistrict, numberOfDistricts=14, populationDeviation=1)
 temp=0
