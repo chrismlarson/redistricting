@@ -1,6 +1,7 @@
 import math
 
 from formatData.blockBorderGraph import BlockBorderGraph
+from geographyHelper import alignmentOfGeometry, Alignment
 
 
 class District(BlockBorderGraph):
@@ -37,6 +38,16 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
 
 
 def cutDistrictIntoRatio(district, aRatio, bRatio, populationDeviation):
+    longestDirection = alignmentOfGeometry(district.geometry)
+    startingRedistrictingGroupSet = []
+
+    if longestDirection == Alignment.northSouth:
+        startingRedistrictingGroupSet = district.westernChildBlocks
+    else:
+        startingRedistrictingGroupSet = district.northernChildBlocks
+
+    
+
     idealDistrictASize = int(district.population / aRatio)
     idealDistrictBSize = int(district.population / bRatio)
     # while not all([math.isclose(district.population, idealDistrictASize, abs_tol=populationDeviation)

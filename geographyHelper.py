@@ -63,6 +63,11 @@ class CardinalDirection(Enum):
     south = 4
 
 
+class Alignment(Enum):
+    northSouth = 1
+    westEast = 2
+
+
 def findDirection(basePoint, targetPoint):
     if basePoint == targetPoint:
         return CardinalDirection.north
@@ -160,3 +165,14 @@ def floodFillGraphObject(remainingObjects):
                     floodQueue.append(neighborObject)
 
     return floodFilledObjects
+
+
+def alignmentOfGeometry(geometry):
+    minX = geometry.bounds[0]
+    minY = geometry.bounds[1]
+    maxX = geometry.bounds[2]
+    maxY = geometry.bounds[3]
+    if maxY - minY > maxX - minX:
+        return Alignment.northSouth
+    else:
+        return Alignment.westEast

@@ -10,6 +10,22 @@ class BlockBorderGraph(CensusContainer):
         self.__easternChildBlocks = []
         self.__southernChildBlocks = []
 
+    @property
+    def northernChildBlocks(self):
+        return self.__northernChildBlocks
+
+    @property
+    def westernChildBlocks(self):
+        return self.__westernChildBlocks
+
+    @property
+    def easternChildBlocks(self):
+        return self.__easternChildBlocks
+
+    @property
+    def southernChildBlocks(self):
+        return self.__southernChildBlocks
+
     def updateBlockContainerData(self):
         super(BlockBorderGraph, self).updateBlockContainerData()
         self.__findBorderBlocks()
