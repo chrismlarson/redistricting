@@ -52,8 +52,12 @@ def updateAllBlockContainersData():
 
 
 def removeWaterBlocksFromAllRedistrictingGroups():
-    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
-        redistrictingGroup.removeWaterBlocks()
+    tqdm.write('\n')
+    tqdm.write('*** Removing Water Blocks From All Redistricting Groups ***')
+    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
+        for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+            redistrictingGroup.removeWaterBlocks()
+            pbar.update(1)
 
 
 def splitNonContiguousRedistrictingGroups():
