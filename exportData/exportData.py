@@ -69,4 +69,5 @@ def loadDataFromFileWithDescription(censusYear, stateName, descriptionOfInfo):
 def loadDataFromFile(filePath):
     with open(filePath, 'rb') as file:
         data = pickle.load(file)
+        tqdm.write('*** Loaded: {0} ***'.format(filePath))
     return data
