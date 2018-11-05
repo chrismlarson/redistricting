@@ -1,5 +1,6 @@
 import math
 
+from exportData.displayShapes import plotBlocksForRedistrictingGroups
 from formatData.blockBorderGraph import BlockBorderGraph
 from geographyHelper import alignmentOfGeometry, Alignment
 
@@ -46,7 +47,7 @@ def cutDistrictIntoRatio(district, aRatio, bRatio, populationDeviation):
     else:
         startingRedistrictingGroupSet = district.northernChildBlocks
 
-    
+    plotBlocksForRedistrictingGroups(redistrictingGroups=startingRedistrictingGroupSet, showDistrictNeighborConnections=True)
 
     idealDistrictASize = int(district.population / aRatio)
     idealDistrictBSize = int(district.population / bRatio)

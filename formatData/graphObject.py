@@ -37,6 +37,10 @@ class GraphObject:
         return self.__southernNeighbors
 
     @property
+    def allNeighbors(self):
+        return self.__northernNeighbors + self.__westernNeighbors + self.__easternNeighbors + self.__southernNeighbors
+
+    @property
     def directionSets(self):
         return [self.northernNeighbors,
                 self.westernNeighbors,
