@@ -1,5 +1,6 @@
 from shapely.geometry import mapping
-from os import path
+from os import path, makedirs
+import glob
 import pickle
 from tqdm import tqdm
 # import fiona
@@ -27,13 +28,35 @@ import sys
 #                 'properties': {'id': id},
 #             })
 
+def saveDataToDirectoryWithDescription(data, censusYear, stateName, descriptionOfInfo):
+    directoryPath = path.expanduser('~/Documents/{0}-{1}-{2}Info'.format(censusYear, stateName, descriptionOfInfo))
+    if not path.exists(directoryPath):
+        makedirs(directoryPath)
+    count = 1
+    for dataChunk in data:
+        filePath = '{0}/{1:09}.redistdata'.format(directoryPath, count)
+        saveDataToFile(data=dataChunk, filePath=filePath)
+        count += 1
 
-def saveDataToFile(data, censusYear, stateName, descriptionOfInfo):
-    sys.setrecursionlimit(100000)
+
+def saveDataToFileWithDescription(data, censusYear, stateName, descriptionOfInfo):
     filePath = path.expanduser('~/Documents/{0}-{1}-{2}Info.redistdata'.format(censusYear, stateName, descriptionOfInfo))
+    saveDataToFile(data=data, filePath=filePath)
+
+
+def saveDataToFile(data, filePath):
+    sys.setrecursionlimit(100000)
     with open(filePath, 'wb') as file:
         pickle.dump(data, file, protocol=pickle.HIGHEST_PROTOCOL)
     tqdm.write('*** Saved: {0} ***'.format(filePath))
+
+
+def loadDataFromDirectoryWithDescription(censusYear, stateName, descriptionOfInfo):
+    directoryPath = path.expanduser('~/Documents/{0}-{1}-{2}Info'.format(censusYear, stateName, descriptionOfInfo))
+    data = []
+    for fileName in glob.glob('{0}/*.redistdata'.format(directoryPath)):
+        data.append(loadDataFromFile(fileName))
+    return data
 
 
 def loadDataFromFileWithDescription(censusYear, stateName, descriptionOfInfo):
