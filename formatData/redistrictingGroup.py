@@ -91,21 +91,22 @@ def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
 
 def attachOrphanRedistrictingGroupsToClosestNeighbor():
     contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
+    while len(contiguousRegions) > 1:
+        for isolatedRegion in contiguousRegions:
+            closestRegion = findClosestGeometry(originGeometry=isolatedRegion,
+                                                otherGeometries=[region for region in contiguousRegions if
+                                                                 region is not isolatedRegion])
 
-    for isolatedRegion in contiguousRegions:
-        closestRegion = findClosestGeometry(originGeometry=isolatedRegion,
-                                            otherGeometries=[region for region in contiguousRegions if
-                                                             region is not isolatedRegion])
+            closestGroupInIsolatedRegion = findClosestGeometry(originGeometry=closestRegion,
+                                                               otherGeometries=isolatedRegion)
+            closestGroupInClosestRegion = findClosestGeometry(originGeometry=isolatedRegion,
+                                                              otherGeometries=closestRegion)
 
-        closestGroupInIsolatedRegion = findClosestGeometry(originGeometry=closestRegion,
-                                                           otherGeometries=isolatedRegion)
-        closestGroupInClosestRegion = findClosestGeometry(originGeometry=isolatedRegion,
-                                                          otherGeometries=closestRegion)
-
-        # these two may already be neighbors from a previous iteration of this loop, so we check
-        if not closestGroupInIsolatedRegion.isNeighbor(closestGroupInClosestRegion):
-            closestGroupInIsolatedRegion.addNeighbors(neighbors=[closestGroupInClosestRegion])
-            closestGroupInClosestRegion.addNeighbors(neighbors=[closestGroupInIsolatedRegion])
+            # these two may already be neighbors from a previous iteration of this loop, so we check
+            if not closestGroupInIsolatedRegion.isNeighbor(closestGroupInClosestRegion):
+                closestGroupInIsolatedRegion.addNeighbors(neighbors=[closestGroupInClosestRegion])
+                closestGroupInClosestRegion.addNeighbors(neighbors=[closestGroupInIsolatedRegion])
+        contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
 
 
 def assignNeighboringRedistrictingGroupsForAllRedistrictingGroups():
