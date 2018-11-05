@@ -54,7 +54,9 @@ def saveDataToFile(data, filePath):
 def loadDataFromDirectoryWithDescription(censusYear, stateName, descriptionOfInfo):
     directoryPath = path.expanduser('~/Documents/{0}-{1}-{2}Info'.format(censusYear, stateName, descriptionOfInfo))
     data = []
-    for fileName in glob.glob('{0}/*.redistdata'.format(directoryPath)):
+    redistFilesInDirectory = glob.glob('{0}/*.redistdata'.format(directoryPath))
+    redistFilesInDirectory.sort()
+    for fileName in redistFilesInDirectory:
         data.append(loadDataFromFile(fileName))
     return data
 
