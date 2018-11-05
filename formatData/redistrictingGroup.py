@@ -1,3 +1,4 @@
+from exportData.displayShapes import plotBlocksForRedistrictingGroups
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
@@ -140,7 +141,10 @@ def convertAllCensusBlocksToAtomicBlocks():
 def validateAllRedistrictingGroups():
     contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
     if len(contiguousRegions) > 1:
-        raise ValueError("Don't have a contiguous set of RedictingGroups")
+        for eachRegion in contiguousRegions:
+            plotBlocksForRedistrictingGroups(redistrictingGroups=eachRegion,
+                                             showDistrictNeighborConnections=True)
+        raise ValueError("Don't have a contiguous set of RedictingGroups. There are {0} distinct groups".format(len(contiguousRegions)))
 
     for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
         redistrictingGroup.validateNeighborLists()
