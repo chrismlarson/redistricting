@@ -13,7 +13,7 @@ descriptionToWorkWith = 'All'
 censusData = loadDataFromFileWithDescription(censusYear=censusYear,
                                              stateName=stateInfo.name,
                                              descriptionOfInfo='{0}Block'.format(descriptionToWorkWith))
-redistrictingGroupList = createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData=censusData[0])
+redistrictingGroupList = createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData=censusData)
 # exportGeographiesToShapefile(geographyList=AtomicBlock.atomicBlockList, descriptionOfInfo='AtomicGroups')
 saveDataToDirectoryWithDescription(data=redistrictingGroupList,
                               censusYear=censusYear,
