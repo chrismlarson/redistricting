@@ -4,7 +4,7 @@ import math
 from esridump.dumper import EsriDumper
 import time
 from censusData import apiKeys
-from exportData.exportData import saveDataToFile
+from exportData.exportData import saveDataToFileWithDescription
 
 
 def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf, specificCountiesOnly=None):
@@ -145,17 +145,17 @@ def allGeoDataForEachCounty(existingCountyData):
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
 censusYear = 2010
+descriptionToWorkWith = 'All'
 
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
-countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf,
-                                    specificCountiesOnly={'Charlevoix'})
+countyInfoList = getCountiesInState(stateFIPSCode=stateInfo.fips, maxNumberOfCounties=math.inf)
 allCountyGeosInState = allGeoDataForEachCounty(existingCountyData=countyInfoList)
 # save county data to file
-saveDataToFile(data=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-               descriptionOfInfo='CharlevoixCounty')
+saveDataToFileWithDescription(data=allCountyGeosInState, censusYear=censusYear, stateName=stateInfo.name,
+                              descriptionOfInfo='{0}County'.format(descriptionToWorkWith))
 
 allBlocksInState = getAllBlocksInState(countyList=countyInfoList)
 allBlockGeosInState = allGeoDataForEachBlock(countyInfoList=countyInfoList, existingBlockData=allBlocksInState)
 # save block data to file
-saveDataToFile(data=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name,
-               descriptionOfInfo='CharlevoixBlock')
+saveDataToFileWithDescription(data=allBlockGeosInState, censusYear=censusYear, stateName=stateInfo.name,
+                              descriptionOfInfo='{0}Block'.format(descriptionToWorkWith))
