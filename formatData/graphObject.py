@@ -1,14 +1,25 @@
 from geographyHelper import findDirectionOfShapeFromPoint, CardinalDirection
+from operator import itemgetter
 
 
 class GraphObject:
     def __init__(self, centerOfObject):
+        self.graphId = getNextUniqueId()
+        GraphObject.graphObjectDict[self.graphId] = self
         self.__northernNeighbors = []
         self.__westernNeighbors = []
         self.__easternNeighbors = []
         self.__southernNeighbors = []
         self.populationEnergy = 0
         self.updateCenterOfObject(centerOfObject)
+
+    graphObjectDict = {}
+
+
+    def __setstate__(self, state):
+        GraphObject.graphObjectDict[state['graphId']] = self
+        self.__dict__ = state
+
 
     @property
     def hasNeighbors(self):
@@ -22,23 +33,23 @@ class GraphObject:
 
     @property
     def northernNeighbors(self):
-        return self.__northernNeighbors
+        return list(itemgetter(*self.__northernNeighbors)(GraphObject.graphObjectDict))
 
     @property
     def westernNeighbors(self):
-        return self.__westernNeighbors
+        return list(itemgetter(*self.__westernNeighbors)(GraphObject.graphObjectDict))
 
     @property
     def easternNeighbors(self):
-        return self.__easternNeighbors
+        return list(itemgetter(*self.__easternNeighbors)(GraphObject.graphObjectDict))
 
     @property
     def southernNeighbors(self):
-        return self.__southernNeighbors
+        return list(itemgetter(*self.__southernNeighbors)(GraphObject.graphObjectDict))
 
     @property
     def allNeighbors(self):
-        return self.__northernNeighbors + self.__westernNeighbors + self.__easternNeighbors + self.__southernNeighbors
+        return self.northernNeighbors + self.westernNeighbors + self.easternNeighbors + self.southernNeighbors
 
     @property
     def directionSets(self):
@@ -73,13 +84,13 @@ class GraphObject:
 
     def addNeighbor(self, graphObject, direction):
         if direction == CardinalDirection.north:
-            self.__northernNeighbors.append(graphObject)
+            self.__northernNeighbors.append(graphObject.graphId)
         elif direction == CardinalDirection.west:
-            self.__westernNeighbors.append(graphObject)
+            self.__westernNeighbors.append(graphObject.graphId)
         elif direction == CardinalDirection.east:
-            self.__easternNeighbors.append(graphObject)
+            self.__easternNeighbors.append(graphObject.graphId)
         elif direction == CardinalDirection.south:
-            self.__southernNeighbors.append(graphObject)
+            self.__southernNeighbors.append(graphObject.graphId)
 
 
     def validateNeighborLists(self):
@@ -87,3 +98,8 @@ class GraphObject:
         for directionSet in directionSets:
             if len(directionSet) != len(set(directionSet)):
                 raise ValueError('Found a duplicate neighbor for GraphObject:{0}'.format(directionSet))
+
+def getNextUniqueId():
+    if GraphObject.graphObjectDict:
+        return max(GraphObject.graphObjectDict.keys()) + 1
+    return 0
