@@ -30,13 +30,15 @@ class AtomicBlock(CensusContainer, GraphObject):
         return all(block.isWater for block in self.children)
 
 
-    def assignNeighborBlocksFromCandiateBlocks(self, candidateBlocks):
-        neighborBlocks = []
-        for candidateBlock in candidateBlocks:
-            if candidateBlock is not self:
-                if intersectingGeometries(self, candidateBlock):
-                    neighborBlocks.append(candidateBlock)
-        self.addNeighbors(neighbors=neighborBlocks)
+def assignNeighborBlocksFromCandiateBlocks(block, candidateBlocks, progressObject=None):
+    neighborBlocks = []
+    for candidateBlock in candidateBlocks:
+        if candidateBlock is not block:
+            if intersectingGeometries(block, candidateBlock):
+                neighborBlocks.append(candidateBlock)
+    block.addNeighbors(neighbors=neighborBlocks)
+    if progressObject:
+        progressObject.update(1)
 
 
 def createAtomicBlockFromCensusBlock(censusBlock):

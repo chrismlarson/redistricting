@@ -1,9 +1,12 @@
 from exportData.displayShapes import plotBlocksForRedistrictingGroups
-from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks
+from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
+    assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries
 from censusData import censusBlock
+from multiprocessing.dummy import Pool
+from itertools import repeat
 from tqdm import tqdm
 
 
@@ -80,9 +83,14 @@ def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
         tqdm.write('    *** Assigning Neighbors To All Census Blocks for Redistricting Group {0} of {1} ***'
                    .format(count, len(RedistrictingGroup.redistrictingGroupList)))
         with tqdm(total=len(redistrictingGroup.children)) as pbar:
-            for atomicBlock in redistrictingGroup.children:
-                atomicBlock.assignNeighborBlocksFromCandiateBlocks(candidateBlocks=redistrictingGroup.children)
-                pbar.update(1)
+            threadPool = Pool(4)
+            threadPool.starmap(assignNeighborBlocksFromCandiateBlocks,
+                               zip(redistrictingGroup.children,
+                                   repeat(redistrictingGroup.children),
+                                   repeat(pbar)))
+            # for atomicBlock in redistrictingGroup.children:
+            #     atomicBlock.assignNeighborBlocksFromCandiateBlocks(candidateBlocks=redistrictingGroup.children)
+            #     pbar.update(1)
         count += 1
 
     # find single orphaned atomic blocks and attach them to the closest neighbor.
