@@ -1,5 +1,4 @@
 from geographyHelper import findDirectionOfShapeFromPoint, CardinalDirection
-from operator import itemgetter
 
 
 class GraphObject:
@@ -31,21 +30,22 @@ class GraphObject:
         else:
             return False
 
+
     @property
     def northernNeighbors(self):
-        return list(itemgetter(*self.__northernNeighbors)(GraphObject.graphObjectDict))
+        return [GraphObject.graphObjectDict[_] for _ in self.__northernNeighbors]
 
     @property
     def westernNeighbors(self):
-        return list(itemgetter(*self.__westernNeighbors)(GraphObject.graphObjectDict))
+        return [GraphObject.graphObjectDict[_] for _ in self.__westernNeighbors]
 
     @property
     def easternNeighbors(self):
-        return list(itemgetter(*self.__easternNeighbors)(GraphObject.graphObjectDict))
+        return [GraphObject.graphObjectDict[_] for _ in self.__easternNeighbors]
 
     @property
     def southernNeighbors(self):
-        return list(itemgetter(*self.__southernNeighbors)(GraphObject.graphObjectDict))
+        return [GraphObject.graphObjectDict[_] for _ in self.__southernNeighbors]
 
     @property
     def allNeighbors(self):
