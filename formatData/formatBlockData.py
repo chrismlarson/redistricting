@@ -25,7 +25,7 @@ redistrictingGroupList = loadDataFromDirectoryWithDescription(censusYear=censusY
                                                               descriptionOfInfo='{0}RedistrictingGroupPreGraph'.format(
                                                                   descriptionToWorkWith))
 
-RedistrictingGroup.redistrictingGroupList = redistrictingGroupList[0:24]
+RedistrictingGroup.redistrictingGroupList = redistrictingGroupList
 redistrictingGroupList = prepareGraphsForAllRedistrictingGroups()
 saveDataToDirectoryWithDescription(data=redistrictingGroupList,
                                    censusYear=censusYear,
@@ -40,4 +40,4 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                       stateName=stateInfo.name,
                                                       descriptionOfInfo='{0}RedistrictingGroup'.format(
                                                           descriptionToWorkWith))
-plotBlocksForRedistrictingGroups(redistrictingGroups=redistrictingGroups, showPopulationCounts=True, showDistrictNeighborConnections=True)
+plotBlocksForRedistrictingGroups(redistrictingGroups=redistrictingGroups, showDistrictNeighborConnections=True)
