@@ -5,7 +5,7 @@ from redistrict.district import createDistrictFromRedistrictingGroups, splitDist
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
 censusYear = 2010
-descriptionToWorkWith = 'Charlevoix'
+descriptionToWorkWith = 'All'
 
 
 redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
