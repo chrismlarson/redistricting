@@ -41,32 +41,58 @@ When most people discuss competitive voting districts, they are referring to dis
 * It further ingrains just those two parties into our political system
 * At what cost do we create competitive districts? If people choose to live with like-minded individuals, that's their choice.
    * This is an attempt to remove unnatural non-competitiveness. Not combat the so-called [Big Sort](http://www.thebigsort.com/home.php).
+   
+#### Other population distribution algorithms
+These are similar to this experiment's proposed solution. They all eliminate any bias that may arise when using demographic data, which makes them good solutions in their own right. But there are still some issues with each that can be addressed.
+
+##### Shortest-splitline
+[The rules of this algorithm](https://en.wikipedia.org/wiki/Gerrymandering#Shortest_splitline_algorithm) use only the population distribution and geographic shape of the state to create district maps.
+
+But problems arise when finding districts in densely populated urban areas. It tends to break them up indiscriminately. [Examples can be found here.](https://rangevoting.org/SplitLR.html)
+
+##### Shortest average distance to center
+This algorithm uses US Census blocks to creates districts where people have the lowest average distance to the center of their district.
+
+As far as I understand this method (correct me if I'm wrong): The primary advantage of this method is that it creates fairly round and compact districts. Which the shortest travel times for constituents. It still has the same problem of potentially breaking up larger populations. That is mitigated by an element of randomness, which leads to a human choosing from a result set for the best maps. This introduces some bias into the system.
+
+[A great explanation of the process can be found here.](https://bdistricting.com/about.html)
 
 ## Proposed Solution
-Evenly split a state into a set number of districts by using county lines and population borders while keeping districts as compact as possible.
+Evenly split a state into a set number of districts by using county lines and population borders while keeping districts as compact as possible. Splitting is done by finding the lowest population paths through each county.
 
 ### Rules we will follow
 
 #### Keep communities together
-By using the [2010 US Census data](https://www2.census.gov/census_2010/04-Summary_File_1/Michigan/), this experiment will break up each state (starting with Michigan) into individual census blocks (the smallest population Census unit). With those blocks, form a population density map. From that map, attempt to keep population groups together by creating paths through the population map that don't break up population dense areas.
+By using the [2010 US Census data](https://www2.census.gov/census_2010/04-Summary_File_1/Michigan/), this experiment will break up each state (starting with Michigan) into individual census blocks (the smallest population Census unit). With those blocks, form a population density map where each Census block knows its nearest neighboring blocks. Forming a state-wide population graph.
 
-The first attempts will start using [Dijkstra's_algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm). It's a method similar to those used in finding seams in [Seam Carving](https://en.wikipedia.org/wiki/Seam_carving#Computing_seams) (an image resizing method).
+The splits will use a form of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming)(an image resizing method). By finding the lowest population path through a group of Census blocks, it will avoid breaking apart communities.
 
-Hopefully by doing this maps will naturally comply with the Voting Rights Act, but as mentioned before, using demographics other than location can lead to bias. So this experiment won't be using any of that information. And will leave the evaluation of the maps under the Voting Rights Act to third parties after the fact. 
+Hopefully by doing this maps will naturally comply with the Voting Rights Act, but as mentioned before, using demographics other than location can lead to bias. So this experiment won't be using any of that information. And will leave the evaluation of the maps under the Voting Rights Act to third parties after map creation. 
 
-#### Use population borders
-Using only (in this order):
-* County lines
-* Community lines (mentioned above)
-* Census blocks
-
-Possibly others as the experiments progress (while adhering to the other rules).
-
-#### Keep districts as round as possible
+#### Use of population borders
+The algorithm starts with state county borders, an already familiar set of dividing lines to most constituents. And then will create its own split lines that will avoid population dense areas or communities. The smallest possible population group will be Census blocks.
+#### Keep districts as round or compact as possible
 Using the [Polsby-Popper Test](https://en.wikipedia.org/wiki/Polsby-Popper_Test) and setting a threshold. If a district doesn't meet that threshold, that electoral map won't be acceptable.
+
+### Technical process
+There are two main parts to this algorithm:
+* Creating districts from a set of groups of Census blocks
+* Breaking apart groups of Census blocks if the districts don't meet compactness and population requirements.
+(And the algorithm will repeat until the rules are met)
+
+When attempting to create districts, it recursively splits the state into districts of appropriately sized ratios and stops when the desired number of districts are created. The recursive splitting based on ratios is similar to the [shortest-splitline](#Shortest-splitline) method. But instead of trying to find a dividing line, it uses a [Forest Fire algorithm](https://en.wikipedia.org/wiki/Flood_fill#Alternative_implementations) to find candidate groups that most closely match the desired population ratio.
+
+If the population ratio cannot be met or the resulting district split doesn’t meet a roundness threshold, a selection of groups are split via the method of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming) that has been mentioned above.
 
 ### Potential problems
 The experiment results may break up rural areas more than urban areas, so we may need to find path that follow the edges of population dense areas. But in the theme of keeping this simple, we will first rely on the roundness/compactness tests first to overcome this challenge.
+
+## Results
+Coming soon.
+The population graph has been formed, but the district forming algorithm is still in progress.
+
+An example starting graph of Michigan:
+![Michigan](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/d367613e-19c3-40ff-9ef6-37483836da5e/11.08.2018-07.07.png)  
 
 ## Notes
 Notice that we are only using population maps to create the district maps
