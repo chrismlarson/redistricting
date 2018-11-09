@@ -1,6 +1,16 @@
 from matplotlib import pyplot, lines
+import matplotlib._color_data as colorData
 from descartes import PolygonPatch
 
+blueColor = '#6699cc'
+greenColor = '#66cc78'
+purpleColor = '#b266cc'
+grayColor = '#636363'
+font = {'family': 'serif',
+            'color': grayColor,
+            'weight': 'normal',
+            'size': 6,
+            }
 
 def plotBlocksForRedistrictingGroup(redistrictingGroup, showPopulationCounts=False):
     plotBlocksForRedistrictingGroups([redistrictingGroup], showPopulationCounts)
@@ -10,18 +20,9 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
                                      showPopulationCounts=False,
                                      showDistrictNeighborConnections=False,
                                      showBlockNeighborConnections=False):
-    blueColor = '#6699cc'
-    greenColor = '#66cc78'
-    purpleColor = '#b266cc'
-    grayColor = '#636363'
     fig = pyplot.figure()
     ax = fig.gca()
 
-    font = {'family': 'serif',
-            'color': grayColor,
-            'weight': 'normal',
-            'size': 6,
-            }
     for redistrictingGroup in redistrictingGroups:
         if showDistrictNeighborConnections:
             for neighborGroup in redistrictingGroup.allNeighbors:
@@ -48,6 +49,36 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
 
     ax.axis('scaled')
     pyplot.show()
+
+def plotRedistrictingGroups(redistrictingGroups,
+                                     showPopulationCounts=False,
+                                     showDistrictNeighborConnections=False):
+    fig = pyplot.figure()
+    ax = fig.gca()
+
+    colorIndex = 0
+    for redistrictingGroup in redistrictingGroups:
+        if showDistrictNeighborConnections:
+            for neighborGroup in redistrictingGroup.allNeighbors:
+                if neighborGroup in redistrictingGroups:
+                    ax.add_line(getLineForPair(redistrictingGroup, neighborGroup, grayColor))
+
+        ax.add_patch(PolygonPatch(redistrictingGroup.geometry, fc=getColor(colorIndex), ec=greenColor, alpha=0.5, zorder=2))
+
+        if showPopulationCounts:
+            centerOfGroup = redistrictingGroup.geometry.centroid
+            ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=redistrictingGroup.population, fontdict=font)
+        colorIndex += 1
+
+    ax.axis('scaled')
+    pyplot.show()
+
+
+def getColor(index):
+    colorList = list(colorData.XKCD_COLORS.values())
+    if index >= len(colorList):
+        index -= len(colorList)
+    return colorList[index]
 
 
 def getLineForPair(a, b, color):
