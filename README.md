@@ -17,11 +17,13 @@ Using Michigan as an example. In the 2012 election (after the last round of redi
 It certainly doesn't look correct that Democratic candidates could have been voted for in stronger numbers, but won 4 fewer seats. These voters aren't being accurately represented in Congress. 
 
 #### Redistricting is biased when done by humans
-Gerrymandering is a practice that has historically been used to defend incumbents. But more recently, it has been used more effectively to lock in US congressional control.
+Gerrymandering is a practice that has historically been used to defend incumbents. But more recently, it has been used more effectively than ever to lock in control at the all levels of government in the US.
 
-More advanced practices of using gender, race, age, buying habits, and party affiliation.
+Modern computing has enabled more advanced practices of using gender, race, age, buying habits, and party affiliation.
 
-Even using the Voting Rights Act has been used as an excuse for creating districts.
+Even well meaning legislation like the Voting Rights Act has been used as an excuse for creating biased districts.
+
+**When more variables are used for redistricting, there is greater risk of misuse of the data.**
 
 #### Both the Democratic and Republican parties have gerrymandered 
 While the current Republican control of most states is currently responsible for most of the gerrymandering around the country, it has been used by both parties in the past.
@@ -71,6 +73,7 @@ Hopefully by doing this maps will naturally comply with the Voting Rights Act, b
 
 #### Use of population borders
 The algorithm starts with state county borders, an already familiar set of dividing lines to most constituents. And then will create its own split lines that will avoid population dense areas or communities. The smallest possible population group will be Census blocks.
+
 #### Keep districts as round or compact as possible
 Using the [Polsby-Popper Test](https://en.wikipedia.org/wiki/Polsby-Popper_Test) and setting a threshold. If a district doesn't meet that threshold, that electoral map won't be acceptable.
 
