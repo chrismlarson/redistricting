@@ -1,4 +1,5 @@
 from us import states
+from exportData.displayShapes import plotDistrict
 from exportData.exportData import saveDataToFile, loadDataFromFileWithDescription
 from redistrict.district import createDistrictFromRedistrictingGroups, splitDistrict
 
@@ -14,5 +15,6 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                           descriptionToWorkWith))
 
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
+plotDistrict(district=initialDistrict, showDistrictNeighborConnections=True, colorDirectionalGroups=True)
 districts = splitDistrict(districtToSplit=initialDistrict, numberOfDistricts=14, populationDeviation=1)
 temp=0

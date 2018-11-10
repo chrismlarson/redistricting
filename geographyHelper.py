@@ -1,4 +1,4 @@
-from shapely.geometry import shape, mapping, MultiPolygon
+from shapely.geometry import shape, mapping, MultiPolygon, LineString
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import cascaded_union
 from enum import Enum
@@ -107,6 +107,34 @@ def findDirectionOfShapeFromPoint(basePoint, targetShape):
     return direction
 
 
+def findDirectionOfShapesInRect(rect, targetShapes):
+    rectPoints = list(rect.exterior.coords)
+    northernLine = LineString([rectPoints[0], rectPoints[1]])
+    easternLine = LineString([rectPoints[1], rectPoints[2]])
+    southernLine = LineString([rectPoints[2], rectPoints[3]])
+    westernLine = LineString([rectPoints[3], rectPoints[4]])
+    directionalLines = [northernLine, easternLine, southernLine, westernLine]
+
+    directionOfShapes = []
+    for targetShape in targetShapes:
+        closestShape = findClosestGeometry(originGeometry=targetShape, otherGeometries=directionalLines)
+        direction = None
+        if closestShape is northernLine:
+            direction = CardinalDirection.north
+        elif closestShape is easternLine:
+            direction = CardinalDirection.east
+        elif closestShape is southernLine:
+            direction = CardinalDirection.south
+        elif closestShape is westernLine:
+            direction = CardinalDirection.west
+        directionOfShapes.append((targetShape, direction))
+    return directionOfShapes
+
+    # targetPoint = targetShape.centroid
+    # direction = findDirection(basePoint=basePoint, targetPoint=targetPoint)
+    # return direction
+
+
 def shapelyGeometryToGeoJSON(geometry):
     geoDict = mapping(geometry)
     geoString = dumps(geoDict)
@@ -116,11 +144,15 @@ def shapelyGeometryToGeoJSON(geometry):
 def distanceBetweenGeometries(a, b):
     if type(a) is list:
         a = geometryFromMultipleGeometries(a)
+    elif isinstance(a, BaseGeometry):
+        a = a
     else:
         a = a.geometry
 
     if type(b) is list:
         b = geometryFromMultipleGeometries(b)
+    elif isinstance(b, BaseGeometry):
+        b = b
     else:
         b = b.geometry
     return a.distance(b)
