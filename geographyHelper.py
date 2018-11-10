@@ -1,4 +1,5 @@
-from shapely.geometry import shape, mapping, MultiPolygon, LineString
+from shapely.geometry import shape, mapping, MultiPolygon, LineString, MultiLineString
+from shapely.ops import shared_paths
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import cascaded_union
 from enum import Enum
@@ -14,6 +15,8 @@ from json import dumps
 #     main(['install', path])
 # install_whl("path_to_file\\Shapely-1.6.4.post1-cp37-cp37m-win32.whl")
 # but not sure if this worked...
+from exportData.displayShapes import plotRedistrictingGroups
+
 
 def convertGeoJSONToShapely(geoJSON):
     shapelyShape = shape(geoJSON)
@@ -51,7 +54,11 @@ def isBoundaryGeometry(parent, child):
 
 def geometryFromMultipleGeometries(geometryList):
     polygons = [geometry.geometry for geometry in geometryList]
-    union = cascaded_union(polygons)
+    return geometryFromMultiplePolygons(polygons)
+
+
+def geometryFromMultiplePolygons(polygonList):
+    union = cascaded_union(polygonList)
     union = union.simplify(tolerance=0.0) #to remove excessive points
     return union
 
@@ -107,32 +114,28 @@ def findDirectionOfShapeFromPoint(basePoint, targetShape):
     return direction
 
 
-def findDirectionOfShapesInRect(rect, targetShapes):
-    rectPoints = list(rect.exterior.coords)
-    northernLine = LineString([rectPoints[0], rectPoints[1]])
-    easternLine = LineString([rectPoints[1], rectPoints[2]])
-    southernLine = LineString([rectPoints[2], rectPoints[3]])
-    westernLine = LineString([rectPoints[3], rectPoints[4]])
-    directionalLines = [northernLine, easternLine, southernLine, westernLine]
-
+def findDirectionOfBorderShapes(parentShape, targetShapes):
     directionOfShapes = []
+    parentLines = getLineListFromBoundary(parentShape.geometry.boundary)
     for targetShape in targetShapes:
-        closestShape = findClosestGeometry(originGeometry=targetShape, otherGeometries=directionalLines)
-        direction = None
-        if closestShape is northernLine:
-            direction = CardinalDirection.north
-        elif closestShape is easternLine:
-            direction = CardinalDirection.east
-        elif closestShape is southernLine:
-            direction = CardinalDirection.south
-        elif closestShape is westernLine:
-            direction = CardinalDirection.west
+        edgesInCommon = []
+        for parentLine in parentLines:
+            targetLines = getLineListFromBoundary(targetShape.geometry.boundary)
+            for targetLine in targetLines:
+                edgesInCommon.append(shared_paths(parentLine, targetLine))
+        commomEdgeShape = geometryFromMultiplePolygons(edgesInCommon)
+        direction = findDirectionOfShape(baseShape=targetShape.geometry.centroid, targetShape=commomEdgeShape)
         directionOfShapes.append((targetShape, direction))
     return directionOfShapes
 
-    # targetPoint = targetShape.centroid
-    # direction = findDirection(basePoint=basePoint, targetPoint=targetPoint)
-    # return direction
+
+def getLineListFromBoundary(boundary):
+    lineList = []
+    if type(boundary) is MultiLineString:
+        lineList = boundary.geoms
+    elif type(boundary) is LineString:
+        lineList.append(boundary)
+    return lineList
 
 
 def shapelyGeometryToGeoJSON(geometry):
