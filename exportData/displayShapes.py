@@ -85,9 +85,13 @@ def plotRedistrictingGroups(redistrictingGroups,
 def plotDistrict(district,
                  showPopulationCounts=False,
                  showDistrictNeighborConnections=False,
+                 showDistrictEnvelope=False,
                  colorDirectionalGroups=False):
     fig = pyplot.figure()
     ax = fig.gca()
+
+    if showDistrictEnvelope:
+        ax.add_patch(PolygonPatch(district.geometry.envelope, fc=grayColor, ec=grayColor, alpha=0.2, zorder=1))
 
     colorIndex = 0
     for redistrictingGroup in district.children:
