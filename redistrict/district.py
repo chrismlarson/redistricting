@@ -2,7 +2,7 @@ import math
 
 from exportData.displayShapes import plotRedistrictingGroups
 from formatData.blockBorderGraph import BlockBorderGraph
-from geographyHelper import alignmentOfGeometry, Alignment
+from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection
 
 
 class District(BlockBorderGraph):
@@ -39,15 +39,14 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
 
 
 def cutDistrictIntoRatio(district, aRatio, bRatio, populationDeviation):
-    longestDirection = alignmentOfGeometry(district.geometry)
-    startingRedistrictingGroupSet = []
+    longestDirection = alignmentOfPolygon(district.geometry)
 
-    if longestDirection == Alignment.northSouth:
-        startingRedistrictingGroupSet = district.northernChildBlocks
-    else:
-        startingRedistrictingGroupSet = district.westernChildBlocks
+    # if longestDirection == Alignment.northSouth:
+    #     startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.north)
+    # else:
+    startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.west)
 
-    plotRedistrictingGroups(redistrictingGroups=startingRedistrictingGroupSet, showDistrictNeighborConnections=True)
+    plotRedistrictingGroups(redistrictingGroups=[startingGroup], showDistrictNeighborConnections=True)
 
     idealDistrictASize = int(district.population / aRatio)
     idealDistrictBSize = int(district.population / bRatio)

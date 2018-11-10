@@ -3,7 +3,7 @@ from shapely.ops import shared_paths
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import cascaded_union
 from enum import Enum
-from math import atan2, degrees, pi
+from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians
 from json import dumps
 
 
@@ -114,7 +114,7 @@ def findDirectionOfShapeFromPoint(basePoint, targetShape):
     return direction
 
 
-def findDirectionOfBorderShapes(parentShape, targetShapes):
+def findDirectionOfBorderGeometries(parentShape, targetShapes):
     directionOfShapes = []
     parentLines = getLineListFromBoundary(parentShape.geometry.boundary)
     for targetShape in targetShapes:
@@ -127,6 +127,17 @@ def findDirectionOfBorderShapes(parentShape, targetShapes):
         direction = findDirectionOfShape(baseShape=targetShape.geometry.centroid, targetShape=commomEdgeShape)
         directionOfShapes.append((targetShape, direction))
     return directionOfShapes
+
+
+def mostCardinalOfGeometries(geometryList, direction):
+    if direction is CardinalDirection.north:
+        return max(geometryList, key=lambda geometry: geometry.geometry.bounds[3])
+    elif direction is CardinalDirection.east:
+        return max(geometryList, key=lambda geometry: geometry.geometry.bounds[2])
+    elif direction is CardinalDirection.south:
+        return min(geometryList, key=lambda geometry: geometry.geometry.bounds[1])
+    elif direction is CardinalDirection.west:
+        return min(geometryList, key=lambda geometry: geometry.geometry.bounds[0])
 
 
 def getLineListFromBoundary(boundary):
@@ -202,12 +213,39 @@ def floodFillGraphObject(remainingObjects):
     return floodFilledObjects
 
 
-def alignmentOfGeometry(geometry):
-    minX = geometry.bounds[0]
-    minY = geometry.bounds[1]
-    maxX = geometry.bounds[2]
-    maxY = geometry.bounds[3]
-    if maxY - minY > maxX - minX:
+def alignmentOfPolygon(polygon):
+    minX = polygon.bounds[0]
+    minY = polygon.bounds[1]
+    maxX = polygon.bounds[2]
+    maxY = polygon.bounds[3]
+    boxDimensions = getWidthAndHeightOfBoxOnEarth(minX=minX, minY=minY, maxX=maxX, maxY=maxY)
+    if boxDimensions[0] < boxDimensions[1]:
         return Alignment.northSouth
     else:
         return Alignment.westEast
+
+
+def getWidthAndHeightOfBoxOnEarth(minX, minY, maxX, maxY):
+    aWidth = getDistanceBetweenLatLong(lat1=minY, lon1=maxX, lat2=maxY, lon2=maxX)
+    bWidth = getDistanceBetweenLatLong(lat1=minY, lon1=minX, lat2=maxY, lon2=minX)
+    maxWidth = max(aWidth, bWidth)
+    aHeight = getDistanceBetweenLatLong(lat1=minX, lon1=maxY, lat2=maxX, lon2=maxY)
+    bHeight = getDistanceBetweenLatLong(lat1=minX, lon1=minY, lat2=maxX, lon2=minY)
+    maxHeight = max(aHeight, bHeight)
+    return (maxWidth, maxHeight)
+
+
+def getDistanceBetweenLatLong(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great circle distance between two points
+    on the earth (specified in decimal degrees)
+    """
+    # convert decimal degrees to radians
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    # haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+    c = 2 * asin(sqrt(a))
+    km = 6371 * c
+    return km

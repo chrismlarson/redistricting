@@ -15,6 +15,6 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                           descriptionToWorkWith))
 
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
-plotDistrict(district=initialDistrict, showDistrictNeighborConnections=True, colorDirectionalGroups=True)
+plotDistrict(district=initialDistrict, showDistrictNeighborConnections=True, showDistrictEnvelope=True, colorDirectionalGroups=True)
 districts = splitDistrict(districtToSplit=initialDistrict, numberOfDistricts=14, populationDeviation=1)
 temp=0

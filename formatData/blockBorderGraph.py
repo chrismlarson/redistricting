@@ -1,4 +1,4 @@
-from geographyHelper import isBoundaryGeometry, findDirectionOfBorderShapes, CardinalDirection
+from geographyHelper import isBoundaryGeometry, findDirectionOfBorderGeometries, CardinalDirection
 from formatData.censusContainer import CensusContainer
 
 
@@ -26,6 +26,10 @@ class BlockBorderGraph(CensusContainer):
     def southernChildBlocks(self):
         return self.__southernChildBlocks
 
+    @property
+    def borderChildren(self):
+        return self.northernChildBlocks + self.westernChildBlocks + self.easternChildBlocks + self.southernChildBlocks
+
     def updateBlockContainerData(self):
         super(BlockBorderGraph, self).updateBlockContainerData()
         self.__findBorderBlocks()
@@ -46,7 +50,7 @@ class BlockBorderGraph(CensusContainer):
             if isBoundaryGeometry(parent=self, child=block):
                 borderBlocks.append(block)
         if len(borderBlocks) > 0:
-            blockDirections = findDirectionOfBorderShapes(parentShape=self, targetShapes=borderBlocks)
+            blockDirections = findDirectionOfBorderGeometries(parentShape=self, targetShapes=borderBlocks)
             for blockDirection in blockDirections:
                 self.__addBorderBlocks(block=blockDirection[0], direction=blockDirection[1])
 
