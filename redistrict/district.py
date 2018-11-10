@@ -1,8 +1,8 @@
 import math
-
-from exportData.displayShapes import plotRedistrictingGroups
+from exportData.displayShapes import plotDistrictCandidates
 from formatData.blockBorderGraph import BlockBorderGraph
-from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection
+from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
+    floodFillGraphObject
 
 
 class District(BlockBorderGraph):
@@ -27,7 +27,8 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
 
     aRatio = math.floor(numberOfDistricts / 2)
     bRatio = math.ceil(numberOfDistricts / 2)
-    cutDistricts = cutDistrictIntoRatio(districtToSplit, aRatio, bRatio, populationDeviation)
+    ratio = (aRatio, bRatio)
+    cutDistricts = cutDistrictIntoRatio(districtToSplit, ratio, populationDeviation)
 
     aDistricts = splitDistrict(cutDistricts[0], aRatio, populationDeviation)
     bDistricts = splitDistrict(cutDistricts[1], bRatio, populationDeviation)
@@ -38,7 +39,7 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
     return districts
 
 
-def cutDistrictIntoRatio(district, aRatio, bRatio, populationDeviation):
+def cutDistrictIntoRatio(district, ratio, populationDeviation):
     longestDirection = alignmentOfPolygon(district.geometry)
 
     if longestDirection == Alignment.northSouth:
@@ -46,11 +47,24 @@ def cutDistrictIntoRatio(district, aRatio, bRatio, populationDeviation):
     else:
         startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.west)
 
-    plotRedistrictingGroups(redistrictingGroups=[startingGroup], showDistrictNeighborConnections=True)
+    ratioTotal = ratio[0] + ratio[1]
+    idealDistrictASize = int(district.population / (ratioTotal / ratio[0]))
+    idealDistrictBSize = int(district.population / (ratioTotal / ratio[1]))
 
-    idealDistrictASize = int(district.population / aRatio)
-    idealDistrictBSize = int(district.population / bRatio)
-    # while not all([math.isclose(district.population, idealDistrictASize, abs_tol=populationDeviation)
-    #                for district in districts]):
-    #     temp = 0
+    def withinIdealDistrictSize(currentGroups, candidateGroup):
+        currentPop = sum(group.population for group in currentGroups)
+        return currentPop + candidateGroup.population <= idealDistrictASize
+
+    candidateDistrictA = floodFillGraphObject(candidateObjects=district.children,
+                                              startingObject=startingGroup,
+                                              condition=withinIdealDistrictSize)
+    candidateDistrictB = [group for group in district.children if group not in candidateDistrictA]
+
+    candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
+    candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
+
+    plotDistrictCandidates(districtCandidates=[candidateDistrictA, candidateDistrictB],
+                           showPopulationCounts=True,
+                           showDistrictNeighborConnections=True)
+
     raise NotImplementedError('cutDistrictIntoRatio')

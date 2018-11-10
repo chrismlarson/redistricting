@@ -6,7 +6,6 @@ from enum import Enum
 from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians
 from json import dumps
 
-
 # On Windows, I needed to install Shapely manually
 # Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 # And then ran:
@@ -42,7 +41,8 @@ def doesGeographyContainTheOther(container, target):
     containsTargetBoundary = False
     for containerPolygon in containerPolygons:
         if containerPolygon.interiors:
-            containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(target.geometry.boundary)
+            containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(
+                target.geometry.boundary)
         else:
             containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target.geometry)
     return containsTargetBoundary
@@ -59,7 +59,7 @@ def geometryFromMultipleGeometries(geometryList):
 
 def geometryFromMultiplePolygons(polygonList):
     union = cascaded_union(polygonList)
-    union = union.simplify(tolerance=0.0) #to remove excessive points
+    union = union.simplify(tolerance=0.0)  # to remove excessive points
     return union
 
 
@@ -188,27 +188,35 @@ def findContiguousGroupsOfGraphObjects(graphObjects):
         remainingObjects = graphObjects.copy()
         contiguousObjectGroups = []
         while len(remainingObjects) > 0:
-            contiguousObjectGroups.append(floodFillGraphObject(remainingObjects=remainingObjects))
+            contiguousObjectGroups.append(
+                floodFillGraphObject(candidateObjects=remainingObjects, removeCandidates=True))
         return contiguousObjectGroups
     else:
         return []
 
 
-def floodFillGraphObject(remainingObjects):
+def floodFillGraphObject(candidateObjects, removeCandidates=False, startingObject=None, condition=lambda x, y: True):
     floodFilledObjects = []
     floodQueue = []
-    floodQueue.append(remainingObjects[0])
+    if removeCandidates:
+        remainingObjects = candidateObjects
+    else:
+        remainingObjects = candidateObjects.copy()
+    if not startingObject:
+        startingObject = remainingObjects[0]
+    floodQueue.append(startingObject)
 
     while len(floodQueue) > 0:
         graphObject = floodQueue.pop(0)
         remainingObjects.remove(graphObject)
-        floodFilledObjects.append(graphObject)
+        if condition(floodFilledObjects, graphObject):
+            floodFilledObjects.append(graphObject)
 
-        directionSets = graphObject.directionSets
-        for directionSet in directionSets:
-            for neighborObject in directionSet:
-                if neighborObject in remainingObjects and neighborObject not in floodQueue:
-                    floodQueue.append(neighborObject)
+            directionSets = graphObject.directionSets
+            for directionSet in directionSets:
+                for neighborObject in directionSet:
+                    if neighborObject in remainingObjects and neighborObject not in floodQueue:
+                        floodQueue.append(neighborObject)
 
     return floodFilledObjects
 

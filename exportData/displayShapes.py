@@ -93,7 +93,6 @@ def plotDistrict(district,
     if showDistrictEnvelope:
         ax.add_patch(PolygonPatch(district.geometry.envelope, fc=grayColor, ec=grayColor, alpha=0.2, zorder=1))
 
-    colorIndex = 0
     for redistrictingGroup in district.children:
         if showDistrictNeighborConnections:
             for neighborGroup in redistrictingGroup.allNeighbors:
@@ -114,6 +113,31 @@ def plotDistrict(district,
         if showPopulationCounts:
             centerOfGroup = redistrictingGroup.geometry.centroid
             ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=redistrictingGroup.population, fontdict=font)
+
+    ax.axis('scaled')
+    pyplot.show()
+
+
+def plotDistrictCandidates(districtCandidates,
+                           showPopulationCounts=False,
+                           showDistrictNeighborConnections=False):
+    fig = pyplot.figure()
+    ax = fig.gca()
+
+    colorIndex = 0
+    for districtCandidate in districtCandidates:
+        for redistrictingGroup in districtCandidate:
+            if showDistrictNeighborConnections:
+                for neighborGroup in redistrictingGroup.allNeighbors:
+                    ax.add_line(getLineForPair(redistrictingGroup, neighborGroup, grayColor))
+
+            ax.add_patch(
+                PolygonPatch(redistrictingGroup.geometry, fc=getColor(colorIndex), ec=getColor(colorIndex), alpha=0.5,
+                             zorder=2))
+
+            if showPopulationCounts:
+                centerOfGroup = redistrictingGroup.geometry.centroid
+                ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=redistrictingGroup.population, fontdict=font)
         colorIndex += 1
 
     ax.axis('scaled')
