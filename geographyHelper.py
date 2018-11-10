@@ -3,7 +3,7 @@ from shapely.ops import shared_paths
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import cascaded_union
 from enum import Enum
-from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians
+from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
 from json import dumps
 
 # On Windows, I needed to install Shapely manually
@@ -189,36 +189,63 @@ def findContiguousGroupsOfGraphObjects(graphObjects):
         contiguousObjectGroups = []
         while len(remainingObjects) > 0:
             contiguousObjectGroups.append(
-                floodFillGraphObject(candidateObjects=remainingObjects, removeCandidates=True))
+                forestFireFillGraphObject(candidateObjects=remainingObjects))
         return contiguousObjectGroups
     else:
         return []
 
 
-def floodFillGraphObject(candidateObjects, removeCandidates=False, startingObject=None, condition=lambda x, y: True):
-    floodFilledObjects = []
-    floodQueue = []
-    if removeCandidates:
-        remainingObjects = candidateObjects
-    else:
-        remainingObjects = candidateObjects.copy()
+def forestFireFillGraphObject(candidateObjects):
+    fireFilledObjects = []
+    fireQueue = []
+    fireQueue.append(candidateObjects[0])
+
+    while len(fireQueue) > 0:
+        graphObject = fireQueue.pop(0)
+        candidateObjects.remove(graphObject)
+        fireFilledObjects.append(graphObject)
+
+        directionSets = graphObject.directionSets
+        for directionSet in directionSets:
+            for neighborObject in directionSet:
+                if neighborObject in candidateObjects and neighborObject not in fireQueue:
+                    fireQueue.append(neighborObject)
+
+    return fireFilledObjects
+
+
+def weightedForestFireFillGraphObject(candidateObjects, startingObject=None, condition=lambda x, y: True,
+                                      weightingScore=lambda x, y: 1):
+    fireFilledObjects = []
+    fireQueue = []
+    remainingObjects = candidateObjects.copy()
     if not startingObject:
         startingObject = remainingObjects[0]
-    floodQueue.append(startingObject)
+    fireQueue.append(startingObject)
 
-    while len(floodQueue) > 0:
-        graphObject = floodQueue.pop(0)
+    while len(fireQueue) > 0:
+        graphObject = fireQueue.pop(0)
         remainingObjects.remove(graphObject)
-        if condition(floodFilledObjects, graphObject):
-            floodFilledObjects.append(graphObject)
+        if condition(fireFilledObjects, graphObject):
+            fireFilledObjects.append(graphObject)
 
+            # add to the queue
             directionSets = graphObject.directionSets
             for directionSet in directionSets:
                 for neighborObject in directionSet:
-                    if neighborObject in remainingObjects and neighborObject not in floodQueue:
-                        floodQueue.append(neighborObject)
+                    if neighborObject in remainingObjects and neighborObject not in fireQueue:
+                        fireQueue.append(neighborObject)
 
-    return floodFilledObjects
+            # apply weights
+            weightedQueue = []
+            for queueObject in fireQueue:
+                weightedQueue.append((queueObject, weightingScore(fireFilledObjects, queueObject)))
+
+            # sort queue
+            weightedQueue.sort(key=lambda x: x[1], reverse=True)
+            fireQueue = [x[0] for x in weightedQueue]
+
+    return fireFilledObjects
 
 
 def alignmentOfPolygon(polygon):
@@ -257,3 +284,8 @@ def getDistanceBetweenLatLong(lat1, lon1, lat2, lon2):
     c = 2 * asin(sqrt(a))
     km = 6371 * c
     return km
+
+
+def polsbyPopperScoreOfPolygon(polygon):
+    # score= 4 * pi() * (area/(perimeter^2))
+    return 4 * pi * (polygon.area / (pow(polygon.length, 2)))

@@ -2,7 +2,7 @@ import math
 from exportData.displayShapes import plotDistrictCandidates
 from formatData.blockBorderGraph import BlockBorderGraph
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
-    floodFillGraphObject
+    weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, geometryFromMultipleGeometries
 
 
 class District(BlockBorderGraph):
@@ -43,7 +43,8 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
     longestDirection = alignmentOfPolygon(district.geometry)
 
     if longestDirection == Alignment.northSouth:
-        startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.north)
+        startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren,
+                                                 direction=CardinalDirection.north)
     else:
         startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.west)
 
@@ -55,9 +56,16 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
         currentPop = sum(group.population for group in currentGroups)
         return currentPop + candidateGroup.population <= idealDistrictASize
 
-    candidateDistrictA = floodFillGraphObject(candidateObjects=district.children,
-                                              startingObject=startingGroup,
-                                              condition=withinIdealDistrictSize)
+    def polsbyPopperScoreOfCombinedGeometry(currentGroups, candidateGroup):
+        geos = currentGroups + [candidateGroup]
+        combinedShape = geometryFromMultipleGeometries(geos)
+        score = polsbyPopperScoreOfPolygon(combinedShape)
+        return score
+
+    candidateDistrictA = weightedForestFireFillGraphObject(candidateObjects=district.children,
+                                                           startingObject=startingGroup,
+                                                           condition=withinIdealDistrictSize,
+                                                           weightingScore=polsbyPopperScoreOfCombinedGeometry)
     candidateDistrictB = [group for group in district.children if group not in candidateDistrictA]
 
     candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
