@@ -95,7 +95,11 @@ Coming soon.
 The population graph has been formed, but the district forming algorithm is still in progress.
 
 An example starting graph of Michigan:
-![Michigan](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/d367613e-19c3-40ff-9ef6-37483836da5e/11.08.2018-07.07.png)  
+![Michigan](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/d367613e-19c3-40ff-9ef6-37483836da5e/11.08.2018-07.07.png)
+
+Start of the forest Fire fill to find district candidates to feed the recursive splitting (even split of the state here):
+![sadf](https://content.screencast.com/media/8f5d0093-d96b-4246-b895-d0617519003d_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-10_13-40-37.png)
+Still need to evaluate candidates for compactness.  
 
 ## Notes
 Notice that we are only using population maps to create the district maps
