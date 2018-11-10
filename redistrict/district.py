@@ -41,10 +41,10 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
 def cutDistrictIntoRatio(district, aRatio, bRatio, populationDeviation):
     longestDirection = alignmentOfPolygon(district.geometry)
 
-    # if longestDirection == Alignment.northSouth:
-    #     startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.north)
-    # else:
-    startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.west)
+    if longestDirection == Alignment.northSouth:
+        startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.north)
+    else:
+        startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.west)
 
     plotRedistrictingGroups(redistrictingGroups=[startingGroup], showDistrictNeighborConnections=True)
 
