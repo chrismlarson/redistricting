@@ -31,7 +31,7 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
     districts = []
 
     if numberOfDistricts == 1:
-        return districtToSplit
+        return [districtToSplit]
 
     aRatio = math.floor(numberOfDistricts / 2)
     bRatio = math.ceil(numberOfDistricts / 2)
