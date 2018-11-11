@@ -38,8 +38,8 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
     ratio = (aRatio, bRatio)
     cutDistricts = cutDistrictIntoRatio(districtToSplit, ratio, populationDeviation)
 
-    aDistricts = splitDistrict(cutDistricts[0], aRatio, populationDeviation)
-    bDistricts = splitDistrict(cutDistricts[1], bRatio, populationDeviation)
+    aDistricts = splitDistrict(District(childrenGroups=cutDistricts[0]), aRatio, populationDeviation)
+    bDistricts = splitDistrict(District(childrenGroups=cutDistricts[1]), bRatio, populationDeviation)
 
     districts.extend(aDistricts)
     districts.extend(bDistricts)
@@ -114,4 +114,4 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
                            showPopulationCounts=True,
                            showDistrictNeighborConnections=True)
 
-    raise NotImplementedError('cutDistrictIntoRatio')
+    return (candidateDistrictA, candidateDistrictB)
