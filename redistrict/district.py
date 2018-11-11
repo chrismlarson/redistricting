@@ -95,21 +95,18 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
         if len(contiguousGroups) <= 1: #candidate won't block any other groups
             return (False, None)
         else:
-            #check to see if all neighbors of candidate block will still fit in district
-            candidateNeighbors = [neighbor for neighbor in candidateGroup.borderChildren
-                                  if neighbor in remainingGroups + ignoredGroups]
-            neighborPop = sum(group.population for group in candidateNeighbors)
-
-            #find the contiguous group with the largest population and remove it from population calculations
+            #find the contiguous group with largest population and remove from calculations
+            #we want to see if the smallest contiguous groups will still meet the ideal size
             contiguousGroups.sort(key=lambda x: sum(group.population for group in x), reverse=True)
             contiguousGroups.remove(contiguousGroups[0])
+
             isolatedGroups = [group
                               for groupList in contiguousGroups
                               for group in groupList]
             isolatedGroupsPop = sum(group.population for group in isolatedGroups)
 
             currentPop = sum(group.population for group in currentGroups)
-            potentialPop = currentPop + neighborPop + isolatedGroupsPop
+            potentialPop = currentPop + isolatedGroupsPop + candidateGroup.population
 
             if potentialPop <= idealDistrictASize:
                 return (False, isolatedGroups)
