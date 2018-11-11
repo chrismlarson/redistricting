@@ -76,7 +76,8 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
 
     def contiguousGroupsInReminaingGroups(remainingGroups, ignoredGroups, currentGroups, queuedGroups, candidateGroup):
         contiguousGroups = findContiguousGroupsOfGraphObjects(graphObjects=remainingGroups + ignoredGroups)
-        if len(contiguousGroups) is 1: #candidate won't block any other groups
+        # todo: there might be something wrong when len(contiguousGroups) == 0
+        if len(contiguousGroups) <= 1: #candidate won't block any other groups
             return (False, None)
         else:
             #check to see if all neighbors of candidate block will still fit in district
