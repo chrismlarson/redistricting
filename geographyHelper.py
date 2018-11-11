@@ -117,19 +117,29 @@ def findDirectionOfShapeFromPoint(basePoint, targetShape):
     return direction
 
 
+def findCommonEdges(a,b):
+    aLines = getLineListFromBoundary(a.boundary)
+    edgesInCommon = []
+    for aLine in aLines:
+        bLines = getLineListFromBoundary(b.boundary)
+        for bLine in bLines:
+            edgesInCommon.append(shared_paths(aLine, bLine))
+
+    edgesInCommon = [edge for edge in edgesInCommon if not edge.is_empty]
+    return edgesInCommon
+
+
 def findDirectionOfBorderGeometries(parentShape, targetShapes):
     directionOfShapes = []
-    parentLines = getLineListFromBoundary(parentShape.geometry.boundary)
     for targetShape in targetShapes:
-        edgesInCommon = []
-        for parentLine in parentLines:
-            targetLines = getLineListFromBoundary(targetShape.geometry.boundary)
-            for targetLine in targetLines:
-                edgesInCommon.append(shared_paths(parentLine, targetLine))
+        edgesInCommon = findCommonEdges(parentShape.geometry, targetShape.geometry)
+
+        if not edgesInCommon: #means we intersect only at a point
+            edgesInCommon = parentShape.geometry.boundary.intersection(targetShape.geometry.boundary)
+
         commomEdgeShape = geometryFromMultiplePolygons(edgesInCommon)
-        if not all(edge.is_empty for edge in edgesInCommon):
-            direction = findDirectionOfShape(baseShape=targetShape.geometry.centroid, targetShape=commomEdgeShape)
-            directionOfShapes.append((targetShape, direction))
+        direction = findDirectionOfShape(baseShape=targetShape.geometry.centroid, targetShape=commomEdgeShape)
+        directionOfShapes.append((targetShape, direction))
     return directionOfShapes
 
 
