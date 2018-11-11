@@ -127,8 +127,9 @@ def findDirectionOfBorderGeometries(parentShape, targetShapes):
             for targetLine in targetLines:
                 edgesInCommon.append(shared_paths(parentLine, targetLine))
         commomEdgeShape = geometryFromMultiplePolygons(edgesInCommon)
-        direction = findDirectionOfShape(baseShape=targetShape.geometry.centroid, targetShape=commomEdgeShape)
-        directionOfShapes.append((targetShape, direction))
+        if not all(edge.is_empty for edge in edgesInCommon):
+            direction = findDirectionOfShape(baseShape=targetShape.geometry.centroid, targetShape=commomEdgeShape)
+            directionOfShapes.append((targetShape, direction))
     return directionOfShapes
 
 
