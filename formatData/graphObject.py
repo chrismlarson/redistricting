@@ -93,6 +93,22 @@ class GraphObject:
             self.__southernNeighbors.append(graphObject.graphId)
 
 
+    def removeNeighbors(self, neighbors):
+        for neighbor in neighbors:
+            for northernNeighbor in self.northernNeighbors:
+                if neighbor is northernNeighbor:
+                    self.__northernNeighbors.remove(neighbor.graphId)
+            for westernNeighbor in self.westernNeighbors:
+                if neighbor is westernNeighbor:
+                    self.__westernNeighbors.remove(neighbor.graphId)
+            for easternNeighbor in self.easternNeighbors:
+                if neighbor is easternNeighbor:
+                    self.__easternNeighbors.remove(neighbor.graphId)
+            for southernNeighbor in self.southernNeighbors:
+                if neighbor is southernNeighbor:
+                    self.__southernNeighbors.remove(neighbor.graphId)
+
+
     def validateNeighborLists(self):
         directionSets = self.directionSets
         for directionSet in directionSets:

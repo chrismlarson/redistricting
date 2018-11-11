@@ -10,9 +10,16 @@ class District(BlockBorderGraph):
     def __init__(self, childrenGroups):
         BlockBorderGraph.__init__(self)
         self.children = childrenGroups
+        self.removeOutdatedNeighborConnections()
         District.districtList.append(self)
 
     districtList = []
+
+    def removeOutdatedNeighborConnections(self):
+        for child in self.children:
+            outdatedNeighborConnections = [neighbor for neighbor in child.allNeighbors if neighbor not in self.children]
+            if outdatedNeighborConnections:
+                child.removeNeighbors(outdatedNeighborConnections)
 
 
 def createDistrictFromRedistrictingGroups(redistrictingGroups):
