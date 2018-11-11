@@ -2,7 +2,8 @@ import math
 from exportData.displayShapes import plotDistrictCandidates
 from formatData.blockBorderGraph import BlockBorderGraph
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
-    weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, geometryFromMultipleGeometries
+    weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, geometryFromMultipleGeometries, \
+    findContiguousGroupsOfGraphObjects
 
 
 class District(BlockBorderGraph):
@@ -62,10 +63,38 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
         score = polsbyPopperScoreOfPolygon(combinedShape)
         return score
 
+    def contiguousGroupsInReminaingGroups(remainingGroups, ignoredGroups, currentGroups, queuedGroups, candidateGroup):
+        contiguousGroups = findContiguousGroupsOfGraphObjects(graphObjects=remainingGroups + ignoredGroups)
+        if len(contiguousGroups) is 1: #candidate won't block any other groups
+            return (False, None)
+        else:
+            #check to see if all neighbors of candidate block will still fit in district
+            candidateNeighbors = [neighbor for neighbor in candidateGroup.borderChildren
+                                  if neighbor in remainingGroups + ignoredGroups]
+            neighborPop = sum(group.population for group in candidateNeighbors)
+
+            contiguousGroups.remove(contiguousGroups[0])
+            isolatedGroups = [group
+                              for groupList in contiguousGroups
+                              for group in groupList]
+            isolatedGroupsPop = sum(group.population for group in isolatedGroups)
+
+            currentPop = sum(group.population for group in currentGroups)
+            potentialPop = currentPop + neighborPop + isolatedGroupsPop
+
+            # if candidateGroup not in queuedGroups:
+            #     potentialPop += candidateGroup.population
+
+            if potentialPop <= idealDistrictASize:
+                return (False, isolatedGroups)
+            else:
+                return (True, None)
+
     candidateDistrictA = weightedForestFireFillGraphObject(candidateObjects=district.children,
                                                            startingObject=startingGroup,
                                                            condition=withinIdealDistrictSize,
-                                                           weightingScore=polsbyPopperScoreOfCombinedGeometry)
+                                                           weightingScore=polsbyPopperScoreOfCombinedGeometry,
+                                                           ignoreCondition=contiguousGroupsInReminaingGroups)
     candidateDistrictB = [group for group in district.children if group not in candidateDistrictA]
 
     candidateDistrictAPop = sum(group.population for group in candidateDistrictA)

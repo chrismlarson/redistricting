@@ -3,7 +3,7 @@ from shapely.ops import shared_paths
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import cascaded_union
 from enum import Enum
-from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
+from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow, inf
 from json import dumps
 
 # On Windows, I needed to install Shapely manually
@@ -214,9 +214,13 @@ def forestFireFillGraphObject(candidateObjects):
     return fireFilledObjects
 
 
-def weightedForestFireFillGraphObject(candidateObjects, startingObject=None, condition=lambda x, y: True,
+def weightedForestFireFillGraphObject(candidateObjects,
+                                      startingObject=None,
+                                      condition=lambda x, y: True,
+                                      ignoreCondition=lambda v, w, x, y, z: (False, None),
                                       weightingScore=lambda x, y: 1):
     fireFilledObjects = []
+    ignoredObjects = []
     fireQueue = []
     remainingObjects = candidateObjects.copy()
     if not startingObject:
@@ -226,24 +230,35 @@ def weightedForestFireFillGraphObject(candidateObjects, startingObject=None, con
     while len(fireQueue) > 0:
         graphObject = fireQueue.pop(0)
         remainingObjects.remove(graphObject)
-        if condition(fireFilledObjects, graphObject):
-            fireFilledObjects.append(graphObject)
+        ignore = ignoreCondition(remainingObjects, ignoredObjects, fireFilledObjects, fireQueue, graphObject)
+        if ignore[0]:
+            ignoredObjects.append(graphObject)
+        else:
+            if condition(fireFilledObjects, graphObject):
+                fireFilledObjects.append(graphObject)
+                if ignoredObjects:
+                    remainingObjects = remainingObjects + ignoredObjects
+                    ignoredObjects = []
 
-            # add to the queue
-            directionSets = graphObject.directionSets
-            for directionSet in directionSets:
-                for neighborObject in directionSet:
-                    if neighborObject in remainingObjects and neighborObject not in fireQueue:
-                        fireQueue.append(neighborObject)
+                # add to the queue
+                directionSets = graphObject.directionSets
+                for directionSet in directionSets:
+                    for neighborObject in directionSet:
+                        if neighborObject in remainingObjects and neighborObject not in fireQueue:
+                            fireQueue.append(neighborObject)
 
-            # apply weights
-            weightedQueue = []
-            for queueObject in fireQueue:
-                weightedQueue.append((queueObject, weightingScore(fireFilledObjects, queueObject)))
+                # apply weights
+                weightedQueue = []
+                for queueObject in fireQueue:
+                    weightScore = weightingScore(fireFilledObjects, queueObject)
+                    if ignore[1]:
+                        if queueObject in ignore[1]:
+                            weightScore = inf
+                    weightedQueue.append((queueObject, weightScore))
 
-            # sort queue
-            weightedQueue.sort(key=lambda x: x[1], reverse=True)
-            fireQueue = [x[0] for x in weightedQueue]
+                # sort queue
+                weightedQueue.sort(key=lambda x: x[1], reverse=True)
+                fireQueue = [x[0] for x in weightedQueue]
 
     return fireFilledObjects
 
