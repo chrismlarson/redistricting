@@ -52,8 +52,11 @@ def isBoundaryGeometry(parent, child):
     return parent.geometry.boundary.intersects(child.geometry.boundary)
 
 
-def geometryFromMultipleGeometries(geometryList):
-    polygons = [geometry.geometry for geometry in geometryList]
+def geometryFromMultipleGeometries(geometryList, useEnvelope=False):
+    if useEnvelope:
+        polygons = [geometry.geometry.envelope for geometry in geometryList]
+    else:
+        polygons = [geometry.geometry for geometry in geometryList]
     return geometryFromMultiplePolygons(polygons)
 
 

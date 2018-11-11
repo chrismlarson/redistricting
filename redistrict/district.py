@@ -59,10 +59,10 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
 
     def polsbyPopperScoreOfCombinedGeometry(currentGroups, remainingGroups, candidateGroup):
         geos = currentGroups + [candidateGroup]
-        combinedShape = geometryFromMultipleGeometries(geos)
+        combinedShape = geometryFromMultipleGeometries(geos, useEnvelope=True) #todo: consider not using env in final
         score = polsbyPopperScoreOfPolygon(combinedShape)
 
-        combinedRemainingShape = geometryFromMultipleGeometries(remainingGroups)
+        combinedRemainingShape = geometryFromMultipleGeometries(remainingGroups, useEnvelope=True)
         remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingShape)
 
         return score + remainingScore
