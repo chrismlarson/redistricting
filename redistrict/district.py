@@ -1,5 +1,5 @@
 import math
-from exportData.displayShapes import plotDistrictCandidates
+from exportData.displayShapes import plotDistrictCandidates, plotRedistrictingGroups
 from formatData.blockBorderGraph import BlockBorderGraph
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, geometryFromMultipleGeometries, \
@@ -15,11 +15,27 @@ class District(BlockBorderGraph):
 
     districtList = []
 
+
+    def updateBlockContainerData(self):
+        super(District, self).updateBlockContainerData()
+        #todo: re-enable once the contiguous bug is fixed
+        #validateContiguousRedistrictingGroups(self.children)
+
+
     def removeOutdatedNeighborConnections(self):
         for child in self.children:
             outdatedNeighborConnections = [neighbor for neighbor in child.allNeighbors if neighbor not in self.children]
             if outdatedNeighborConnections:
                 child.removeNeighbors(outdatedNeighborConnections)
+
+def validateContiguousRedistrictingGroups(groupList):
+    contiguousRegions = findContiguousGroupsOfGraphObjects(groupList)
+    if len(contiguousRegions) > 1:
+        nonContiguousDistrict = [item for sublist in contiguousRegions for item in sublist]
+        plotRedistrictingGroups(redistrictingGroups=nonContiguousDistrict,
+                                         showDistrictNeighborConnections=True)
+        raise ValueError("Don't have a contiguous set of RedictingGroups. There are {0} distinct groups".format(
+            len(contiguousRegions)))
 
 
 def createDistrictFromRedistrictingGroups(redistrictingGroups):
@@ -75,9 +91,14 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
         return score + remainingScore
 
     def contiguousGroupsInReminaingGroups(remainingGroups, ignoredGroups, currentGroups, queuedGroups, candidateGroup):
+        if len(remainingGroups + ignoredGroups) == 0:
+            return (False, None)
+
         contiguousGroups = findContiguousGroupsOfGraphObjects(graphObjects=remainingGroups + ignoredGroups)
         # todo: there might be something wrong when len(contiguousGroups) == 0
         if len(contiguousGroups) <= 1: #candidate won't block any other groups
+            if len(contiguousGroups) == 0:
+                temp=0
             return (False, None)
         else:
             #check to see if all neighbors of candidate block will still fit in district
@@ -111,8 +132,8 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
     candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
     candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
 
-    plotDistrictCandidates(districtCandidates=[candidateDistrictA, candidateDistrictB],
-                           showPopulationCounts=True,
-                           showDistrictNeighborConnections=True)
+    # plotDistrictCandidates(districtCandidates=[candidateDistrictA, candidateDistrictB],
+    #                        showPopulationCounts=True,
+    #                        showDistrictNeighborConnections=True)
 
     return (candidateDistrictA, candidateDistrictB)

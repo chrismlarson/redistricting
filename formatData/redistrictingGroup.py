@@ -9,6 +9,8 @@ from multiprocessing.dummy import Pool
 from itertools import repeat
 from tqdm import tqdm
 
+from redistrict.district import validateContiguousRedistrictingGroups
+
 
 class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def __init__(self, childrenBlocks):
@@ -147,12 +149,7 @@ def convertAllCensusBlocksToAtomicBlocks():
 
 
 def validateAllRedistrictingGroups():
-    contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
-    if len(contiguousRegions) > 1:
-        for eachRegion in contiguousRegions:
-            plotBlocksForRedistrictingGroups(redistrictingGroups=eachRegion,
-                                             showDistrictNeighborConnections=True)
-        raise ValueError("Don't have a contiguous set of RedictingGroups. There are {0} distinct groups".format(len(contiguousRegions)))
+    validateContiguousRedistrictingGroups(RedistrictingGroup.redistrictingGroupList)
 
     for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
         redistrictingGroup.validateNeighborLists()
