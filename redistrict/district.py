@@ -77,6 +77,8 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
                                   if neighbor in remainingGroups + ignoredGroups]
             neighborPop = sum(group.population for group in candidateNeighbors)
 
+            #find the contiguous group with the largest population and remove it from population calculations
+            contiguousGroups.sort(key=lambda x: sum(group.population for group in x), reverse=True)
             contiguousGroups.remove(contiguousGroups[0])
             isolatedGroups = [group
                               for groupList in contiguousGroups
