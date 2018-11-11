@@ -171,10 +171,9 @@ def plotDistricts(districts,
 
 
 def getColor(index):
-    colorList = list(colorData.XKCD_COLORS.values())
-    if index >= len(colorList):
-        index -= len(colorList)
-    return colorList[index]
+    if index >= len(distinctColors):
+        index -= len(distinctColors)
+    return distinctColors[index]
 
 
 def getLineForPair(a, b, color):
@@ -184,3 +183,20 @@ def getLineForPair(a, b, color):
                         ydata=[aCenter.y, bCenter.y],
                         color=color,
                         linewidth=0.5)
+
+startingColors = [colorData.XKCD_COLORS['xkcd:cloudy blue'],
+                  colorData.XKCD_COLORS['xkcd:dark pastel green'],
+                  colorData.XKCD_COLORS['xkcd:liliac'],
+                  colorData.XKCD_COLORS['xkcd:saffron'],
+                  colorData.XKCD_COLORS['xkcd:light red'],
+                  colorData.XKCD_COLORS['xkcd:yellow'],
+                  colorData.XKCD_COLORS['xkcd:tan'],
+                  colorData.XKCD_COLORS['xkcd:cool blue'],
+                  colorData.XKCD_COLORS['xkcd:lime green'],
+                  colorData.XKCD_COLORS['xkcd:purple'],
+                  colorData.XKCD_COLORS['xkcd:orange'],
+                  colorData.XKCD_COLORS['xkcd:deep pink'],
+                  colorData.XKCD_COLORS['xkcd:eggshell'],
+                  colorData.XKCD_COLORS['xkcd:brownish yellow'],
+                  colorData.XKCD_COLORS['xkcd:twilight']]
+distinctColors = startingColors + [color for color in list(colorData.XKCD_COLORS.values()) if color not in startingColors]

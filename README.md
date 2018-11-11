@@ -101,7 +101,7 @@ Start of the Forest Fire fill to find district candidates to feed the recursive 
 ![Michigan Forest Fire Fill Even Split](https://content.screencast.com/media/cef9f5d8-9235-4af6-9b5b-c7607a913d1c_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-10_23-13-52.png)
 
 A complete Forest Fire fill with contiguous bugs
-![Buggy Fill](https://content.screencast.com/media/e8a18583-9de2-42d3-9270-d07455192807_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11_09-45-36%20copy.png)
+![Buggy Fill](https://content.screencast.com/media/a29abfdc-0ba4-4b07-afd4-dc165560a041_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11_12-58-47.png)
 
 
 ## Notes
