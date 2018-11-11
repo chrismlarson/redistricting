@@ -144,6 +144,32 @@ def plotDistrictCandidates(districtCandidates,
     pyplot.show()
 
 
+def plotDistricts(districts,
+                  showPopulationCounts=False,
+                  showDistrictNeighborConnections=False):
+    fig = pyplot.figure()
+    ax = fig.gca()
+
+    colorIndex = 0
+    for district in districts:
+        for redistrictingGroup in district.children:
+            if showDistrictNeighborConnections:
+                for neighborGroup in redistrictingGroup.allNeighbors:
+                    ax.add_line(getLineForPair(redistrictingGroup, neighborGroup, grayColor))
+
+            ax.add_patch(
+                PolygonPatch(redistrictingGroup.geometry, fc=getColor(colorIndex), ec=getColor(colorIndex), alpha=0.5,
+                             zorder=2))
+
+            if showPopulationCounts:
+                centerOfGroup = redistrictingGroup.geometry.centroid
+                ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=redistrictingGroup.population, fontdict=font)
+        colorIndex += 1
+
+    ax.axis('scaled')
+    pyplot.show()
+
+
 def getColor(index):
     colorList = list(colorData.XKCD_COLORS.values())
     if index >= len(colorList):
