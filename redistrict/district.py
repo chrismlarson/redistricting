@@ -57,11 +57,15 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
         currentPop = sum(group.population for group in currentGroups)
         return currentPop + candidateGroup.population <= idealDistrictASize
 
-    def polsbyPopperScoreOfCombinedGeometry(currentGroups, candidateGroup):
+    def polsbyPopperScoreOfCombinedGeometry(currentGroups, remainingGroups, candidateGroup):
         geos = currentGroups + [candidateGroup]
         combinedShape = geometryFromMultipleGeometries(geos)
         score = polsbyPopperScoreOfPolygon(combinedShape)
-        return score
+
+        combinedRemainingShape = geometryFromMultipleGeometries(remainingGroups)
+        remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingShape)
+
+        return score + remainingScore
 
     def contiguousGroupsInReminaingGroups(remainingGroups, ignoredGroups, currentGroups, queuedGroups, candidateGroup):
         contiguousGroups = findContiguousGroupsOfGraphObjects(graphObjects=remainingGroups + ignoredGroups)
@@ -81,9 +85,6 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
 
             currentPop = sum(group.population for group in currentGroups)
             potentialPop = currentPop + neighborPop + isolatedGroupsPop
-
-            # if candidateGroup not in queuedGroups:
-            #     potentialPop += candidateGroup.population
 
             if potentialPop <= idealDistrictASize:
                 return (False, isolatedGroups)

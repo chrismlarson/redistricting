@@ -218,7 +218,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                                       startingObject=None,
                                       condition=lambda x, y: True,
                                       ignoreCondition=lambda v, w, x, y, z: (False, None),
-                                      weightingScore=lambda x, y: 1):
+                                      weightingScore=lambda x, y, z: 1):
     fireFilledObjects = []
     ignoredObjects = []
     fireQueue = []
@@ -250,7 +250,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                 # apply weights
                 weightedQueue = []
                 for queueObject in fireQueue:
-                    weightScore = weightingScore(fireFilledObjects, queueObject)
+                    weightScore = weightingScore(fireFilledObjects, remainingObjects, queueObject)
                     if ignore[1]:
                         if queueObject in ignore[1]:
                             weightScore = inf
