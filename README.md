@@ -67,7 +67,7 @@ Evenly split a state into a set number of districts by using county lines and po
 #### Keep communities together
 By using the [2010 US Census data](https://www2.census.gov/census_2010/04-Summary_File_1/Michigan/), this experiment will break up each state (starting with Michigan) into individual census blocks (the smallest population Census unit). With those blocks, form a population density map where each Census block knows its nearest neighboring blocks. Forming a state-wide population graph.
 
-The splits will use a form of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming)(an image resizing method). By finding the lowest population path through a group of Census blocks, it will avoid breaking apart communities.
+The splits will use a form of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming)(an image analyzing method used for content-aware resizing). By finding the lowest population path through a group of Census blocks, it will avoid breaking apart communities.
 
 Hopefully by doing this maps will naturally comply with the Voting Rights Act, but as mentioned before, using demographics other than location can lead to bias. So this experiment won't be using any of that information. And will leave the evaluation of the maps under the Voting Rights Act to third parties after map creation. 
 
@@ -95,16 +95,17 @@ The experiment results may break up rural areas more than urban areas, so we may
 
 ## Results
 Coming soon.
-The population graph has been formed, but the district forming algorithm is still in progress.
+The population graph has been formed, but the district forming algorithm is still in progress. **The examples shown below are just with a weighted Forest Fire fill and still need the split method mentioned above.**
 
 An example starting graph of Michigan:
 ![Michigan](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/d367613e-19c3-40ff-9ef6-37483836da5e/11.08.2018-07.07.png)
 
 Start of the Forest Fire fill to find district candidates to feed the recursive splitting (even split of the state here) sorting by compactness:
-![Michigan Forest Fire Fill Even Split](https://content.screencast.com/media/cef9f5d8-9235-4af6-9b5b-c7607a913d1c_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-10_23-13-52.png)
+![Michigan Forest Fire Fill Even Split](https://content.screencast.com/media/77ae5ae2-19aa-4e94-a87b-c817396cdac5_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11_22-46-49.png)
+There are some issues here to fix with the neighbor links.
 
-A complete Forest Fire fill with contiguous bugs
-![Buggy Fill](https://content.screencast.com/media/7db020f4-dbd0-4614-a27e-11e8651db361_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11_15-09-55.png)
+A complete Forest Fire fill without breaking up counties:
+![Forest Fire Fill - No Breaking](https://content.screencast.com/media/0325738e-d73c-47ba-a678-f1619fa38b3b_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11_22-35-32.png)
 
 
 

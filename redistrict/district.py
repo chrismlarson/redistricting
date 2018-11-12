@@ -53,13 +53,17 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
     aRatio = math.floor(numberOfDistricts / 2)
     bRatio = math.ceil(numberOfDistricts / 2)
     ratio = (aRatio, bRatio)
+
     cutDistricts = cutDistrictIntoRatio(districtToSplit, ratio, populationDeviation)
 
-    aDistricts = splitDistrict(District(childrenGroups=cutDistricts[0]), aRatio, populationDeviation)
-    bDistricts = splitDistrict(District(childrenGroups=cutDistricts[1]), bRatio, populationDeviation)
+    # todo: remove when splits are using the breaking up logic
+    if len(cutDistricts[0]) != 0:
+        aDistricts = splitDistrict(District(childrenGroups=cutDistricts[0]), aRatio, populationDeviation)
+        districts.extend(aDistricts)
 
-    districts.extend(aDistricts)
-    districts.extend(bDistricts)
+    if len(cutDistricts[1]) != 0:
+        bDistricts = splitDistrict(District(childrenGroups=cutDistricts[1]), bRatio, populationDeviation)
+        districts.extend(bDistricts)
 
     return districts
 
@@ -69,11 +73,25 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
     # plotDistrict(district, showPopulationCounts=True, showDistrictNeighborConnections=True)
     longestDirection = alignmentOfPolygon(district.geometry)
 
+
+    northernStartingCandidate = mostCardinalOfGeometries(geometryList=district.borderChildren,
+                                             direction=CardinalDirection.north)
+    westernStartingCandidate = mostCardinalOfGeometries(geometryList=district.borderChildren,
+                                             direction=CardinalDirection.west)
+    easternStartingCandidate = mostCardinalOfGeometries(geometryList=district.borderChildren,
+                                             direction=CardinalDirection.east)
+    southernStartingCandidate = mostCardinalOfGeometries(geometryList=district.borderChildren,
+                                             direction=CardinalDirection.south)
     if longestDirection == Alignment.northSouth:
-        startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren,
-                                                 direction=CardinalDirection.north)
+        startingGroupCandidates = (northernStartingCandidate,
+                                   southernStartingCandidate,
+                                   westernStartingCandidate,
+                                   easternStartingCandidate)
     else:
-        startingGroup = mostCardinalOfGeometries(geometryList=district.borderChildren, direction=CardinalDirection.west)
+        startingGroupCandidates = (westernStartingCandidate,
+                                   easternStartingCandidate,
+                                   northernStartingCandidate,
+                                   southernStartingCandidate)
 
     ratioTotal = ratio[0] + ratio[1]
     idealDistrictASize = int(district.population / (ratioTotal / ratio[0]))
@@ -93,11 +111,14 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
         remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingShape)
 
         return score + remainingScore
-
-    candidateDistrictA = weightedForestFireFillGraphObject(candidateObjects=district.children,
-                                                           startingObject=startingGroup,
-                                                           condition=withinIdealDistrictSize,
-                                                           weightingScore=polsbyPopperScoreOfCombinedGeometry)
+    candidateDistrictA = []
+    i = 0
+    while not candidateDistrictA and i <= 3:
+        candidateDistrictA = weightedForestFireFillGraphObject(candidateObjects=district.children,
+                                                               startingObject=startingGroupCandidates[i],
+                                                               condition=withinIdealDistrictSize,
+                                                               weightingScore=polsbyPopperScoreOfCombinedGeometry)
+        i += 1
     candidateDistrictB = [group for group in district.children if group not in candidateDistrictA]
 
     candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
