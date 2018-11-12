@@ -83,7 +83,10 @@ There are two main parts to this algorithm:
 * Breaking apart groups of Census blocks if the districts don't meet compactness and population requirements.
 (And the algorithm will repeat until the rules are met)
 
-When attempting to create districts, it recursively splits the state into districts of appropriately sized ratios and stops when the desired number of districts are created. The recursive splitting based on ratios is similar to the [shortest-splitline](#Shortest-splitline) method. But instead of trying to find a dividing line, it uses a [Forest Fire algorithm](https://en.wikipedia.org/wiki/Flood_fill#Alternative_implementations) to find candidate groups that most closely match the desired population ratio.
+When attempting to create districts, it recursively splits the state into districts of appropriately sized ratios and stops when the desired number of districts are created. The recursive splitting based on ratios is similar to the [shortest-splitline](#Shortest-splitline) method. But instead of trying to find a dividing line, it uses a [Forest Fire algorithm](https://en.wikipedia.org/wiki/Flood_fill#Alternative_implementations) to find candidate groups that most closely match the desired population ratio. The Forest Fire fill is weighted by compactness of the potential district.
+
+Example of Weighted Forest Fire fill:
+![Forest Fire Fill](https://content.screencast.com/media/48d2b76f-072a-41ff-9676-6894a8348391_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11%2021_30_52%20(1).gif)
 
 If the population ratio cannot be met or the resulting district split doesn’t meet a roundness threshold, a selection of groups are split via the method of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming) that has been mentioned above.
 
@@ -102,6 +105,7 @@ Start of the Forest Fire fill to find district candidates to feed the recursive 
 
 A complete Forest Fire fill with contiguous bugs
 ![Buggy Fill](https://content.screencast.com/media/7db020f4-dbd0-4614-a27e-11e8651db361_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11_15-09-55.png)
+
 
 
 ## Notes
