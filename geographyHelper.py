@@ -14,7 +14,7 @@ from json import dumps
 #     main(['install', path])
 # install_whl("path_to_file\\Shapely-1.6.4.post1-cp37-cp37m-win32.whl")
 # but not sure if this worked...
-from exportData.displayShapes import plotRedistrictingGroups
+from exportData.displayShapes import plotRedistrictingGroups, plotDistrictCandidates
 
 
 def convertGeoJSONToShapely(geoJSON):
@@ -231,48 +231,75 @@ def forestFireFillGraphObject(candidateObjects):
 def weightedForestFireFillGraphObject(candidateObjects,
                                       startingObject=None,
                                       condition=lambda x, y: True,
-                                      ignoreCondition=lambda v, w, x, y, z: (False, None),
                                       weightingScore=lambda x, y, z: 1):
     fireFilledObjects = []
-    ignoredObjects = []
     fireQueue = []
     remainingObjects = candidateObjects.copy()
     if not startingObject:
         startingObject = remainingObjects[0]
-    fireQueue.append(startingObject)
+    fireQueue.append([startingObject])
 
     while len(fireQueue) > 0:
-        graphObject = fireQueue.pop(0)
-        remainingObjects.remove(graphObject)
-        ignore = ignoreCondition(remainingObjects, ignoredObjects, fireFilledObjects, fireQueue, graphObject)
-        if ignore[0]:
-            ignoredObjects.append(graphObject)
+        # pull from the top of the queue
+        graphObjectCandidateGroup = fireQueue.pop(0)
+
+        # remove objects that we pulled from the queue from the remaining list
+        remainingObjects = [object for object in remainingObjects if object not in graphObjectCandidateGroup]
+
+        potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
+        if len(potentiallyIsolatedGroups) <= 1:  # candidate won't block any other groups
+            if condition(fireFilledObjects, graphObjectCandidateGroup):
+                fireFilledObjects.extend(graphObjectCandidateGroup)
+
+                # find any of objects just added and remove them from the queue
+                remainingItemsFromGroups = []
+                groupsToRemove = []
+                for queueItemGroup in fireQueue:
+                    if any([queueItem for queueItem in queueItemGroup if queueItem in graphObjectCandidateGroup]):
+                        remainingItems = [queueItem for queueItem in queueItemGroup if queueItem not in graphObjectCandidateGroup]
+                        remainingItemsFromGroups.extend(remainingItems)
+                        groupsToRemove.append(queueItemGroup)
+                # remove duplicates from the lists
+                remainingItemsFromGroups = set(remainingItemsFromGroups)
+                # crazy way to remove duplicates from a list of lists
+                groupsToRemove = [list(item) for item in set(tuple(row) for row in groupsToRemove)]
+                for groupToRemove in groupsToRemove:
+                    fireQueue.remove(groupToRemove)
+                for remainingItemFromGroups in remainingItemsFromGroups:
+                    fireQueue.append([remainingItemFromGroups])
+
+                # add neighbors to the queue
+                for graphObjectCandidate in graphObjectCandidateGroup:
+                    directionSets = graphObjectCandidate.directionSets
+                    for directionSet in directionSets:
+                        for neighborObject in directionSet:
+                            flatFireQueue = [object for objectGroup in fireQueue for object in objectGroup]
+                            if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
+                                fireQueue.append([neighborObject])
+            else:
+                remainingObjects.extend(graphObjectCandidateGroup)
         else:
-            if condition(fireFilledObjects, graphObject):
-                fireFilledObjects.append(graphObject)
-                if ignoredObjects:
-                    remainingObjects = remainingObjects + ignoredObjects
-                    ignoredObjects = []
+            # find the contiguous group with largest population and remove.
+            # This will be handled by subsequent fire fill passes
+            potentiallyIsolatedGroups.sort(key=lambda x: sum(group.population for group in x), reverse=True)
+            potentiallyIsolatedGroups.remove(potentiallyIsolatedGroups[0])
 
-                # add to the queue
-                directionSets = graphObject.directionSets
-                for directionSet in directionSets:
-                    for neighborObject in directionSet:
-                        if neighborObject in remainingObjects and neighborObject not in fireQueue:
-                            fireQueue.append(neighborObject)
+            # add the potentially isolated groups and the candidate group back to the queue
+            potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
+            potentiallyIsolatedObjects.extend(graphObjectCandidateGroup)
 
-                # apply weights
-                weightedQueue = []
-                for queueObject in fireQueue:
-                    weightScore = weightingScore(fireFilledObjects, remainingObjects, queueObject)
-                    if ignore[1]:
-                        if queueObject in ignore[1]:
-                            weightScore = inf
-                    weightedQueue.append((queueObject, weightScore))
+            fireQueue.append(potentiallyIsolatedObjects)
+            remainingObjects.extend(graphObjectCandidateGroup)
 
-                # sort queue
-                weightedQueue.sort(key=lambda x: x[1], reverse=True)
-                fireQueue = [x[0] for x in weightedQueue]
+        # apply weights for sorting
+        weightedQueue = []
+        for queueObjectGroup in fireQueue:
+            weightScore = weightingScore(fireFilledObjects, remainingObjects, queueObjectGroup)
+            weightedQueue.append((queueObjectGroup, weightScore))
+
+        # sort queue
+        weightedQueue.sort(key=lambda x: x[1], reverse=True)
+        fireQueue = [x[0] for x in weightedQueue]
 
     return fireFilledObjects
 
