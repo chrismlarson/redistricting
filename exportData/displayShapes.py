@@ -1,3 +1,4 @@
+from os import path, makedirs
 from matplotlib import pyplot, lines
 import matplotlib._color_data as colorData
 from descartes import PolygonPatch
@@ -120,7 +121,9 @@ def plotDistrict(district,
 
 def plotDistrictCandidates(districtCandidates,
                            showPopulationCounts=False,
-                           showDistrictNeighborConnections=False):
+                           showDistrictNeighborConnections=False,
+                           saveImages=False,
+                           saveDescription='Temp'):
     fig = pyplot.figure()
     ax = fig.gca()
 
@@ -141,12 +144,21 @@ def plotDistrictCandidates(districtCandidates,
         colorIndex += 1
 
     ax.axis('scaled')
+
+    if saveImages:
+        directoryPath = path.expanduser('~/Documents/RedistrictingImages')
+        if not path.exists(directoryPath):
+            makedirs(directoryPath)
+        filePath = path.expanduser('{0}/{1}.png'.format(directoryPath, saveDescription))
+        pyplot.savefig(filePath)
     pyplot.show()
 
 
 def plotDistricts(districts,
                   showPopulationCounts=False,
-                  showDistrictNeighborConnections=False):
+                  showDistrictNeighborConnections=False,
+                  saveImages=False,
+                  saveDescription='Temp'):
     fig = pyplot.figure()
     ax = fig.gca()
 
@@ -167,6 +179,13 @@ def plotDistricts(districts,
         colorIndex += 1
 
     ax.axis('scaled')
+
+    if saveImages:
+        directoryPath = path.expanduser('~/Documents/RedistrictingImages')
+        if not path.exists(directoryPath):
+            makedirs(directoryPath)
+        filePath = path.expanduser('{0}/{1}.png'.format(directoryPath, saveDescription))
+        pyplot.savefig(filePath)
     pyplot.show()
 
 
@@ -184,6 +203,7 @@ def getLineForPair(a, b, color):
                         color=color,
                         linewidth=0.5)
 
+
 startingColors = [colorData.XKCD_COLORS['xkcd:cloudy blue'],
                   colorData.XKCD_COLORS['xkcd:dark pastel green'],
                   colorData.XKCD_COLORS['xkcd:liliac'],
@@ -199,4 +219,5 @@ startingColors = [colorData.XKCD_COLORS['xkcd:cloudy blue'],
                   colorData.XKCD_COLORS['xkcd:eggshell'],
                   colorData.XKCD_COLORS['xkcd:brownish yellow'],
                   colorData.XKCD_COLORS['xkcd:twilight']]
-distinctColors = startingColors + [color for color in list(colorData.XKCD_COLORS.values()) if color not in startingColors]
+distinctColors = startingColors + [color for color in list(colorData.XKCD_COLORS.values()) if
+                                   color not in startingColors]
