@@ -330,28 +330,29 @@ def weightedForestFireFillGraphObject(candidateObjects,
 def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
     combinations = []
 
-    for group in startingGroup:
-        # if the group is touching a must touch object, continue, otherwise add group plus all candidates
-        if group in [mustTouchObjectNeighbor for mustTouchObject in mustTouchGroup for mustTouchObjectNeighbor in mustTouchObject.allNeighbors]:
-            neighborsInCandidates = [groupNeighbor for groupNeighbor in group.allNeighbors if groupNeighbor in candidateGroups]
-            if len(neighborsInCandidates) > 0:
-                for neighbor in neighborsInCandidates:
-                    neighborCombinations = combinationsFromGroup(candidateGroups=[candidateGroup for candidateGroup in candidateGroups if candidateGroup is not group and candidateGroup is not neighbor],
-                                                                 mustTouchGroup=mustTouchGroup,
-                                                                 startingGroup=[neighbor])
-                    for neighborCombination in neighborCombinations:
-                        # add the combination with the group and without
-                        neighborCombination.sort()
-                        combinations.append(neighborCombination)
-                        neighborCombinationWithGroup = neighborCombination + [group]
-                        neighborCombinationWithGroup.sort()
-                        combinations.append(neighborCombinationWithGroup)
-            else:
-                combinations.append([group])
+    # if the group is touching a must touch object, continue, otherwise add group plus all candidates
+    mustTouchGroupNeighbors = [mustTouchObjectNeighbor for mustTouchObject in mustTouchGroup for mustTouchObjectNeighbor in mustTouchObject.allNeighbors]
+    if any(group for group in startingGroup if group in mustTouchGroupNeighbors):
+
+        neighborsInCandidates = [groupNeighbor for group in startingGroup for groupNeighbor in group.allNeighbors if groupNeighbor in candidateGroups]
+        if len(neighborsInCandidates) > 0:
+            for neighbor in neighborsInCandidates:
+                neighborCombinations = combinationsFromGroup(candidateGroups=[candidateGroup for candidateGroup in candidateGroups if candidateGroup not in startingGroup and candidateGroup is not neighbor],
+                                                             mustTouchGroup=mustTouchGroup,
+                                                             startingGroup=[neighbor])
+                for neighborCombination in neighborCombinations:
+                    # add the combination with the group and without
+                    neighborCombination.sort()
+                    combinations.append(neighborCombination)
+                    neighborCombinationWithGroup = neighborCombination + startingGroup
+                    neighborCombinationWithGroup.sort()
+                    combinations.append(neighborCombinationWithGroup)
         else:
-            candidatesLeftWithGroup = candidateGroups + [group]
-            candidatesLeftWithGroup.sort()
-            combinations.append(candidatesLeftWithGroup)
+            combinations.append(startingGroup)
+    else:
+        candidatesLeftWithGroup = candidateGroups + startingGroup
+        candidatesLeftWithGroup.sort()
+        combinations.append(candidatesLeftWithGroup)
 
     # remove duplicates from the list
     combinations.sort()
