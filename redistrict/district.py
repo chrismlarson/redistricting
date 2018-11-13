@@ -1,4 +1,7 @@
 import math
+
+from tqdm import tqdm
+
 from exportData.displayShapes import plotDistrictCandidates, plotRedistrictingGroups, plotDistrict
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.blockBorderGraph import BlockBorderGraph
@@ -44,7 +47,15 @@ def createDistrictFromRedistrictingGroups(redistrictingGroups):
     return initialDistrict
 
 
-def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
+def splitDistrict(districtToSplit,
+                  numberOfDistricts,
+                  populationDeviation,
+                  progressObject=None,
+                  shouldDrawEachStep=False):
+    if not progressObject:
+        tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
+        progressObject = tqdm()
+
     districts = []
 
     if numberOfDistricts == 1:
@@ -54,21 +65,25 @@ def splitDistrict(districtToSplit, numberOfDistricts, populationDeviation):
     bRatio = math.ceil(numberOfDistricts / 2)
     ratio = (aRatio, bRatio)
 
-    cutDistricts = cutDistrictIntoRatio(districtToSplit, ratio, populationDeviation)
+    cutDistricts = cutDistrictIntoRatio(district=districtToSplit,
+                                        ratio=ratio,
+                                        populationDeviation=populationDeviation,
+                                        shouldDrawEachStep=shouldDrawEachStep)
+    progressObject.update(1)
 
     # todo: remove when splits are using the breaking up logic
     if len(cutDistricts[0]) != 0:
-        aDistricts = splitDistrict(District(childrenGroups=cutDistricts[0]), aRatio, populationDeviation)
+        aDistricts = splitDistrict(District(childrenGroups=cutDistricts[0]), aRatio, populationDeviation, progressObject)
         districts.extend(aDistricts)
 
     if len(cutDistricts[1]) != 0:
-        bDistricts = splitDistrict(District(childrenGroups=cutDistricts[1]), bRatio, populationDeviation)
+        bDistricts = splitDistrict(District(childrenGroups=cutDistricts[1]), bRatio, populationDeviation, progressObject)
         districts.extend(bDistricts)
 
     return districts
 
 
-def cutDistrictIntoRatio(district, ratio, populationDeviation):
+def cutDistrictIntoRatio(district, ratio, populationDeviation, shouldDrawEachStep=False):
     # saveDataToFileWithDescription(data=district, descriptionOfInfo='LastDistrictForDebug', censusYear=2010, stateName='Michigan')
     # plotDistrict(district, showPopulationCounts=True, showDistrictNeighborConnections=True)
     longestDirection = alignmentOfPolygon(district.geometry)
@@ -117,7 +132,8 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation):
         candidateDistrictA = weightedForestFireFillGraphObject(candidateObjects=district.children,
                                                                startingObject=startingGroupCandidates[i],
                                                                condition=withinIdealDistrictSize,
-                                                               weightingScore=polsbyPopperScoreOfCombinedGeometry)
+                                                               weightingScore=polsbyPopperScoreOfCombinedGeometry,
+                                                               shouldDrawEachStep=shouldDrawEachStep)
         i += 1
     candidateDistrictB = [group for group in district.children if group not in candidateDistrictA]
 

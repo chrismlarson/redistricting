@@ -3,8 +3,9 @@ from shapely.ops import shared_paths
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import cascaded_union
 from enum import Enum
-from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow, inf
+from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
 from json import dumps
+from itertools import groupby
 
 # On Windows, I needed to install Shapely manually
 # Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
@@ -231,7 +232,8 @@ def forestFireFillGraphObject(candidateObjects):
 def weightedForestFireFillGraphObject(candidateObjects,
                                       startingObject=None,
                                       condition=lambda x, y: True,
-                                      weightingScore=lambda x, y, z: 1):
+                                      weightingScore=lambda x, y, z: 1,
+                                      shouldDrawEachStep=False):
     fireFilledObjects = []
     fireQueue = []
     remainingObjects = candidateObjects.copy()
@@ -239,12 +241,20 @@ def weightedForestFireFillGraphObject(candidateObjects,
         startingObject = remainingObjects[0]
     fireQueue.append([startingObject])
 
+    count = 1
     while len(fireQueue) > 0:
         # pull from the top of the queue
         graphObjectCandidateGroup = fireQueue.pop(0)
 
         # remove objects that we pulled from the queue from the remaining list
         remainingObjects = [object for object in remainingObjects if object not in graphObjectCandidateGroup]
+
+        if shouldDrawEachStep:
+            plotDistrictCandidates([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
+                                   showDistrictNeighborConnections=True,
+                                   saveImages=True,
+                                   saveDescription='WeightedForestFireFillGraphObject{0}'.format(count))
+            count += 1
 
         potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
         if len(potentiallyIsolatedGroups) <= 1:  # candidate won't block any other groups
@@ -283,13 +293,26 @@ def weightedForestFireFillGraphObject(candidateObjects,
             # This will be handled by subsequent fire fill passes
             potentiallyIsolatedGroups.sort(key=lambda x: sum(group.population for group in x), reverse=True)
             potentiallyIsolatedGroups.remove(potentiallyIsolatedGroups[0])
+            potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
+
+            if shouldDrawEachStep:
+                plotDistrictCandidates([fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
+                                       showDistrictNeighborConnections=True,
+                                       saveImages=True,
+                                       saveDescription='WeightedForestFireFillGraphObject{0}'.format(count))
+                count += 1
 
             # add the potentially isolated groups and the candidate group back to the queue
-            potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
-            potentiallyIsolatedObjects.extend(graphObjectCandidateGroup)
+            combinationsOfPotentiallyIsolatedObjects = combinationsFromGroup(candidateGroups=potentiallyIsolatedObjects,
+                                                                             mustTouchGroup=fireFilledObjects,
+                                                                             startingGroup=graphObjectCandidateGroup)
 
-            fireQueue.append(potentiallyIsolatedObjects)
-            remainingObjects.extend(graphObjectCandidateGroup)
+            fireQueue.extend(combinationsOfPotentiallyIsolatedObjects)
+            remainingObjects.extend(graphObjectCandidateGroup)  # add candidate back to the queue
+
+        # remove duplicates from the list
+        fireQueue.sort()
+        fireQueue = list(fireQueueItem for fireQueueItem, _ in groupby(fireQueue))
 
         # apply weights for sorting
         weightedQueue = []
@@ -302,6 +325,47 @@ def weightedForestFireFillGraphObject(candidateObjects,
         fireQueue = [x[0] for x in weightedQueue]
 
     return fireFilledObjects
+
+
+def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
+    combinations = []
+
+    for group in startingGroup:
+        # if the group is touching a must touch object, continue, otherwise add group plus all candidates
+        if group in [mustTouchObjectNeighbor for mustTouchObject in mustTouchGroup for mustTouchObjectNeighbor in mustTouchObject.allNeighbors]:
+            neighborsInCandidates = [groupNeighbor for groupNeighbor in group.allNeighbors if groupNeighbor in candidateGroups]
+            if len(neighborsInCandidates) > 0:
+                for neighbor in neighborsInCandidates:
+                    neighborCombinations = combinationsFromGroup(candidateGroups=[candidateGroup for candidateGroup in candidateGroups if candidateGroup is not group and candidateGroup is not neighbor],
+                                                                 mustTouchGroup=mustTouchGroup,
+                                                                 startingGroup=[neighbor])
+                    for neighborCombination in neighborCombinations:
+                        # add the combination with the group and without
+                        neighborCombination.sort()
+                        combinations.append(neighborCombination)
+                        neighborCombinationWithGroup = neighborCombination + [group]
+                        neighborCombinationWithGroup.sort()
+                        combinations.append(neighborCombinationWithGroup)
+            else:
+                combinations.append([group])
+        else:
+            candidatesLeftWithGroup = candidateGroups + [group]
+            candidatesLeftWithGroup.sort()
+            combinations.append(candidatesLeftWithGroup)
+
+    # remove duplicates from the list
+    combinations.sort()
+    combinations = list(combination for combination, _ in groupby(combinations))
+
+    # make sure combinations are contiguous
+    combinationsToRemove = []
+    for combination in combinations:
+        contiguousGroupsInCombination = findContiguousGroupsOfGraphObjects(combination)
+        if len(contiguousGroupsInCombination) > 1:
+            combinationsToRemove.append(combination)
+    combinations = [combination for combination in combinations if combination not in combinationsToRemove]
+    return combinations
+
 
 
 def alignmentOfPolygon(polygon):
