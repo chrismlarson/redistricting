@@ -52,7 +52,7 @@ def splitDistrict(districtToSplit,
                   populationDeviation,
                   progressObject=None,
                   shouldDrawEachStep=False):
-    if not progressObject:
+    if progressObject is None:
         tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
         progressObject = tqdm()
 
