@@ -73,19 +73,25 @@ def splitDistrict(districtToSplit,
 
     # todo: remove when splits are using the breaking up logic
     if len(cutDistricts[0]) != 0:
-        aDistricts = splitDistrict(District(childrenGroups=cutDistricts[0]), aRatio, populationDeviation, progressObject)
+        aDistricts = splitDistrict(districtToSplit=District(childrenGroups=cutDistricts[0]),
+                                   numberOfDistricts=aRatio,
+                                   populationDeviation=populationDeviation,
+                                   progressObject=progressObject,
+                                   shouldDrawEachStep=shouldDrawEachStep)
         districts.extend(aDistricts)
 
     if len(cutDistricts[1]) != 0:
-        bDistricts = splitDistrict(District(childrenGroups=cutDistricts[1]), bRatio, populationDeviation, progressObject)
+        bDistricts = splitDistrict(districtToSplit=District(childrenGroups=cutDistricts[1]),
+                                   numberOfDistricts=bRatio,
+                                   populationDeviation=populationDeviation,
+                                   progressObject=progressObject,
+                                   shouldDrawEachStep=shouldDrawEachStep)
         districts.extend(bDistricts)
 
     return districts
 
 
-def cutDistrictIntoRatio(district, ratio, populationDeviation, shouldDrawEachStep=False):
-    # saveDataToFileWithDescription(data=district, descriptionOfInfo='LastDistrictForDebug', censusYear=2010, stateName='Michigan')
-    # plotDistrict(district, showPopulationCounts=True, showDistrictNeighborConnections=True)
+def cutDistrictIntoRatio(district, ratio, populationDeviation, shouldDrawEachStep=False, shouldDisplayPlot=True):
     longestDirection = alignmentOfPolygon(district.geometry)
 
 
@@ -139,9 +145,5 @@ def cutDistrictIntoRatio(district, ratio, populationDeviation, shouldDrawEachSte
 
     candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
     candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
-
-    # plotDistrictCandidates(districtCandidates=[candidateDistrictA, candidateDistrictB],
-    #                        showPopulationCounts=True,
-    #                        showDistrictNeighborConnections=True)
 
     return (candidateDistrictA, candidateDistrictB)

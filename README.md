@@ -86,7 +86,7 @@ There are two main parts to this algorithm:
 When attempting to create districts, it recursively splits the state into districts of appropriately sized ratios and stops when the desired number of districts are created. The recursive splitting based on ratios is similar to the [shortest-splitline](#Shortest-splitline) method. But instead of trying to find a dividing line, it uses a [Forest Fire algorithm](https://en.wikipedia.org/wiki/Flood_fill#Alternative_implementations) to find candidate groups that most closely match the desired population ratio. The Forest Fire fill is weighted by compactness of the potential district.
 
 Example of Weighted Forest Fire fill:
-![Forest Fire Fill](https://content.screencast.com/media/48d2b76f-072a-41ff-9676-6894a8348391_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11%2021_30_52%20(1).gif)
+![Forest Fire Fill](https://content.screencast.com/media/00c736d2-6ebb-40bb-85c3-4c667a6f9363_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_Michigan-Forest-Fire-Fill-Even%20(2).gif)
 
 If the population ratio cannot be met or the resulting district split doesn’t meet a roundness threshold, a selection of groups are split via the method of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming) that has been mentioned above.
 
@@ -101,11 +101,11 @@ An example starting graph of Michigan:
 ![Michigan](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/d367613e-19c3-40ff-9ef6-37483836da5e/11.08.2018-07.07.png)
 
 Start of the Forest Fire fill to find district candidates to feed the recursive splitting (even split of the state here) sorting by compactness:
-![Michigan Forest Fire Fill Even Split](https://content.screencast.com/media/77ae5ae2-19aa-4e94-a87b-c817396cdac5_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11_22-46-49.png)
-There are some issues here to fix with the neighbor links.
+![Michigan Forest Fire Fill Even Split](https://content.screencast.com/media/a12bf84e-6f98-4589-ac15-2fc46d40853a_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-13_20-46-59.png)
 
 A complete Forest Fire fill without breaking up counties:
-![Forest Fire Fill - No Breaking](https://content.screencast.com/media/0325738e-d73c-47ba-a678-f1619fa38b3b_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-11_22-35-32.png)
+![Forest Fire Fill - No Breaking](https://content.screencast.com/media/c273a213-1c4a-4496-8aaa-914a8b910b48_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-13_20-42-13.png)
+
 
 
 

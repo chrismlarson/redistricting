@@ -12,10 +12,12 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                       stateName=stateInfo.name,
                                                       descriptionOfInfo='{0}RedistrictingGroup'.format(
                                                           descriptionToWorkWith))
-
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
-# plotDistrict(district=initialDistrict, showDistrictNeighborConnections=True, showDistrictEnvelope=True, colorDirectionalGroups=True)
-districts = splitDistrict(districtToSplit=initialDistrict, numberOfDistricts=14, populationDeviation=1, shouldDrawEachStep=True)
+
+districts = splitDistrict(districtToSplit=initialDistrict,
+                          numberOfDistricts=14,
+                          populationDeviation=1,
+                          shouldDrawEachStep=False)
 plotDistricts(districts=districts,
               showPopulationCounts=True,
               showDistrictNeighborConnections=True)

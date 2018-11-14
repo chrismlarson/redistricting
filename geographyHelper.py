@@ -253,7 +253,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
             plotDistrictCandidates([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
                                    showDistrictNeighborConnections=True,
                                    saveImages=True,
-                                   saveDescription='WeightedForestFireFillGraphObject{0}'.format(count))
+                                   saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects),count))
             count += 1
 
         potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
@@ -299,7 +299,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                 plotDistrictCandidates([fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
                                        showDistrictNeighborConnections=True,
                                        saveImages=True,
-                                       saveDescription='WeightedForestFireFillGraphObject{0}'.format(count))
+                                       saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects),count))
                 count += 1
 
             # add the potentially isolated groups and the candidate group back to the queue
@@ -323,6 +323,13 @@ def weightedForestFireFillGraphObject(candidateObjects,
         # sort queue
         weightedQueue.sort(key=lambda x: x[1], reverse=True)
         fireQueue = [x[0] for x in weightedQueue]
+
+    if shouldDrawEachStep:
+        plotDistrictCandidates(
+            [fireFilledObjects, [], remainingObjects],
+            showDistrictNeighborConnections=True,
+            saveImages=True,
+            saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
 
     return fireFilledObjects
 
