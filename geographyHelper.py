@@ -24,7 +24,10 @@ def convertGeoJSONToShapely(geoJSON):
 
 
 def intersectingGeometries(a, b):
-    return a.geometry.intersects(b.geometry)
+    if doesEitherGeographyContainTheOther(a,b):
+        return True
+    else:
+        return len(findCommonEdges(a.geometry,b.geometry)) > 0
 
 
 def doesEitherGeographyContainTheOther(a, b):

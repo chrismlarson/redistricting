@@ -24,6 +24,44 @@ class TestIntersectingGeometries(TestCase):
         bIntersectsA = intersectingGeometries(b, a)
         self.assertTrue(aIntersectsB and bIntersectsA)
 
+    def test_intersectingGeometries_BonePointTouchingA(self):
+        a = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[-1, 0], [0, 0], [0, -1], [-1, -1]]]})
+        b = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[0, 1], [1, 1], [1, 0], [0, 0]]]})
+        aIntersectsB = intersectingGeometries(a, b)
+        bIntersectsA = intersectingGeometries(b, a)
+        self.assertFalse(aIntersectsB and bIntersectsA)
+
+    def test_intersectingGeometries_BsharesSideWithA(self):
+        a = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[-1, 0], [-1, 1], [0, 1], [0, 0]]]})
+        b = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]})
+        aIntersectsB = intersectingGeometries(a, b)
+        bIntersectsA = intersectingGeometries(b, a)
+        self.assertTrue(aIntersectsB and bIntersectsA)
+
     def test_intersectingGeometries_BinAwithHole(self):
         exterior = [[-10, 10], [10, 10], [10, -10], [-10, -10]]
         hole = [[-1, 1], [1, 1], [1, -1], [-1, -1]]
