@@ -91,7 +91,7 @@ def splitDistrict(districtToSplit,
     return districts
 
 
-def cutDistrictIntoRatio(district, ratio, populationDeviation, shouldDrawEachStep=False, shouldDisplayPlot=True):
+def cutDistrictIntoRatio(district, ratio, populationDeviation, shouldDrawEachStep=False):
     longestDirection = alignmentOfPolygon(district.geometry)
 
 
