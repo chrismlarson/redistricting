@@ -86,7 +86,7 @@ There are two main parts to this algorithm:
 When attempting to create districts, it recursively splits the state into districts of appropriately sized ratios and stops when the desired number of districts are created. The recursive splitting based on ratios is similar to the [shortest-splitline](#Shortest-splitline) method. But instead of trying to find a dividing line, it uses a [Forest Fire algorithm](https://en.wikipedia.org/wiki/Flood_fill#Alternative_implementations) to find candidate groups that most closely match the desired population ratio. The Forest Fire fill is weighted by compactness of the potential district.
 
 Example of Weighted Forest Fire fill:
-![Forest Fire Fill](https://content.screencast.com/media/00c736d2-6ebb-40bb-85c3-4c667a6f9363_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_Michigan-Forest-Fire-Fill-Even%20(2).gif)
+![Forest Fire Fill](https://content.screencast.com/media/944eee16-1600-42ea-8e63-7a0fbbe1aefc_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_Forest%20Fire%20Fill%20-%20Michigan%20-%20Even%20Split.gif)
 
 If the population ratio cannot be met or the resulting district split doesn’t meet a roundness threshold, a selection of groups are split via the method of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming) that has been mentioned above.
 
