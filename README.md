@@ -101,10 +101,10 @@ An example starting graph of Michigan:
 ![Michigan](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/d367613e-19c3-40ff-9ef6-37483836da5e/11.08.2018-07.07.png)
 
 Start of the Forest Fire fill to find district candidates to feed the recursive splitting (even split of the state here) sorting by compactness:
-![Michigan Forest Fire Fill Even Split](https://content.screencast.com/media/a12bf84e-6f98-4589-ac15-2fc46d40853a_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-13_20-46-59.png)
+![Michigan Forest Fire Fill Even Split](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/b95e9430-a0f6-4583-9365-f564ec89c5ad/11.15.2018-06.55.png)
 
-A complete Forest Fire fill without breaking up counties:
-![Forest Fire Fill - No Breaking](https://content.screencast.com/media/c273a213-1c4a-4496-8aaa-914a8b910b48_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-13_20-42-13.png)
+A complete Forest Fire fill without breaking up counties (This is next):
+![Forest Fire Fill - No Breaking](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/e4ce9633-7523-4a81-b0f1-8e33e4a277f9/11.15.2018-06.43.png)
 
 
 
