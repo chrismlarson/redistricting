@@ -10,7 +10,7 @@ class TestAttachOrphanRedistrictingGroupsToClosestNeighbor(TestCase):
 
     def test_attachOrphanRedistrictingGroupsToClosestNeighbor_ThreeRegions(self):
         testDataFilePath = os.path.join(os.path.dirname(__file__),
-                                        'testData/2010-Michigan-KeweenawAndTheThumbRedistrictingGroupInfo.redistdata')
+                                        'testData/2010-Michigan-KeweenawAndTheThumbRedistrictingGroupInfoHasOrphans.redistdata')
         testData = loadDataFromFile(filePath=testDataFilePath)
         RedistrictingGroup.redistrictingGroupList = testData
         contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
