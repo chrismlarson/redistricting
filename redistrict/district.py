@@ -96,14 +96,12 @@ class District(BlockBorderGraph):
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawEachStep=False):
 
         ratioTotal = ratio[0] + ratio[1]
-        ratioA = int(ratioTotal / ratio[0])
-        ratioB = int(ratioTotal / ratio[1])
-        idealDistrictASize = int(self.population / ratioA)
-        idealDistrictBSize = int(self.population / ratioB)
+        idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
+        idealDistrictBSize = int(self.population / (ratioTotal / ratio[1]))
         candidateDistrictA = []
         candidateDistrictB = []
         districtStillNotExactlyCut = True
-        tqdm.write('*** Attempting forest fire fill for a {0} to {1} ratio ***'.format(ratioA, ratioB))
+        tqdm.write('*** Attempting forest fire fill for a {0} to {1} ratio ***'.format(ratio[0], ratio[1]))
 
         while districtStillNotExactlyCut:
 
