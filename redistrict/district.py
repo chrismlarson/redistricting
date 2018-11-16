@@ -96,11 +96,14 @@ class District(BlockBorderGraph):
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawEachStep=False):
 
         ratioTotal = ratio[0] + ratio[1]
-        idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
-        idealDistrictBSize = int(self.population / (ratioTotal / ratio[1]))
+        ratioA = int(ratioTotal / ratio[0])
+        ratioB = int(ratioTotal / ratio[1])
+        idealDistrictASize = int(self.population / ratioA)
+        idealDistrictBSize = int(self.population / ratioB)
         candidateDistrictA = []
         candidateDistrictB = []
         districtStillNotExactlyCut = True
+        tqdm.write('*** Attempting forest fire fill for a {0} to {1} ratio ***'.format(ratioA, ratioB))
 
         while districtStillNotExactlyCut:
 
@@ -115,6 +118,19 @@ class District(BlockBorderGraph):
             if idealDistrictASize - populationDeviation <= candidateDistrictAPop <= idealDistrictASize + populationDeviation and \
                idealDistrictBSize - populationDeviation <= candidateDistrictBPop <= idealDistrictBSize + populationDeviation:
                 districtStillNotExactlyCut = False
+            else:
+                tqdm.write('   *** Unsuccessful fill attempt. {0} off the count. ***'
+                    .format(abs(idealDistrictASize - candidateDistrictAPop)))
+                groupsToBreakUp = getRedistrictingGroupsBetweenCandidates(aCandidate=candidateDistrictA,
+                                                                          bCandidate=candidateDistrictB)
+
+                tqdm.write('   *** *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
+                updatedChildren = self.children.copy()
+                for groupToBreakUp in groupsToBreakUp:
+                    smallerRedistrictingGroups = groupToBreakUp.getGraphSplits()
+                    updatedChildren.extend(smallerRedistrictingGroups)
+                    updatedChildren.remove(groupToBreakUp)
+                self.children = updatedChildren
 
         return (candidateDistrictA, candidateDistrictB)
 
@@ -166,3 +182,7 @@ def validateContiguousRedistrictingGroups(groupList):
 def createDistrictFromRedistrictingGroups(redistrictingGroups):
     initialDistrict = District(childrenGroups=redistrictingGroups)
     return initialDistrict
+
+
+def getRedistrictingGroupsBetweenCandidates(aCandidate, bCandidate):
+    raise NotImplementedError

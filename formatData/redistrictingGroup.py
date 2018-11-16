@@ -42,6 +42,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def findOrphanBlocks(self):
         return [block for block in self.children if block.hasNeighbors is False]
 
+    def getGraphSplits(self):
+        raise NotImplementedError
+
     def __lt__(self, other):
         if isinstance(other, RedistrictingGroup):
             return self.graphId < other.graphId
