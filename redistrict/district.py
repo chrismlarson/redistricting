@@ -19,12 +19,10 @@ class District(BlockBorderGraph):
 
     districtList = []
 
-
     def updateBlockContainerData(self):
         super(District, self).updateBlockContainerData()
-        #todo: re-enable once the contiguous bug is fixed
-        #validateContiguousRedistrictingGroups(self.children)
-
+        # todo: re-enable once the contiguous bug is fixed
+        # validateContiguousRedistrictingGroups(self.children)
 
     def removeOutdatedNeighborConnections(self):
         for child in self.children:
@@ -32,12 +30,135 @@ class District(BlockBorderGraph):
             if outdatedNeighborConnections:
                 child.removeNeighbors(outdatedNeighborConnections)
 
+    def getCutStartingCandidates(self):
+        longestDirection = alignmentOfPolygon(self.geometry)
+
+        northernStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                             direction=CardinalDirection.north)
+        westernStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                            direction=CardinalDirection.west)
+        easternStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                            direction=CardinalDirection.east)
+        southernStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                             direction=CardinalDirection.south)
+        if longestDirection == Alignment.northSouth:
+            startingGroupCandidates = (northernStartingCandidate,
+                                       southernStartingCandidate,
+                                       westernStartingCandidate,
+                                       easternStartingCandidate)
+        else:
+            startingGroupCandidates = (westernStartingCandidate,
+                                       easternStartingCandidate,
+                                       northernStartingCandidate,
+                                       southernStartingCandidate)
+
+        return startingGroupCandidates
+
+    def splitDistrict(self,
+                      numberOfDistricts,
+                      populationDeviation,
+                      progressObject=None,
+                      shouldDrawEachStep=False):
+        if progressObject is None:
+            tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
+            progressObject = tqdm()
+
+        districts = []
+
+        if numberOfDistricts == 1:
+            return [self]
+
+        aRatio = math.floor(numberOfDistricts / 2)
+        bRatio = math.ceil(numberOfDistricts / 2)
+        ratio = (aRatio, bRatio)
+
+        cutDistricts = self.cutDistrictIntoExactRatio(ratio=ratio,
+                                                      populationDeviation=populationDeviation,
+                                                      shouldDrawEachStep=shouldDrawEachStep)
+        progressObject.update(1)
+
+        aDistrict = District(childrenGroups=cutDistricts[0])
+        aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
+                                                  populationDeviation=populationDeviation,
+                                                  progressObject=progressObject,
+                                                  shouldDrawEachStep=shouldDrawEachStep)
+        districts.extend(aDistrictSplits)
+
+        bDistrict = District(childrenGroups=cutDistricts[1])
+        bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
+                                                  populationDeviation=populationDeviation,
+                                                  progressObject=progressObject,
+                                                  shouldDrawEachStep=shouldDrawEachStep)
+        districts.extend(bDistrictSplits)
+
+        return districts
+
+    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawEachStep=False):
+
+        ratioTotal = ratio[0] + ratio[1]
+        idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
+        idealDistrictBSize = int(self.population / (ratioTotal / ratio[1]))
+        candidateDistrictA = []
+        candidateDistrictB = []
+        districtStillNotExactlyCut = True
+
+        while districtStillNotExactlyCut:
+
+            districtCandidates = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
+                                                                shouldDrawEachStep=shouldDrawEachStep)
+            candidateDistrictA = districtCandidates[0]
+            candidateDistrictB = districtCandidates[1]
+
+            candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
+            candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
+
+            if idealDistrictASize - populationDeviation <= candidateDistrictAPop <= idealDistrictASize + populationDeviation and \
+               idealDistrictBSize - populationDeviation <= candidateDistrictBPop <= idealDistrictBSize + populationDeviation:
+                districtStillNotExactlyCut = False
+
+        return (candidateDistrictA, candidateDistrictB)
+
+    def cutDistrictIntoRoughRatio(self, idealDistrictASize, shouldDrawEachStep=False):
+
+        def withinIdealDistrictSize(currentGroups, candidateGroups):
+            currentPop = sum(group.population for group in currentGroups)
+            candidatePop = sum(group.population for group in candidateGroups)
+            return currentPop + candidatePop <= idealDistrictASize
+
+        def polsbyPopperScoreOfCombinedGeometry(currentGroups, remainingGroups, candidateGroups):
+            geos = currentGroups + candidateGroups
+            combinedShape = geometryFromMultipleGeometries(geos,
+                                                           useEnvelope=True)  # todo: consider not using env in final
+            score = polsbyPopperScoreOfPolygon(combinedShape)
+
+            combinedRemainingShape = geometryFromMultipleGeometries(remainingGroups, useEnvelope=True)
+            remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingShape)
+
+            return score + remainingScore
+
+        candidateDistrictA = []
+
+        startingGroupCandidates = self.getCutStartingCandidates()
+
+        i = 0
+        while not candidateDistrictA and i <= 3:
+            candidateDistrictA = weightedForestFireFillGraphObject(candidateObjects=self.children,
+                                                                   startingObject=startingGroupCandidates[i],
+                                                                   condition=withinIdealDistrictSize,
+                                                                   weightingScore=polsbyPopperScoreOfCombinedGeometry,
+                                                                   shouldDrawEachStep=shouldDrawEachStep)
+            i += 1
+        candidateDistrictB = [group for group in self.children if group not in candidateDistrictA]
+
+        return (candidateDistrictA, candidateDistrictB)
+
+
 def validateContiguousRedistrictingGroups(groupList):
     contiguousRegions = findContiguousGroupsOfGraphObjects(groupList)
     if len(contiguousRegions) > 1:
         nonContiguousDistrict = [item for sublist in contiguousRegions for item in sublist]
         plotRedistrictingGroups(redistrictingGroups=nonContiguousDistrict,
-                                         showDistrictNeighborConnections=True)
+                                showDistrictNeighborConnections=True)
         raise ValueError("Don't have a contiguous set of RedictingGroups. There are {0} distinct groups".format(
             len(contiguousRegions)))
 
@@ -45,105 +166,3 @@ def validateContiguousRedistrictingGroups(groupList):
 def createDistrictFromRedistrictingGroups(redistrictingGroups):
     initialDistrict = District(childrenGroups=redistrictingGroups)
     return initialDistrict
-
-
-def splitDistrict(districtToSplit,
-                  numberOfDistricts,
-                  populationDeviation,
-                  progressObject=None,
-                  shouldDrawEachStep=False):
-    if progressObject is None:
-        tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
-        progressObject = tqdm()
-
-    districts = []
-
-    if numberOfDistricts == 1:
-        return [districtToSplit]
-
-    aRatio = math.floor(numberOfDistricts / 2)
-    bRatio = math.ceil(numberOfDistricts / 2)
-    ratio = (aRatio, bRatio)
-
-    cutDistricts = cutDistrictIntoRatio(district=districtToSplit,
-                                        ratio=ratio,
-                                        populationDeviation=populationDeviation,
-                                        shouldDrawEachStep=shouldDrawEachStep)
-    progressObject.update(1)
-
-    # todo: remove when splits are using the breaking up logic
-    if len(cutDistricts[0]) != 0:
-        aDistricts = splitDistrict(districtToSplit=District(childrenGroups=cutDistricts[0]),
-                                   numberOfDistricts=aRatio,
-                                   populationDeviation=populationDeviation,
-                                   progressObject=progressObject,
-                                   shouldDrawEachStep=shouldDrawEachStep)
-        districts.extend(aDistricts)
-
-    if len(cutDistricts[1]) != 0:
-        bDistricts = splitDistrict(districtToSplit=District(childrenGroups=cutDistricts[1]),
-                                   numberOfDistricts=bRatio,
-                                   populationDeviation=populationDeviation,
-                                   progressObject=progressObject,
-                                   shouldDrawEachStep=shouldDrawEachStep)
-        districts.extend(bDistricts)
-
-    return districts
-
-
-def cutDistrictIntoRatio(district, ratio, populationDeviation, shouldDrawEachStep=False):
-    longestDirection = alignmentOfPolygon(district.geometry)
-
-
-    northernStartingCandidate = mostCardinalOfGeometries(geometryList=district.borderChildren,
-                                             direction=CardinalDirection.north)
-    westernStartingCandidate = mostCardinalOfGeometries(geometryList=district.borderChildren,
-                                             direction=CardinalDirection.west)
-    easternStartingCandidate = mostCardinalOfGeometries(geometryList=district.borderChildren,
-                                             direction=CardinalDirection.east)
-    southernStartingCandidate = mostCardinalOfGeometries(geometryList=district.borderChildren,
-                                             direction=CardinalDirection.south)
-    if longestDirection == Alignment.northSouth:
-        startingGroupCandidates = (northernStartingCandidate,
-                                   southernStartingCandidate,
-                                   westernStartingCandidate,
-                                   easternStartingCandidate)
-    else:
-        startingGroupCandidates = (westernStartingCandidate,
-                                   easternStartingCandidate,
-                                   northernStartingCandidate,
-                                   southernStartingCandidate)
-
-    ratioTotal = ratio[0] + ratio[1]
-    idealDistrictASize = int(district.population / (ratioTotal / ratio[0]))
-    idealDistrictBSize = int(district.population / (ratioTotal / ratio[1]))
-
-    def withinIdealDistrictSize(currentGroups, candidateGroups):
-        currentPop = sum(group.population for group in currentGroups)
-        candidatePop = sum(group.population for group in candidateGroups)
-        return currentPop + candidatePop <= idealDistrictASize
-
-    def polsbyPopperScoreOfCombinedGeometry(currentGroups, remainingGroups, candidateGroups):
-        geos = currentGroups + candidateGroups
-        combinedShape = geometryFromMultipleGeometries(geos, useEnvelope=True) #todo: consider not using env in final
-        score = polsbyPopperScoreOfPolygon(combinedShape)
-
-        combinedRemainingShape = geometryFromMultipleGeometries(remainingGroups, useEnvelope=True)
-        remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingShape)
-
-        return score + remainingScore
-    candidateDistrictA = []
-    i = 0
-    while not candidateDistrictA and i <= 3:
-        candidateDistrictA = weightedForestFireFillGraphObject(candidateObjects=district.children,
-                                                               startingObject=startingGroupCandidates[i],
-                                                               condition=withinIdealDistrictSize,
-                                                               weightingScore=polsbyPopperScoreOfCombinedGeometry,
-                                                               shouldDrawEachStep=shouldDrawEachStep)
-        i += 1
-    candidateDistrictB = [group for group in district.children if group not in candidateDistrictA]
-
-    candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
-    candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
-
-    return (candidateDistrictA, candidateDistrictB)

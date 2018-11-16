@@ -1,7 +1,7 @@
 from us import states
 from exportData.displayShapes import plotDistrict, plotDistricts
 from exportData.exportData import saveDataToFile, loadDataFromFileWithDescription
-from redistrict.district import createDistrictFromRedistrictingGroups, splitDistrict
+from redistrict.district import createDistrictFromRedistrictingGroups
 
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
@@ -14,10 +14,9 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                           descriptionToWorkWith))
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
 
-districts = splitDistrict(districtToSplit=initialDistrict,
-                          numberOfDistricts=14,
-                          populationDeviation=1,
-                          shouldDrawEachStep=False)
+districts = initialDistrict.splitDistrict(numberOfDistricts=14,
+                                          populationDeviation=1,
+                                          shouldDrawEachStep=False)
 plotDistricts(districts=districts,
               showPopulationCounts=True,
               showDistrictNeighborConnections=True)
