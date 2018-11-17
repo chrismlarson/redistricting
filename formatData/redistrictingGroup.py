@@ -1,4 +1,4 @@
-from exportData.displayShapes import plotBlocksForRedistrictingGroups
+from exportData.displayShapes import plotBlocksForRedistrictingGroups, plotBlocksForRedistrictingGroup
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
     assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
@@ -42,8 +42,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def findOrphanBlocks(self):
         return [block for block in self.children if block.hasNeighbors is False]
 
-    def getGraphSplits(self):
+    def getGraphSplits(self, shouldDrawGraph=False):
         self.fillPopulationEnergyGraph(Alignment.northSouth)
+        if shouldDrawGraph:
+            plotBlocksForRedistrictingGroup(redistrictingGroup=self, showGraphHeatmap=True)
         northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth)
         self.clearPopulationEnergyGraph()
 
@@ -58,14 +60,34 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         return (northWestSplit, northEastSplit, southWestSplit, southEastSplit)
 
     def fillPopulationEnergyGraph(self, alignment):
-        startingBlocks = []
+        remainingObjects = self.children.copy()
         if alignment is Alignment.northSouth:
-            startingBlocks = self.westernChildBlocks
+            blocksToActOn = self.westernChildBlocks
         else:
-            startingBlocks = self.northernChildBlocks
+            blocksToActOn = self.northernChildBlocks
 
+        for blockToActOn in blocksToActOn:
+            blockToActOn.populationEnergy = blockToActOn.population
+            remainingObjects.remove(blockToActOn)
 
-        raise NotImplementedError
+        while len(remainingObjects) > 0:
+            blocksToActOn = getNeighborsForGraphObjectsInList(graphObjects=blocksToActOn, inList=remainingObjects)
+            filledBlocks = [block for block in self.children if block not in remainingObjects]
+
+            for blockToActOn in blocksToActOn:
+                previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn], inList=filledBlocks)
+                if len(previousNeighbors) is 0:
+                    raise ReferenceError("Can't find previous neighbor for {0}".format(blockToActOn))
+
+                lowestPopulationEnergyNeighbor = None
+                for previousNeighbor in previousNeighbors:
+                    if lowestPopulationEnergyNeighbor is None:
+                        lowestPopulationEnergyNeighbor = previousNeighbor
+                    elif previousNeighbor.populationEnergy < lowestPopulationEnergyNeighbor.populationEnergy:
+                        lowestPopulationEnergyNeighbor = previousNeighbor
+
+                blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
+                remainingObjects.remove(blockToActOn)
 
     def clearPopulationEnergyGraph(self):
         for child in self.children:
@@ -74,12 +96,19 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def getPopulationEnergySplit(self, alignment):
         raise NotImplementedError
 
-
-
     def __lt__(self, other):
         if isinstance(other, RedistrictingGroup):
             return self.graphId < other.graphId
         return NotImplemented
+
+
+def getNeighborsForGraphObjectsInList(graphObjects, inList):
+    neighborList = []
+    for graphObject in graphObjects:
+        for neighborObject in graphObject.allNeighbors:
+            if neighborObject in inList and neighborObject not in neighborList and neighborObject not in graphObjects:
+                neighborList.append(neighborObject)
+    return neighborList
 
 
 def attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups():
