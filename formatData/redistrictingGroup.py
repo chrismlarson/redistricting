@@ -104,7 +104,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def __lt__(self, other):
         if isinstance(other, RedistrictingGroup):
             return self.graphId < other.graphId
-        return NotImplemented
+        return NotImplemented('Can only do a less than comparison with another RedistrictingGroup')
 
 
 def getNeighborsForGraphObjectsInList(graphObjects, inList):
