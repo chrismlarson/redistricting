@@ -7,7 +7,7 @@ from exportData.exportData import saveDataToFileWithDescription
 from formatData.blockBorderGraph import BlockBorderGraph
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, geometryFromMultipleGeometries, \
-    findContiguousGroupsOfGraphObjects
+    findContiguousGroupsOfGraphObjects, intersectingGeometries
 
 
 class District(BlockBorderGraph):
@@ -183,4 +183,14 @@ def createDistrictFromRedistrictingGroups(redistrictingGroups):
 
 
 def getRedistrictingGroupsBetweenCandidates(aCandidate, bCandidate):
-    raise NotImplementedError
+    groupsBetween = []
+
+    for aGroup in aCandidate:
+        for bGroup in bCandidate:
+            if intersectingGeometries(aGroup, bGroup):
+                if aGroup not in groupsBetween:
+                    groupsBetween.append(aGroup)
+                if bGroup not in groupsBetween:
+                    groupsBetween.append(bGroup)
+
+    return groupsBetween
