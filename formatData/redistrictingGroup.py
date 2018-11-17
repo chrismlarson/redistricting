@@ -68,7 +68,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         raise NotImplementedError
 
     def clearPopulationEnergyGraph(self):
-        raise NotImplementedError
+        for child in self.children:
+            child.populationEnergy = 0
 
     def getPopulationEnergySplit(self, alignment):
         raise NotImplementedError
