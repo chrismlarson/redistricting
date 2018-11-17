@@ -50,6 +50,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         self.clearPopulationEnergyGraph()
 
         self.fillPopulationEnergyGraph(Alignment.westEast)
+        if shouldDrawGraph:
+            plotBlocksForRedistrictingGroup(redistrictingGroup=self, showGraphHeatmap=True)
         westEastSplit = self.getPopulationEnergySplit(Alignment.westEast)
         self.clearPopulationEnergyGraph()
 
@@ -57,7 +59,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         northEastSplit = [group for group in northSouthSplit[0] if group in westEastSplit[1]]
         southWestSplit = [group for group in northSouthSplit[1] if group in westEastSplit[0]]
         southEastSplit = [group for group in northSouthSplit[1] if group in westEastSplit[1]]
-        return (northWestSplit, northEastSplit, southWestSplit, southEastSplit)
+        return (RedistrictingGroup(childrenBlocks=northWestSplit),
+                RedistrictingGroup(childrenBlocks=northEastSplit),
+                RedistrictingGroup(childrenBlocks=southWestSplit),
+                RedistrictingGroup(childrenBlocks=southEastSplit))
 
     def fillPopulationEnergyGraph(self, alignment):
         remainingObjects = self.children.copy()
