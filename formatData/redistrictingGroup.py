@@ -3,7 +3,7 @@ from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllA
     assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
-from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries
+from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment
 from censusData import censusBlock
 from multiprocessing.dummy import Pool
 from itertools import repeat
@@ -43,7 +43,37 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         return [block for block in self.children if block.hasNeighbors is False]
 
     def getGraphSplits(self):
+        self.fillPopulationEnergyGraph(Alignment.northSouth)
+        northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth)
+        self.clearPopulationEnergyGraph()
+
+        self.fillPopulationEnergyGraph(Alignment.westEast)
+        westEastSplit = self.getPopulationEnergySplit(Alignment.westEast)
+        self.clearPopulationEnergyGraph()
+
+        northWestSplit = [group for group in northSouthSplit[0] if group in westEastSplit[0]]
+        northEastSplit = [group for group in northSouthSplit[0] if group in westEastSplit[1]]
+        southWestSplit = [group for group in northSouthSplit[1] if group in westEastSplit[0]]
+        southEastSplit = [group for group in northSouthSplit[1] if group in westEastSplit[1]]
+        return (northWestSplit, northEastSplit, southWestSplit, southEastSplit)
+
+    def fillPopulationEnergyGraph(self, alignment):
+        startingBlocks = []
+        if alignment is Alignment.northSouth:
+            startingBlocks = self.westernChildBlocks
+        else:
+            startingBlocks = self.northernChildBlocks
+
+
         raise NotImplementedError
+
+    def clearPopulationEnergyGraph(self):
+        raise NotImplementedError
+
+    def getPopulationEnergySplit(self, alignment):
+        raise NotImplementedError
+
+
 
     def __lt__(self, other):
         if isinstance(other, RedistrictingGroup):
