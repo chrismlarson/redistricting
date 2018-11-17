@@ -90,6 +90,10 @@ Example of Weighted Forest Fire fill:
 
 If the population ratio cannot be met or the resulting district split doesn’t meet a roundness threshold, a selection of groups are split via the method of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming) that has been mentioned above.
 
+Example of the population energy heatmap used for splitting up a group:
+![Directional Heatmap](https://content.screencast.com/media/d3510401-bfdb-4e3f-8761-860932dfe98c_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-16_23-44-20.png)
+Drawn from west to east. To find a sensible split, we take the values along the eastern border and work our way back to the western border, finding the least energetic neighbor along the way to find the least disruptive path.
+
 ### Potential problems
 The experiment results may break up rural areas more than urban areas, so we may need to find path that follow the edges of population dense areas. But in the theme of keeping this simple, we will first rely on the roundness/compactness tests first to overcome this challenge.
 

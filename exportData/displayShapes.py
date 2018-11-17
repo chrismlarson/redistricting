@@ -1,5 +1,5 @@
 from os import path, makedirs
-from matplotlib import pyplot, lines
+from matplotlib import pyplot, lines, cm, colors
 import matplotlib._color_data as colorData
 from descartes import PolygonPatch
 
@@ -16,14 +16,23 @@ font = {'family': 'serif',
         }
 
 
-def plotBlocksForRedistrictingGroup(redistrictingGroup, showPopulationCounts=False):
-    plotBlocksForRedistrictingGroups([redistrictingGroup], showPopulationCounts)
+def plotBlocksForRedistrictingGroup(redistrictingGroup,
+                                    showPopulationCounts=False,
+                                    showDistrictNeighborConnections=False,
+                                    showBlockNeighborConnections=False,
+                                    showGraphHeatmap=False):
+    plotBlocksForRedistrictingGroups(redistrictingGroups=[redistrictingGroup],
+                                     showPopulationCounts=showPopulationCounts,
+                                     showDistrictNeighborConnections=showDistrictNeighborConnections,
+                                     showBlockNeighborConnections=showBlockNeighborConnections,
+                                     showGraphHeatmap=showGraphHeatmap)
 
 
 def plotBlocksForRedistrictingGroups(redistrictingGroups,
                                      showPopulationCounts=False,
                                      showDistrictNeighborConnections=False,
-                                     showBlockNeighborConnections=False):
+                                     showBlockNeighborConnections=False,
+                                     showGraphHeatmap=False):
     fig = pyplot.figure()
     ax = fig.gca()
 
@@ -33,14 +42,23 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
                 if neighborGroup in redistrictingGroups:
                     ax.add_line(getLineForPair(redistrictingGroup, neighborGroup, grayColor))
 
+        maxPopulationEnergy = max([block.populationEnergy for block in redistrictingGroup.children])
+        heatMap = cm.get_cmap('hot')
+        heatmapNormalizer = colors.Normalize(vmin=0.0, vmax=maxPopulationEnergy)
+
         for block in redistrictingGroup.children:
             if block.isWater:
                 ax.add_patch(PolygonPatch(block.geometry, fc=blueColor, ec=blueColor, alpha=0.5, zorder=2))
             else:
-                if redistrictingGroup.isBorderBlock(block):
-                    ax.add_patch(PolygonPatch(block.geometry, fc=purpleColor, ec=purpleColor, alpha=0.5, zorder=2))
+                if showGraphHeatmap:
+                    normalizedEnergy = heatmapNormalizer(block.populationEnergy)
+                    heatColor = heatMap(normalizedEnergy)
+                    ax.add_patch(PolygonPatch(block.geometry, fc=heatColor, ec=heatColor, alpha=0.5, zorder=2))
                 else:
-                    ax.add_patch(PolygonPatch(block.geometry, fc=greenColor, ec=greenColor, alpha=0.5, zorder=2))
+                    if redistrictingGroup.isBorderBlock(block):
+                        ax.add_patch(PolygonPatch(block.geometry, fc=purpleColor, ec=purpleColor, alpha=0.5, zorder=2))
+                    else:
+                        ax.add_patch(PolygonPatch(block.geometry, fc=greenColor, ec=greenColor, alpha=0.5, zorder=2))
             centerOfBlock = block.geometry.centroid
 
             if showPopulationCounts:
