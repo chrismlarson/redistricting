@@ -1,5 +1,6 @@
 from exportData.displayShapes import plotBlocksForRedistrictingGroups, plotBlocksForRedistrictingGroup, \
     plotGraphObjectGroups
+from shapely.geometry import Polygon
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
     assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
@@ -324,6 +325,9 @@ def validateAllRedistrictingGroups():
 
     for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
         redistrictingGroup.validateNeighborLists()
+        if type(redistrictingGroup.geometry) is not Polygon:
+            raise RuntimeError(
+                "Found a redistricting group without a Polygon geometry: {0}".format(redistrictingGroup.graphId))
 
 
 def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
