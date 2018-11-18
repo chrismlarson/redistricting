@@ -159,9 +159,18 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         finishedSeam = False
         count = 1
         while not finishedSeam:
-            neighborCandidates = [block for block in blockToActOn.allNeighbors
+            if alignment is Alignment.northSouth:
+                primaryNeighborCandidates = blockToActOn.westernNeighbors
+            else:
+                primaryNeighborCandidates = blockToActOn.northernNeighbors
+            neighborCandidates = [block for block in primaryNeighborCandidates
                                   if block not in lowestPopulationEnergySeam and
                                   block not in borderBlocksToAvoid]
+
+            if len(neighborCandidates) is 0:
+                neighborCandidates = [block for block in blockToActOn.allNeighbors
+                                      if block not in lowestPopulationEnergySeam and
+                                      block not in borderBlocksToAvoid]
 
             if len(neighborCandidates) is 0:
                 raise RuntimeError("Can't find a {0} path through {1}".format(alignment, self))
@@ -180,7 +189,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                       showGraphHeatmapForFirstGroup=True,
                                       saveImages=True,
                                       saveDescription='SeamFinding{0}'.format(count))
-             blockToActOn = lowestPopulationEnergyNeighbor
+
+            blockToActOn = lowestPopulationEnergyNeighbor
 
             lowestPopulationEnergySeam.append(blockToActOn)
 
