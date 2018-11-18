@@ -97,7 +97,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 if len(previousNeighbors) is 0:
                     raise ReferenceError("Can't find previous neighbor for {0}".format(blockToActOn))
 
-                lowestPopulationEnergyNeighbor = getLowestPopulationEnergyNeighbor(previousNeighbors)
+                lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
 
                 blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
                 remainingObjects.remove(blockToActOn)
@@ -183,16 +183,6 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if isinstance(other, RedistrictingGroup):
             return self.graphId < other.graphId
         return NotImplemented('Can only do a less than comparison with another RedistrictingGroup')
-
-def getLowestPopulationEnergyNeighbor(neighborCandidates):
-    lowestPopulationEnergyNeighbor = None
-    for neighborCandidate in neighborCandidates:
-        if lowestPopulationEnergyNeighbor is None:
-            lowestPopulationEnergyNeighbor = neighborCandidate
-        elif neighborCandidate.populationEnergy < lowestPopulationEnergyNeighbor.populationEnergy:
-            lowestPopulationEnergyNeighbor = neighborCandidate
-    return lowestPopulationEnergyNeighbor
-
 
 def getNeighborsForGraphObjectsInList(graphObjects, inList):
     neighborList = []
