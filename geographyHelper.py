@@ -27,11 +27,11 @@ def intersectingGeometries(a, b):
     # are they touching?
     if a.geometry.intersects(b.geometry):
         # does one contain the other?
-        if doesEitherGeographyContainTheOther(a,b):
+        if doesEitherGeographyContainTheOther(a, b):
             return True
         else:
             # do they touch by just a point or do they share an edge?
-            return len(findCommonEdges(a.geometry,b.geometry)) > 0
+            return len(findCommonEdges(a.geometry, b.geometry)) > 0
     else:
         return False
 
@@ -127,7 +127,7 @@ def findDirectionOfShapeFromPoint(basePoint, targetShape):
     return direction
 
 
-def findCommonEdges(a,b):
+def findCommonEdges(a, b):
     aLines = getLineListFromBoundary(a.boundary)
     edgesInCommon = []
     for aLine in aLines:
@@ -144,7 +144,7 @@ def findDirectionOfBorderGeometries(parentShape, targetShapes):
     for targetShape in targetShapes:
         edgesInCommon = findCommonEdges(parentShape.geometry, targetShape.geometry)
 
-        if not edgesInCommon: #means we intersect only at a point
+        if not edgesInCommon:  # means we intersect only at a point
             edgesInCommon = parentShape.geometry.boundary.intersection(targetShape.geometry.boundary)
 
         commomEdgeShape = geometryFromMultiplePolygons(edgesInCommon)
@@ -219,10 +219,12 @@ def findContiguousGroupsOfGraphObjects(graphObjects):
         return []
 
 
-def forestFireFillGraphObject(candidateObjects):
+def forestFireFillGraphObject(candidateObjects, startingObject=None, notInList=None):
     fireFilledObjects = []
     fireQueue = []
-    fireQueue.append(candidateObjects[0])
+    if not startingObject:
+        startingObject = candidateObjects[0]
+    fireQueue.append(startingObject)
 
     while len(fireQueue) > 0:
         graphObject = fireQueue.pop(0)
@@ -233,7 +235,8 @@ def forestFireFillGraphObject(candidateObjects):
         for directionSet in directionSets:
             for neighborObject in directionSet:
                 if neighborObject in candidateObjects and neighborObject not in fireQueue:
-                    fireQueue.append(neighborObject)
+                    if notInList is None or neighborObject not in notInList:
+                        fireQueue.append(neighborObject)
 
     return fireFilledObjects
 
@@ -262,7 +265,8 @@ def weightedForestFireFillGraphObject(candidateObjects,
             plotDistrictCandidates([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
                                    showDistrictNeighborConnections=True,
                                    saveImages=True,
-                                   saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects),count))
+                                   saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(
+                                       id(candidateObjects), count))
             count += 1
 
         potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
@@ -275,7 +279,8 @@ def weightedForestFireFillGraphObject(candidateObjects,
                 groupsToRemove = []
                 for queueItemGroup in fireQueue:
                     if any([queueItem for queueItem in queueItemGroup if queueItem in graphObjectCandidateGroup]):
-                        remainingItems = [queueItem for queueItem in queueItemGroup if queueItem not in graphObjectCandidateGroup]
+                        remainingItems = [queueItem for queueItem in queueItemGroup if
+                                          queueItem not in graphObjectCandidateGroup]
                         remainingItemsFromGroups.extend(remainingItems)
                         groupsToRemove.append(queueItemGroup)
                 # remove duplicates from the lists
@@ -305,10 +310,11 @@ def weightedForestFireFillGraphObject(candidateObjects,
             potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
 
             if shouldDrawEachStep:
-                plotDistrictCandidates([fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
-                                       showDistrictNeighborConnections=True,
-                                       saveImages=True,
-                                       saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects),count))
+                plotDistrictCandidates(
+                    [fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
+                    showDistrictNeighborConnections=True,
+                    saveImages=True,
+                    saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
                 count += 1
 
             # add the potentially isolated groups and the candidate group back to the queue
@@ -347,15 +353,19 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
     combinations = []
 
     # if the group is touching a must touch object, continue, otherwise add group plus all candidates
-    mustTouchGroupNeighbors = [mustTouchObjectNeighbor for mustTouchObject in mustTouchGroup for mustTouchObjectNeighbor in mustTouchObject.allNeighbors]
+    mustTouchGroupNeighbors = [mustTouchObjectNeighbor for mustTouchObject in mustTouchGroup for mustTouchObjectNeighbor
+                               in mustTouchObject.allNeighbors]
     if any(group for group in startingGroup if group in mustTouchGroupNeighbors):
 
-        neighborsInCandidates = [groupNeighbor for group in startingGroup for groupNeighbor in group.allNeighbors if groupNeighbor in candidateGroups]
+        neighborsInCandidates = [groupNeighbor for group in startingGroup for groupNeighbor in group.allNeighbors if
+                                 groupNeighbor in candidateGroups]
         if len(neighborsInCandidates) > 0:
             for neighbor in neighborsInCandidates:
-                neighborCombinations = combinationsFromGroup(candidateGroups=[candidateGroup for candidateGroup in candidateGroups if candidateGroup not in startingGroup and candidateGroup is not neighbor],
-                                                             mustTouchGroup=mustTouchGroup,
-                                                             startingGroup=[neighbor])
+                neighborCombinations = combinationsFromGroup(
+                    candidateGroups=[candidateGroup for candidateGroup in candidateGroups if
+                                     candidateGroup not in startingGroup and candidateGroup is not neighbor],
+                    mustTouchGroup=mustTouchGroup,
+                    startingGroup=[neighbor])
                 for neighborCombination in neighborCombinations:
                     # add the combination with the group and without
                     neighborCombination.sort()
@@ -382,7 +392,6 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
             combinationsToRemove.append(combination)
     combinations = [combination for combination in combinations if combination not in combinationsToRemove]
     return combinations
-
 
 
 def alignmentOfPolygon(polygon):
