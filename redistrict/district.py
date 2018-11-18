@@ -2,7 +2,7 @@ import math
 
 from tqdm import tqdm
 
-from exportData.displayShapes import plotDistrictCandidates, plotRedistrictingGroups, plotDistrict
+from exportData.displayShapes import plotGraphObjectGroups, plotRedistrictingGroups, plotDistrict
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.blockBorderGraph import BlockBorderGraph
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \

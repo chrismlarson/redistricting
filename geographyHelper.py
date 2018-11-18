@@ -15,7 +15,7 @@ from itertools import groupby
 #     main(['install', path])
 # install_whl("path_to_file\\Shapely-1.6.4.post1-cp37-cp37m-win32.whl")
 # but not sure if this worked...
-from exportData.displayShapes import plotRedistrictingGroups, plotDistrictCandidates
+from exportData.displayShapes import plotRedistrictingGroups, plotGraphObjectGroups
 
 
 def convertGeoJSONToShapely(geoJSON):
@@ -262,10 +262,10 @@ def weightedForestFireFillGraphObject(candidateObjects,
         remainingObjects = [object for object in remainingObjects if object not in graphObjectCandidateGroup]
 
         if shouldDrawEachStep:
-            plotDistrictCandidates([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
-                                   showDistrictNeighborConnections=True,
-                                   saveImages=True,
-                                   saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(
+            plotGraphObjectGroups([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
+                                  showDistrictNeighborConnections=True,
+                                  saveImages=True,
+                                  saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(
                                        id(candidateObjects), count))
             count += 1
 
@@ -310,7 +310,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
             potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
 
             if shouldDrawEachStep:
-                plotDistrictCandidates(
+                plotGraphObjectGroups(
                     [fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
                     showDistrictNeighborConnections=True,
                     saveImages=True,
@@ -340,7 +340,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
         fireQueue = [x[0] for x in weightedQueue]
 
     if shouldDrawEachStep:
-        plotDistrictCandidates(
+        plotGraphObjectGroups(
             [fireFilledObjects, [], remainingObjects],
             showDistrictNeighborConnections=True,
             saveImages=True,

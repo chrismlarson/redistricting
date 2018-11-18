@@ -137,28 +137,28 @@ def plotDistrict(district,
     pyplot.show()
 
 
-def plotDistrictCandidates(districtCandidates,
-                           showPopulationCounts=False,
-                           showDistrictNeighborConnections=False,
-                           saveImages=False,
-                           saveDescription='Temp'):
+def plotGraphObjectGroups(graphObjectGroups,
+                          showPopulationCounts=False,
+                          showDistrictNeighborConnections=False,
+                          saveImages=False,
+                          saveDescription='Temp'):
     fig = pyplot.figure()
     ax = fig.gca()
 
     colorIndex = 0
-    for districtCandidate in districtCandidates:
-        for redistrictingGroup in districtCandidate:
+    for graphObjectGroup in graphObjectGroups:
+        for graphObject in graphObjectGroup:
             if showDistrictNeighborConnections:
-                for neighborGroup in redistrictingGroup.allNeighbors:
-                    ax.add_line(getLineForPair(redistrictingGroup, neighborGroup, grayColor))
+                for neighborGroup in graphObject.allNeighbors:
+                    ax.add_line(getLineForPair(graphObject, neighborGroup, grayColor))
 
             ax.add_patch(
-                PolygonPatch(redistrictingGroup.geometry, fc=getColor(colorIndex), ec=getColor(colorIndex), alpha=0.5,
+                PolygonPatch(graphObject.geometry, fc=getColor(colorIndex), ec=getColor(colorIndex), alpha=0.5,
                              zorder=2))
 
             if showPopulationCounts:
-                centerOfGroup = redistrictingGroup.geometry.centroid
-                ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=redistrictingGroup.population, fontdict=font)
+                centerOfGroup = graphObject.geometry.centroid
+                ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=graphObject.population, fontdict=font)
         colorIndex += 1
 
     ax.axis('scaled')
