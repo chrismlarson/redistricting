@@ -1,4 +1,5 @@
-from exportData.displayShapes import plotBlocksForRedistrictingGroups, plotBlocksForRedistrictingGroup
+from exportData.displayShapes import plotBlocksForRedistrictingGroups, plotBlocksForRedistrictingGroup, \
+    plotGraphObjectGroups
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
     assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
@@ -47,13 +48,13 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         self.fillPopulationEnergyGraph(Alignment.northSouth)
         if shouldDrawGraph:
             plotBlocksForRedistrictingGroup(redistrictingGroup=self, showGraphHeatmap=True)
-        northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth)
+        northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
         self.clearPopulationEnergyGraph()
 
         self.fillPopulationEnergyGraph(Alignment.westEast)
         if shouldDrawGraph:
             plotBlocksForRedistrictingGroup(redistrictingGroup=self, showGraphHeatmap=True)
-        westEastSplit = self.getPopulationEnergySplit(Alignment.westEast)
+        westEastSplit = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
         self.clearPopulationEnergyGraph()
 
         northWestSplit = RedistrictingGroup(
@@ -106,8 +107,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         for child in self.children:
             child.populationEnergy = 0
 
-    def getPopulationEnergySplit(self, alignment):
-        lowestEnergySeam = self.getLowestPopulationEnergySeam(alignment)
+    def getPopulationEnergySplit(self, alignment, shouldDrawGraph=False):
+        lowestEnergySeam = self.getLowestPopulationEnergySeam(alignment, shouldDrawGraph=shouldDrawGraph)
 
         if alignment is Alignment.northSouth:
             aSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
@@ -137,22 +138,26 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         else:
             bSplit += lowestEnergySeam
 
+        if shouldDrawGraph:
+            plotGraphObjectGroups(graphObjectGroups=[aSplit, bSplit])
+
         return (aSplit, bSplit)
 
-    def getLowestPopulationEnergySeam(self, alignment):
+    def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False):
         if alignment is Alignment.northSouth:
-            startingCandidates = self.southernChildBlocks
-            borderBlocksToAvoid = self.westernChildBlocks + self.easternChildBlocks
-            finishCandidates = self.northernChildBlocks
-        else:
             startingCandidates = self.easternChildBlocks
-            borderBlocksToAvoid = self.northernChildBlocks + self.southernChildBlocks
+            borderBlocksToAvoid = self.northernChildBlocks + self.southernChildBlocks + startingCandidates
             finishCandidates = self.westernChildBlocks
+        else:
+            startingCandidates = self.southernChildBlocks
+            borderBlocksToAvoid = self.westernChildBlocks + self.easternChildBlocks + startingCandidates
+            finishCandidates = self.northernChildBlocks
 
         blockToActOn = min(startingCandidates, key=lambda block: block.populationEnergy)
 
         lowestPopulationEnergySeam = [blockToActOn]
         finishedSeam = False
+        count = 1
         while not finishedSeam:
             neighborCandidates = [block for block in blockToActOn.allNeighbors
                                   if block not in lowestPopulationEnergySeam and
@@ -161,14 +166,28 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             if len(neighborCandidates) is 0:
                 raise RuntimeError("Can't find a {0} path through {1}".format(alignment, self))
 
-            lowestPopulationEnergyNeighbor = getLowestPopulationEnergyNeighbor(neighborCandidates)
-            blockToActOn = lowestPopulationEnergyNeighbor
+            lowestPopulationEnergyNeighbor = min(neighborCandidates, key=lambda block: block.populationEnergy)
+            if shouldDrawGraph:
+                plotGraphObjectGroups(graphObjectGroups=[self.children,
+                                                         neighborCandidates,
+                                                         startingCandidates,
+                                                         finishCandidates,
+                                                         [],
+                                                         [],
+                                                         [],
+                                                         lowestPopulationEnergySeam,
+                                                         [lowestPopulationEnergyNeighbor]],
+                                      showGraphHeatmapForFirstGroup=True,
+                                      saveImages=True,
+                                      saveDescription='SeamFinding{0}'.format(count))
+             blockToActOn = lowestPopulationEnergyNeighbor
 
             lowestPopulationEnergySeam.append(blockToActOn)
 
             if blockToActOn in finishCandidates:
                 finishedSeam = True
 
+            count += 1
         return lowestPopulationEnergySeam
 
     def assignNeighboringBlocksToBlocks(self):
