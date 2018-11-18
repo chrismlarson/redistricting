@@ -55,14 +55,26 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         westEastSplit = self.getPopulationEnergySplit(Alignment.westEast)
         self.clearPopulationEnergyGraph()
 
-        northWestSplit = [group for group in northSouthSplit[0] if group in westEastSplit[0]]
-        northEastSplit = [group for group in northSouthSplit[0] if group in westEastSplit[1]]
-        southWestSplit = [group for group in northSouthSplit[1] if group in westEastSplit[0]]
-        southEastSplit = [group for group in northSouthSplit[1] if group in westEastSplit[1]]
-        return (RedistrictingGroup(childrenBlocks=northWestSplit),
-                RedistrictingGroup(childrenBlocks=northEastSplit),
-                RedistrictingGroup(childrenBlocks=southWestSplit),
-                RedistrictingGroup(childrenBlocks=southEastSplit))
+        northWestSplit = RedistrictingGroup(
+            childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[0]])
+        northWestSplit.assignNeighboringBlocksToBlocks()
+
+        northEastSplit = RedistrictingGroup(
+            childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[1]])
+        northEastSplit.assignNeighboringBlocksToBlocks()
+
+        southWestSplit = RedistrictingGroup(
+            childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[0]])
+        southWestSplit.assignNeighboringBlocksToBlocks()
+
+        southEastSplit = RedistrictingGroup(
+            childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[1]])
+        southEastSplit.assignNeighboringBlocksToBlocks()
+
+        return (northWestSplit,
+                northEastSplit,
+                southWestSplit,
+                southEastSplit)
 
     def fillPopulationEnergyGraph(self, alignment):
         remainingObjects = self.children.copy()
@@ -100,6 +112,14 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
     def getPopulationEnergySplit(self, alignment):
         raise NotImplementedError
+
+    def assignNeighboringBlocksToBlocks(self):
+        with tqdm(total=len(self.children)) as pbar:
+            threadPool = Pool(4)
+            threadPool.starmap(assignNeighborBlocksFromCandiateBlocks,
+                               zip(self.children,
+                                   repeat(self.children),
+                                   repeat(pbar)))
 
     def __lt__(self, other):
         if isinstance(other, RedistrictingGroup):
@@ -157,15 +177,7 @@ def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
         tqdm.write('\n')
         tqdm.write('    *** Assigning Neighbors To All Census Blocks for Redistricting Group {0} of {1} ***'
                    .format(count, len(RedistrictingGroup.redistrictingGroupList)))
-        with tqdm(total=len(redistrictingGroup.children)) as pbar:
-            threadPool = Pool(4)
-            threadPool.starmap(assignNeighborBlocksFromCandiateBlocks,
-                               zip(redistrictingGroup.children,
-                                   repeat(redistrictingGroup.children),
-                                   repeat(pbar)))
-            # for atomicBlock in redistrictingGroup.children:
-            #     atomicBlock.assignNeighborBlocksFromCandiateBlocks(candidateBlocks=redistrictingGroup.children)
-            #     pbar.update(1)
+        redistrictingGroup.assignNeighboringBlocksToBlocks()
         count += 1
 
     # find single orphaned atomic blocks and attach them to the closest neighbor.
