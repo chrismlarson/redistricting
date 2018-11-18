@@ -36,6 +36,7 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
     fig = pyplot.figure()
     ax = fig.gca()
 
+
     for redistrictingGroup in redistrictingGroups:
         if showDistrictNeighborConnections:
             for neighborGroup in redistrictingGroup.allNeighbors:
@@ -140,26 +141,36 @@ def plotDistrict(district,
 def plotGraphObjectGroups(graphObjectGroups,
                           showPopulationCounts=False,
                           showDistrictNeighborConnections=False,
+                          showGraphHeatmapForFirstGroup=False,
                           saveImages=False,
                           saveDescription='Temp'):
-    fig = pyplot.figure()
+    fig = pyplot.figure(figsize=(10,10))
     ax = fig.gca()
 
-    colorIndex = 0
+    count = 0
     for graphObjectGroup in graphObjectGroups:
-        for graphObject in graphObjectGroup:
-            if showDistrictNeighborConnections:
-                for neighborGroup in graphObject.allNeighbors:
-                    ax.add_line(getLineForPair(graphObject, neighborGroup, grayColor))
+        if len(graphObjectGroup) is not 0:
+            maxPopulationEnergy = max([block.populationEnergy for block in graphObjectGroup])
+            heatMap = cm.get_cmap('hot')
+            heatmapNormalizer = colors.Normalize(vmin=0.0, vmax=maxPopulationEnergy)
 
-            ax.add_patch(
-                PolygonPatch(graphObject.geometry, fc=getColor(colorIndex), ec=getColor(colorIndex), alpha=0.5,
-                             zorder=2))
+            for graphObject in graphObjectGroup:
+                if showDistrictNeighborConnections:
+                    for neighborGroup in graphObject.allNeighbors:
+                        ax.add_line(getLineForPair(graphObject, neighborGroup, grayColor))
+                if showGraphHeatmapForFirstGroup and count is 0:
+                    normalizedEnergy = heatmapNormalizer(graphObject.populationEnergy)
+                    heatColor = heatMap(normalizedEnergy)
+                    ax.add_patch(PolygonPatch(graphObject.geometry, fc=heatColor, ec=heatColor, alpha=0.5, zorder=2))
+                else:
+                    ax.add_patch(
+                        PolygonPatch(graphObject.geometry, fc=getColor(count), ec=getColor(count), alpha=0.5,
+                                     zorder=2))
 
-            if showPopulationCounts:
-                centerOfGroup = graphObject.geometry.centroid
-                ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=graphObject.population, fontdict=font)
-        colorIndex += 1
+                if showPopulationCounts:
+                    centerOfGroup = graphObject.geometry.centroid
+                    ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=graphObject.population, fontdict=font)
+        count += 1
 
     ax.axis('scaled')
 
