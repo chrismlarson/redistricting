@@ -3,7 +3,8 @@ from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllA
     assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
-from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment
+from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
+    forestFireFillGraphObject, mostCardinalOfGeometries, CardinalDirection
 from censusData import censusBlock
 from multiprocessing.dummy import Pool
 from itertools import repeat
@@ -96,12 +97,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 if len(previousNeighbors) is 0:
                     raise ReferenceError("Can't find previous neighbor for {0}".format(blockToActOn))
 
-                lowestPopulationEnergyNeighbor = None
-                for previousNeighbor in previousNeighbors:
-                    if lowestPopulationEnergyNeighbor is None:
-                        lowestPopulationEnergyNeighbor = previousNeighbor
-                    elif previousNeighbor.populationEnergy < lowestPopulationEnergyNeighbor.populationEnergy:
-                        lowestPopulationEnergyNeighbor = previousNeighbor
+                lowestPopulationEnergyNeighbor = getLowestPopulationEnergyNeighbor(previousNeighbors)
 
                 blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
                 remainingObjects.remove(blockToActOn)
@@ -111,7 +107,69 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             child.populationEnergy = 0
 
     def getPopulationEnergySplit(self, alignment):
-        raise NotImplementedError
+        lowestEnergySeam = self.getLowestPopulationEnergySeam(alignment)
+
+        if alignment is Alignment.northSouth:
+            aSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                           direction=CardinalDirection.north)
+
+            bSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                           direction=CardinalDirection.south)
+        else:
+            aSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                           direction=CardinalDirection.west)
+
+            bSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                           direction=CardinalDirection.east)
+
+        aSplit = forestFireFillGraphObject(candidateObjects=self.children,
+                                           startingObject=aSplitStartingBlock,
+                                           notInList=lowestEnergySeam)
+        bSplit = forestFireFillGraphObject(candidateObjects=self.children,
+                                           startingObject=bSplitStartingBlock,
+                                           notInList=lowestEnergySeam)
+
+        aSplitPopulation = sum(block.population for block in lowestEnergySeam)
+        bSplitPopulation = sum(block.population for block in lowestEnergySeam)
+
+        if aSplitPopulation < bSplitPopulation:
+            aSplit += lowestEnergySeam
+        else:
+            bSplit += lowestEnergySeam
+
+        return (aSplit, bSplit)
+
+    def getLowestPopulationEnergySeam(self, alignment):
+        if alignment is Alignment.northSouth:
+            startingCandidates = self.southernChildBlocks
+            borderBlocksToAvoid = self.westernChildBlocks + self.easternChildBlocks
+            finishCandidates = self.northernChildBlocks
+        else:
+            startingCandidates = self.easternChildBlocks
+            borderBlocksToAvoid = self.northernChildBlocks + self.southernChildBlocks
+            finishCandidates = self.westernChildBlocks
+
+        blockToActOn = min(startingCandidates, key=lambda block: block.populationEnergy)
+
+        lowestPopulationEnergySeam = [blockToActOn]
+        finishedSeam = False
+        while not finishedSeam:
+            neighborCandidates = [block for block in blockToActOn.allNeighbors
+                                  if block not in lowestPopulationEnergySeam and
+                                  block not in borderBlocksToAvoid]
+
+            if len(neighborCandidates) is 0:
+                raise RuntimeError("Can't find a {0} path through {1}".format(alignment, self))
+
+            lowestPopulationEnergyNeighbor = getLowestPopulationEnergyNeighbor(neighborCandidates)
+            blockToActOn = lowestPopulationEnergyNeighbor
+
+            lowestPopulationEnergySeam.append(blockToActOn)
+
+            if blockToActOn in finishCandidates:
+                finishedSeam = True
+
+        return lowestPopulationEnergySeam
 
     def assignNeighboringBlocksToBlocks(self):
         with tqdm(total=len(self.children)) as pbar:
@@ -125,6 +183,15 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if isinstance(other, RedistrictingGroup):
             return self.graphId < other.graphId
         return NotImplemented('Can only do a less than comparison with another RedistrictingGroup')
+
+def getLowestPopulationEnergyNeighbor(neighborCandidates):
+    lowestPopulationEnergyNeighbor = None
+    for neighborCandidate in neighborCandidates:
+        if lowestPopulationEnergyNeighbor is None:
+            lowestPopulationEnergyNeighbor = neighborCandidate
+        elif neighborCandidate.populationEnergy < lowestPopulationEnergyNeighbor.populationEnergy:
+            lowestPopulationEnergyNeighbor = neighborCandidate
+    return lowestPopulationEnergyNeighbor
 
 
 def getNeighborsForGraphObjectsInList(graphObjects, inList):
