@@ -103,6 +103,7 @@ class District(BlockBorderGraph):
         districtStillNotExactlyCut = True
         tqdm.write('*** Attempting forest fire fill for a {0} to {1} ratio ***'.format(ratio[0], ratio[1]))
 
+        count = 1
         while districtStillNotExactlyCut:
 
             districtCandidates = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
@@ -125,10 +126,15 @@ class District(BlockBorderGraph):
                 tqdm.write('   *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
                 updatedChildren = self.children.copy()
                 for groupToBreakUp in groupsToBreakUp:
-                    smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=True)
+                    smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)
                 self.children = updatedChildren
+            saveDataToFileWithDescription(data=self,
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='DistrictSplittingIteration{0}'.format(count))
+            count +=1
 
         return (candidateDistrictA, candidateDistrictB)
 

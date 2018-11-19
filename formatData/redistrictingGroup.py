@@ -1,12 +1,12 @@
-from exportData.displayShapes import plotBlocksForRedistrictingGroups, plotBlocksForRedistrictingGroup, \
-    plotGraphObjectGroups
+from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups
 from shapely.geometry import Polygon
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
     assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
-    forestFireFillGraphObject, mostCardinalOfGeometries, CardinalDirection
+    mostCardinalOfGeometries, CardinalDirection, geometryFromMultipleGeometries, getPolygonThatIntersectsGeometry, \
+    geometryFromMultiplePolygons, doesPolygonContainTheOther
 from censusData import censusBlock
 from multiprocessing.dummy import Pool
 from itertools import repeat
@@ -47,14 +47,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
     def getGraphSplits(self, shouldDrawGraph=False):
         self.fillPopulationEnergyGraph(Alignment.northSouth)
-        if shouldDrawGraph:
-            plotBlocksForRedistrictingGroup(redistrictingGroup=self, showGraphHeatmap=True)
         northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
         self.clearPopulationEnergyGraph()
 
         self.fillPopulationEnergyGraph(Alignment.westEast)
-        if shouldDrawGraph:
-            plotBlocksForRedistrictingGroup(redistrictingGroup=self, showGraphHeatmap=True)
         westEastSplit = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
         self.clearPopulationEnergyGraph()
 
@@ -73,6 +69,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         southEastSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[1]])
         southEastSplit.assignNeighboringBlocksToBlocks()
+
+        # if shouldDrawGraph:
+        plotRedistrictingGroups(
+            redistrictingGroups=[northWestSplit, northEastSplit, southWestSplit, southEastSplit])
 
         return (northWestSplit,
                 northEastSplit,
@@ -109,40 +109,72 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             child.populationEnergy = 0
 
     def getPopulationEnergySplit(self, alignment, shouldDrawGraph=False):
-        lowestEnergySeam = self.getLowestPopulationEnergySeam(alignment, shouldDrawGraph=shouldDrawGraph)
+        polygonSplits = self.getPopulationEnergyPolygonSplit(alignment=alignment, shouldDrawGraph=shouldDrawGraph)
+        aSplitPolygon = polygonSplits[0]
+        bSplitPolygon = polygonSplits[1]
+        seamSplitPolygon = polygonSplits[2]
 
-        if alignment is Alignment.northSouth:
-            aSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
-                                                           direction=CardinalDirection.north)
+        aSplit = []
+        bSplit = []
+        seamSplit = []
+        for block in self.children:
+            if doesPolygonContainTheOther(container=aSplitPolygon, target=block.geometry, ignoreInteriors=False):
+                aSplit.append(block)
+            elif doesPolygonContainTheOther(container=bSplitPolygon, target=block.geometry, ignoreInteriors=False):
+                bSplit.append(block)
+            elif doesPolygonContainTheOther(container=seamSplitPolygon, target=block.geometry, ignoreInteriors=False):
+                seamSplit.append(block)
+            else:
+                plotPolygons([aSplitPolygon, bSplitPolygon, seamSplitPolygon, block.geometry])
+                raise RuntimeError("Couldn't find a container for block: {0}".format(block.geometry))
 
-            bSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
-                                                           direction=CardinalDirection.south)
-        else:
-            aSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
-                                                           direction=CardinalDirection.west)
-
-            bSplitStartingBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
-                                                           direction=CardinalDirection.east)
-
-        aSplit = forestFireFillGraphObject(candidateObjects=self.children,
-                                           startingObject=aSplitStartingBlock,
-                                           notInList=lowestEnergySeam)
-        bSplit = forestFireFillGraphObject(candidateObjects=self.children,
-                                           startingObject=bSplitStartingBlock,
-                                           notInList=lowestEnergySeam)
-
-        aSplitPopulation = sum(block.population for block in lowestEnergySeam)
-        bSplitPopulation = sum(block.population for block in lowestEnergySeam)
+        aSplitPopulation = sum(block.population for block in aSplit)
+        bSplitPopulation = sum(block.population for block in bSplit)
 
         if aSplitPopulation < bSplitPopulation:
-            aSplit += lowestEnergySeam
+            aSplit += seamSplit
         else:
-            bSplit += lowestEnergySeam
+            bSplit += seamSplit
 
         if shouldDrawGraph:
             plotGraphObjectGroups(graphObjectGroups=[aSplit, bSplit])
 
         return (aSplit, bSplit)
+
+    def getPopulationEnergyPolygonSplit(self, alignment, shouldDrawGraph=False):
+        lowestEnergySeam = self.getLowestPopulationEnergySeam(alignment)
+
+        seamSplitPolygon = geometryFromMultipleGeometries(geometryList=lowestEnergySeam)
+        polygonWithoutSeam = self.geometry.difference(seamSplitPolygon)
+        splitPolygons = list(polygonWithoutSeam)
+
+        if alignment is Alignment.northSouth:
+            aSplitRepresentativeBlockDirection = CardinalDirection.north
+            bSplitRepresentativeBlockDirection = CardinalDirection.south
+        else:
+            aSplitRepresentativeBlockDirection = CardinalDirection.west
+            bSplitRepresentativeBlockDirection = CardinalDirection.east
+
+        aSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                             direction=aSplitRepresentativeBlockDirection)
+
+        bSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
+                                                             direction=bSplitRepresentativeBlockDirection)
+
+        aSplitPolygon = getPolygonThatIntersectsGeometry(polygonList=splitPolygons,
+                                                         targetGeometry=aSplitRepresentativeBlock)
+        bSplitPolygon = getPolygonThatIntersectsGeometry(polygonList=splitPolygons,
+                                                         targetGeometry=bSplitRepresentativeBlock)
+        leftOverPolygons = [geometry for geometry in splitPolygons if
+                            geometry is not aSplitPolygon and geometry is not bSplitPolygon]
+        if len(leftOverPolygons) is not len(splitPolygons) - 2:
+            raise RuntimeError('Missing some polygons for mapping')
+        seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
+
+        if shouldDrawGraph:
+            plotPolygons([aSplitPolygon, bSplitPolygon, seamSplitPolygon])
+
+        return (aSplitPolygon, bSplitPolygon, seamSplitPolygon)
 
     def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False):
         if alignment is Alignment.northSouth:
@@ -213,6 +245,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if isinstance(other, RedistrictingGroup):
             return self.graphId < other.graphId
         return NotImplemented('Can only do a less than comparison with another RedistrictingGroup')
+
 
 def getNeighborsForGraphObjectsInList(graphObjects, inList):
     neighborList = []
