@@ -173,7 +173,6 @@ class TestDoesGeographyContainTheOther(TestCase):
         bContainsA = doesGeographyContainTheOther(container=b, target=a)
         self.assertFalse(bContainsA)
 
-
     def test_containsTheOther_BMultiploygoninAWithHoles(self):
         exterior = [[-10, 10], [10, 10], [10, -10], [-10, -10]]
         shape1 = [[-1, 1], [1, 1], [1, -1], [-1, -1]]
@@ -198,6 +197,28 @@ class TestDoesGeographyContainTheOther(TestCase):
                                 [shape2]
                             ]
                         })
+        aContainsB = doesGeographyContainTheOther(container=a, target=b)
+        self.assertTrue(aContainsB)
+        bContainsA = doesGeographyContainTheOther(container=b, target=a)
+        self.assertFalse(bContainsA)
+
+    def test_containsTheOther_BInButOnBorderOfA(self):
+        # def isBoundaryGeometry(parent, child):
+        #     return parent.geometry.boundary.intersects(child.geometry.boundary)
+        a = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[-5, 0], [5, 0], [5, 5], [-5, 5]]]})
+        b = CensusBlock(countyFIPS='01',
+                        tractFIPS='01',
+                        blockFIPS='01',
+                        population=int('1'),
+                        isWater=False,
+                        geoJSONGeometry={'type': 'Polygon',
+                                         'coordinates': [[[0, 0], [1, 0], [1,1], [0,1]]]})
         aContainsB = doesGeographyContainTheOther(container=a, target=b)
         self.assertTrue(aContainsB)
         bContainsA = doesGeographyContainTheOther(container=b, target=a)

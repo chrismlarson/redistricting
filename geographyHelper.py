@@ -72,9 +72,9 @@ def doesGeographyContainTheOther(container, target):
     return containsTargetBoundary
 
 
-def doesPolygonContainTheOther(container, target):
+def doesPolygonContainTheOther(container, target, ignoreInteriors=True):
     containsTargetBoundary = False
-    if container.interiors:
+    if container.interiors and ignoreInteriors:
         containsTargetBoundary = containsTargetBoundary or container.boundary.contains(
             target.boundary)
     else:
