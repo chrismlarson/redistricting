@@ -61,24 +61,22 @@ def getPolygonThatIntersectsGeometry(polygonList, targetGeometry):
 
 
 def doesGeographyContainTheOther(container, target):
-    if type(container.geometry) is MultiPolygon:
-        containerPolygons = list(container.geometry)
-    else:
-        containerPolygons = [container.geometry]
-    containsTargetBoundary = True
-    for containerPolygon in containerPolygons:
-        containsTargetBoundary = containsTargetBoundary and doesPolygonContainTheOther(container=containerPolygon,
-                                                                                       target=target.geometry)
+    containsTargetBoundary = doesPolygonContainTheOther(container=container.geometry, target=target.geometry)
     return containsTargetBoundary
 
 
 def doesPolygonContainTheOther(container, target, ignoreInteriors=True):
-    containsTargetBoundary = False
-    if container.interiors and ignoreInteriors:
-        containsTargetBoundary = containsTargetBoundary or container.boundary.contains(
-            target.boundary)
+    if type(container) is MultiPolygon:
+        containerPolygons = list(container)
     else:
-        containsTargetBoundary = containsTargetBoundary or container.contains(target)
+        containerPolygons = [container]
+    containsTargetBoundary = False
+    for containerPolygon in containerPolygons:
+        if containerPolygon.interiors and ignoreInteriors:
+            containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(
+                target.boundary)
+        else:
+            containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target)
     return containsTargetBoundary
 
 
