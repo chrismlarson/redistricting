@@ -70,9 +70,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[1]])
         southEastSplit.assignNeighboringBlocksToBlocks()
 
-        # if shouldDrawGraph:
-        plotRedistrictingGroups(
-            redistrictingGroups=[northWestSplit, northEastSplit, southWestSplit, southEastSplit])
+        if shouldDrawGraph:
+            plotRedistrictingGroups(
+                redistrictingGroups=[northWestSplit, northEastSplit, southWestSplit, southEastSplit])
 
         return (northWestSplit,
                 northEastSplit,
