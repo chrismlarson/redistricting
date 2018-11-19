@@ -24,14 +24,18 @@ def convertGeoJSONToShapely(geoJSON):
 
 
 def intersectingGeometries(a, b):
+    return intersectingPolygons(a.geometry, b.geometry)
+
+
+def intersectingPolygons(a, b):
     # are they touching?
-    if a.geometry.intersects(b.geometry):
+    if a.intersects(b):
         # does one contain the other?
-        if doesEitherGeographyContainTheOther(a, b):
+        if doesEitherPolygonContainTheOther(a, b):
             return True
         else:
             # do they touch by just a point or do they share an edge?
-            return len(findCommonEdges(a.geometry, b.geometry)) > 0
+            return len(findCommonEdges(a, b)) > 0
     else:
         return False
 
@@ -42,19 +46,39 @@ def doesEitherGeographyContainTheOther(a, b):
     return aContainsBBoundary or bContainsABoundary
 
 
+def doesEitherPolygonContainTheOther(a, b):
+    aContainsBBoundary = doesPolygonContainTheOther(container=a, target=b)
+    bContainsABoundary = doesPolygonContainTheOther(container=b, target=a)
+    return aContainsBBoundary or bContainsABoundary
+
+
+
+def getPolygonThatIntersectsGeometry(polygonList, targetGeometry):
+    for polygon in polygonList:
+        if intersectingPolygons(polygon, targetGeometry.geometry):
+            return polygon
+    return None
+
+
 def doesGeographyContainTheOther(container, target):
     if type(container.geometry) is MultiPolygon:
         containerPolygons = list(container.geometry)
     else:
         containerPolygons = [container.geometry]
-
-    containsTargetBoundary = False
+    containsTargetBoundary = True
     for containerPolygon in containerPolygons:
-        if containerPolygon.interiors:
-            containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(
-                target.geometry.boundary)
-        else:
-            containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target.geometry)
+        containsTargetBoundary = containsTargetBoundary and doesPolygonContainTheOther(container=containerPolygon,
+                                                                                       target=target.geometry)
+    return containsTargetBoundary
+
+
+def doesPolygonContainTheOther(container, target):
+    containsTargetBoundary = False
+    if container.interiors:
+        containsTargetBoundary = containsTargetBoundary or container.boundary.contains(
+            target.boundary)
+    else:
+        containsTargetBoundary = containsTargetBoundary or container.contains(target)
     return containsTargetBoundary
 
 
