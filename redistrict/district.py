@@ -122,7 +122,7 @@ class District(BlockBorderGraph):
                 groupsToBreakUp = getRedistrictingGroupsBetweenCandidates(aCandidate=candidateDistrictA,
                                                                           bCandidate=candidateDistrictB)
 
-                tqdm.write('   *** *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
+                tqdm.write('   *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
                 updatedChildren = self.children.copy()
                 for groupToBreakUp in groupsToBreakUp:
                     smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=True)
