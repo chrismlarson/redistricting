@@ -206,7 +206,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                       block not in borderBlocksToAvoid]
 
             if len(neighborCandidates) is 0:
-                raise RuntimeError("Can't find a {0} path through {1}".format(alignment, self))
+                raise RuntimeError("Can't find a {0} path through {1}".format(alignment, self.graphId))
 
             lowestPopulationEnergyNeighbor = min(neighborCandidates, key=lambda block: block.populationEnergy)
             if shouldDrawGraph:
