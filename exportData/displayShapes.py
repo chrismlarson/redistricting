@@ -183,6 +183,19 @@ def plotGraphObjectGroups(graphObjectGroups,
     pyplot.show()
 
 
+def plotPolygons(polygons):
+    fig = pyplot.figure(figsize=(10,10))
+    ax = fig.gca()
+
+    count = 0
+    for polygon in polygons:
+        ax.add_patch(PolygonPatch(polygon, fc=getColor(count), ec=getColor(count), alpha=0.5, zorder=2))
+        count += 1
+
+    ax.axis('scaled')
+    pyplot.show()
+
+
 def plotDistricts(districts,
                   showPopulationCounts=False,
                   showDistrictNeighborConnections=False,
