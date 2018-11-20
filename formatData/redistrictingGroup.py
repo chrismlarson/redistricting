@@ -45,7 +45,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def findOrphanBlocks(self):
         return [block for block in self.children if block.hasNeighbors is False]
 
-    def getGraphSplits(self, shouldDrawGraph=False):
+    def getGraphSplits(self, shouldDrawGraph=False, countForProgress=None):
+        if countForProgress is not None:
+            tqdm.write('         *** Finding seam for graph split {0} - GraphId: {1} ***'
+                       .format(countForProgress, self.graphId))
         self.fillPopulationEnergyGraph(Alignment.northSouth)
         northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
         self.clearPopulationEnergyGraph()
@@ -53,6 +56,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         self.fillPopulationEnergyGraph(Alignment.westEast)
         westEastSplit = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
         self.clearPopulationEnergyGraph()
+
+        if countForProgress is not None:
+            tqdm.write('         *** Re-assigning neighboring blocks to new Redistricting Groups in {0} ***'.format(
+                countForProgress))
 
         northWestSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[0]])

@@ -57,11 +57,11 @@ class District(BlockBorderGraph):
     def splitDistrict(self,
                       numberOfDistricts,
                       populationDeviation,
-                      progressObject=None,
+                      count=None,
                       shouldDrawEachStep=False):
-        if progressObject is None:
+        if count is None:
             tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
-            progressObject = tqdm()
+            count = 0
 
         districts = []
 
@@ -75,19 +75,20 @@ class District(BlockBorderGraph):
         cutDistricts = self.cutDistrictIntoExactRatio(ratio=ratio,
                                                       populationDeviation=populationDeviation,
                                                       shouldDrawEachStep=shouldDrawEachStep)
-        progressObject.update(1)
+        count += 1
+        tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
 
         aDistrict = District(childrenGroups=cutDistricts[0])
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
-                                                  progressObject=progressObject,
+                                                  count=count,
                                                   shouldDrawEachStep=shouldDrawEachStep)
         districts.extend(aDistrictSplits)
 
         bDistrict = District(childrenGroups=cutDistricts[1])
         bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
                                                   populationDeviation=populationDeviation,
-                                                  progressObject=progressObject,
+                                                  count=count,
                                                   shouldDrawEachStep=shouldDrawEachStep)
         districts.extend(bDistrictSplits)
 
@@ -101,7 +102,7 @@ class District(BlockBorderGraph):
         candidateDistrictA = []
         candidateDistrictB = []
         districtStillNotExactlyCut = True
-        tqdm.write('*** Attempting forest fire fill for a {0} to {1} ratio ***'.format(ratio[0], ratio[1]))
+        tqdm.write('   *** Attempting forest fire fill for a {0} to {1} ratio ***'.format(ratio[0], ratio[1]))
 
         count = 1
         while districtStillNotExactlyCut:
@@ -115,18 +116,20 @@ class District(BlockBorderGraph):
             candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
 
             if idealDistrictASize - populationDeviation <= candidateDistrictAPop <= idealDistrictASize + populationDeviation and \
-               idealDistrictBSize - populationDeviation <= candidateDistrictBPop <= idealDistrictBSize + populationDeviation:
+                    idealDistrictBSize - populationDeviation <= candidateDistrictBPop <= idealDistrictBSize + populationDeviation:
                 districtStillNotExactlyCut = False
             else:
-                tqdm.write('   *** Unsuccessful fill attempt. {0} off the count. ***'
-                    .format(abs(idealDistrictASize - candidateDistrictAPop)))
+                tqdm.write('      *** Unsuccessful fill attempt. {0} off the count. ***'
+                           .format(abs(idealDistrictASize - candidateDistrictAPop)))
                 groupsToBreakUp = getRedistrictingGroupsBetweenCandidates(aCandidate=candidateDistrictA,
                                                                           bCandidate=candidateDistrictB)
 
-                tqdm.write('   *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
+                tqdm.write('      *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
                 updatedChildren = self.children.copy()
                 for groupToBreakUp in groupsToBreakUp:
-                    smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep)
+                    smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep,
+                                                                               countForProgress=groupsToBreakUp
+                                                                               .index(groupToBreakUp)+1)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)
                 self.children = updatedChildren
@@ -134,7 +137,7 @@ class District(BlockBorderGraph):
                                           censusYear='',
                                           stateName='',
                                           descriptionOfInfo='DistrictSplittingIteration{0}'.format(count))
-            count +=1
+            count += 1
 
         return (candidateDistrictA, candidateDistrictB)
 
