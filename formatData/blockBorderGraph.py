@@ -48,12 +48,10 @@ class BlockBorderGraph(CensusContainer):
         else:
             blocksToCheck = self.children
 
-        with tqdm(total=len(blocksToCheck)) as pbar:
-            for child in blocksToCheck:
-                outdatedNeighborConnections = [neighbor for neighbor in child.allNeighbors if neighbor not in self.children]
-                if outdatedNeighborConnections:
-                    child.removeNeighbors(outdatedNeighborConnections)
-                pbar.update(1)
+        for child in blocksToCheck:
+            outdatedNeighborConnections = [neighbor for neighbor in child.allNeighbors if neighbor not in self.children]
+            if outdatedNeighborConnections:
+                child.removeNeighbors(outdatedNeighborConnections)
 
     def __findBorderBlocks(self):
         self.__northernChildBlocks = []
