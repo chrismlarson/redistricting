@@ -63,19 +63,19 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
         northWestSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[0]])
-        northWestSplit.assignNeighboringBlocksToBlocks()
+        northWestSplit.assignNeighboringBlocksToBlocks(borderBlocksOnly=True)
 
         northEastSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[1]])
-        northEastSplit.assignNeighboringBlocksToBlocks()
+        northEastSplit.assignNeighboringBlocksToBlocks(borderBlocksOnly=True)
 
         southWestSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[0]])
-        southWestSplit.assignNeighboringBlocksToBlocks()
+        southWestSplit.assignNeighboringBlocksToBlocks(borderBlocksOnly=True)
 
         southEastSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[1]])
-        southEastSplit.assignNeighboringBlocksToBlocks()
+        southEastSplit.assignNeighboringBlocksToBlocks(borderBlocksOnly=True)
 
         if shouldDrawGraph:
             plotRedistrictingGroups(
@@ -175,7 +175,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         leftOverPolygons = [geometry for geometry in splitPolygons if
                             geometry is not aSplitPolygon and geometry is not bSplitPolygon]
         if len(leftOverPolygons) is not len(splitPolygons) - 2:
-            raise RuntimeError('Missing some polygons for mapping')
+            raise RuntimeError('Missing some polygons for mapping. Split polygons: {0} Left over polygon: {1}'
+                               .format(len(splitPolygons), len(leftOverPolygons)))
         seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
 
         if shouldDrawGraph:
@@ -240,11 +241,16 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             count += 1
         return lowestPopulationEnergySeam
 
-    def assignNeighboringBlocksToBlocks(self):
-        with tqdm(total=len(self.children)) as pbar:
+    def assignNeighboringBlocksToBlocks(self, borderBlocksOnly=False):
+        if borderBlocksOnly:
+            blocksToAssign = self.borderChildren
+        else:
+            blocksToAssign = self.children
+
+        with tqdm(total=len(blocksToAssign)) as pbar:
             threadPool = Pool(4)
             threadPool.starmap(assignNeighborBlocksFromCandiateBlocks,
-                               zip(self.children,
+                               zip(blocksToAssign,
                                    repeat(self.children),
                                    repeat(pbar)))
 

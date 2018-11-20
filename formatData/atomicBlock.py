@@ -31,6 +31,7 @@ class AtomicBlock(CensusContainer, GraphObject):
 
 
 def assignNeighborBlocksFromCandiateBlocks(block, candidateBlocks, progressObject=None):
+    block.clearNeighborGraphObjects()
     neighborBlocks = []
     for candidateBlock in candidateBlocks:
         if candidateBlock is not block:
