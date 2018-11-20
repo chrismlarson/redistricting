@@ -213,9 +213,11 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             borderBlocksToAvoid = self.westernChildBlocks + self.easternChildBlocks + startingCandidates
             finishCandidates = self.northernChildBlocks
 
-        blockToActOn = min(startingCandidates, key=lambda block: block.populationEnergy)
+        startingBlock = min(startingCandidates, key=lambda block: block.populationEnergy)
+        blockToActOn = startingBlock
 
         lowestPopulationEnergySeam = [blockToActOn]
+        failedStartingBlocks = []
         finishedSeam = False
         count = 1
         while not finishedSeam:
@@ -232,8 +234,31 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                       if block not in lowestPopulationEnergySeam and
                                       block not in borderBlocksToAvoid]
 
+            # If we don't have any neighbors in the direction we're headed,
+            # we need to find the next best block candidate
             if len(neighborCandidates) is 0:
-                raise RuntimeError("Can't find a {0} path through {1}".format(alignment, self.graphId))
+                failedStartingBlocks.append(startingBlock)
+
+                remainingStartingCandidates = [startingCandidate for startingCandidate in startingCandidates if
+                                               startingCandidate not in failedStartingBlocks]
+
+                # If there are no more starting candidates, we've really failed
+                if len(remainingStartingCandidates) is 0:
+                    plotGraphObjectGroups(graphObjectGroups=[self.children,
+                                                             self.northernChildBlocks,
+                                                             self.westernChildBlocks,
+                                                             self.easternChildBlocks,
+                                                             self.southernChildBlocks,
+                                                             lowestPopulationEnergySeam,
+                                                             failedStartingBlocks],
+                                          showGraphHeatmapForFirstGroup=True)
+                    raise RuntimeError("Can't find a {0} path through {1}. Tried and failed on {2} starting blocks"
+                                       .format(alignment, self.graphId, len(failedStartingBlocks)))
+
+                startingBlock = min(remainingStartingCandidates, key=lambda block: block.populationEnergy)
+                blockToActOn = startingBlock
+                lowestPopulationEnergySeam = [blockToActOn]
+                continue
 
             lowestPopulationEnergyNeighbor = min(neighborCandidates, key=lambda block: block.populationEnergy)
             if shouldDrawGraph:
@@ -245,7 +270,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                                          [],
                                                          [],
                                                          lowestPopulationEnergySeam,
-                                                         [lowestPopulationEnergyNeighbor]],
+                                                         [lowestPopulationEnergyNeighbor],
+                                                         failedStartingBlocks],
                                       showGraphHeatmapForFirstGroup=True,
                                       saveImages=True,
                                       saveDescription='SeamFinding{0}'.format(count))
