@@ -51,13 +51,6 @@ class GraphObject:
     def allNeighbors(self):
         return self.northernNeighbors + self.westernNeighbors + self.easternNeighbors + self.southernNeighbors
 
-    @property
-    def directionSets(self):
-        return [self.northernNeighbors,
-                self.westernNeighbors,
-                self.easternNeighbors,
-                self.southernNeighbors]
-
     def updateCenterOfObject(self, center):
         self.__centerOfObject = center
 
@@ -110,10 +103,8 @@ class GraphObject:
 
 
     def validateNeighborLists(self):
-        directionSets = self.directionSets
-        for directionSet in directionSets:
-            if len(directionSet) != len(set(directionSet)):
-                raise ValueError('Found a duplicate neighbor for GraphObject:{0}'.format(directionSet))
+        if len(self.allNeighbors) != len(set(self.allNeighbors)):
+            raise ValueError('Found a duplicate neighbor for GraphObject:{0}'.format(directionSet))
 
 def getNextUniqueId():
     if GraphObject.graphObjectDict:

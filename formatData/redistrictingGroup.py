@@ -12,8 +12,6 @@ from multiprocessing.dummy import Pool
 from itertools import repeat
 from tqdm import tqdm
 
-from redistrict.district import validateContiguousRedistrictingGroups
-
 
 class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def __init__(self, childrenBlocks):
@@ -23,6 +21,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         RedistrictingGroup.redistrictingGroupList.append(self)
 
     redistrictingGroupList = []
+
+    def __setstate__(self, state):
+        RedistrictingGroup.redistrictingGroupList.append(self)
+        super(RedistrictingGroup, self).__setstate__(state)
 
     def updateBlockContainerData(self):
         super(RedistrictingGroup, self).updateBlockContainerData()
@@ -379,11 +381,12 @@ def attachOrphanRedistrictingGroupsToClosestNeighbor():
 
 
 def assignNeighboringRedistrictingGroupsForAllRedistrictingGroups():
-    for redistrictingGroupToCheck in RedistrictingGroup.redistrictingGroupList:
+    for redistrictingGroupToAssign in RedistrictingGroup.redistrictingGroupList:
+        redistrictingGroupToAssign.clearNeighborGraphObjects()
         for redistrictingGroupToCheckAgainst in RedistrictingGroup.redistrictingGroupList:
-            if redistrictingGroupToCheck != redistrictingGroupToCheckAgainst:
-                if intersectingGeometries(redistrictingGroupToCheck, redistrictingGroupToCheckAgainst):
-                    redistrictingGroupToCheck.addNeighbors([redistrictingGroupToCheckAgainst])
+            if redistrictingGroupToAssign != redistrictingGroupToCheckAgainst:
+                if intersectingGeometries(redistrictingGroupToAssign, redistrictingGroupToCheckAgainst):
+                    redistrictingGroupToAssign.addNeighbors([redistrictingGroupToCheckAgainst])
 
     attachOrphanRedistrictingGroupsToClosestNeighbor()
 
@@ -414,6 +417,16 @@ def validateAllRedistrictingGroups():
         if type(redistrictingGroup.geometry) is not Polygon:
             raise RuntimeError(
                 "Found a redistricting group without a Polygon geometry: {0}".format(redistrictingGroup.graphId))
+
+
+def validateContiguousRedistrictingGroups(groupList):
+    contiguousRegions = findContiguousGroupsOfGraphObjects(groupList)
+    if len(contiguousRegions) > 1:
+        nonContiguousDistrict = [item for sublist in contiguousRegions for item in sublist]
+        plotRedistrictingGroups(redistrictingGroups=nonContiguousDistrict,
+                                showDistrictNeighborConnections=True)
+        raise ValueError("Don't have a contiguous set of RedictingGroups. There are {0} distinct groups".format(
+            len(contiguousRegions)))
 
 
 def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):

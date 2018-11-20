@@ -278,12 +278,10 @@ def forestFireFillGraphObject(candidateObjects, startingObject=None, notInList=N
         candidateObjects.remove(graphObject)
         fireFilledObjects.append(graphObject)
 
-        directionSets = graphObject.directionSets
-        for directionSet in directionSets:
-            for neighborObject in directionSet:
-                if neighborObject in candidateObjects and neighborObject not in fireQueue:
-                    if notInList is None or neighborObject not in notInList:
-                        fireQueue.append(neighborObject)
+        for neighborObject in graphObject.allNeighbors:
+            if neighborObject in candidateObjects and neighborObject not in fireQueue:
+                if notInList is None or neighborObject not in notInList:
+                    fireQueue.append(neighborObject)
 
     return fireFilledObjects
 
@@ -341,12 +339,10 @@ def weightedForestFireFillGraphObject(candidateObjects,
 
                 # add neighbors to the queue
                 for graphObjectCandidate in graphObjectCandidateGroup:
-                    directionSets = graphObjectCandidate.directionSets
-                    for directionSet in directionSets:
-                        for neighborObject in directionSet:
-                            flatFireQueue = [object for objectGroup in fireQueue for object in objectGroup]
-                            if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
-                                fireQueue.append([neighborObject])
+                    for neighborObject in graphObjectCandidate.allNeighbors:
+                        flatFireQueue = [object for objectGroup in fireQueue for object in objectGroup]
+                        if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
+                            fireQueue.append([neighborObject])
             else:
                 remainingObjects.extend(graphObjectCandidateGroup)
         else:

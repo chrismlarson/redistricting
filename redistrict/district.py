@@ -1,10 +1,10 @@
 import math
-
 from tqdm import tqdm
-
 from exportData.displayShapes import plotGraphObjectGroups, plotRedistrictingGroups, plotDistrict
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.blockBorderGraph import BlockBorderGraph
+from formatData.redistrictingGroup import assignNeighboringRedistrictingGroupsForAllRedistrictingGroups, \
+    validateContiguousRedistrictingGroups, RedistrictingGroup
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, geometryFromMultipleGeometries, \
     findContiguousGroupsOfGraphObjects, intersectingGeometries
@@ -21,8 +21,7 @@ class District(BlockBorderGraph):
 
     def updateBlockContainerData(self):
         super(District, self).updateBlockContainerData()
-        # todo: re-enable once the contiguous bug is fixed
-        # validateContiguousRedistrictingGroups(self.children)
+        validateContiguousRedistrictingGroups(self.children)
 
     def getCutStartingCandidates(self):
         longestDirection = alignmentOfPolygon(self.geometry)
@@ -126,7 +125,10 @@ class District(BlockBorderGraph):
                                                                                .index(groupToBreakUp)+1)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)
+                    RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
                 self.children = updatedChildren
+                assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
+
             saveDataToFileWithDescription(data=self,
                                           censusYear='',
                                           stateName='',
@@ -168,16 +170,6 @@ class District(BlockBorderGraph):
         candidateDistrictB = [group for group in self.children if group not in candidateDistrictA]
 
         return (candidateDistrictA, candidateDistrictB)
-
-
-def validateContiguousRedistrictingGroups(groupList):
-    contiguousRegions = findContiguousGroupsOfGraphObjects(groupList)
-    if len(contiguousRegions) > 1:
-        nonContiguousDistrict = [item for sublist in contiguousRegions for item in sublist]
-        plotRedistrictingGroups(redistrictingGroups=nonContiguousDistrict,
-                                showDistrictNeighborConnections=True)
-        raise ValueError("Don't have a contiguous set of RedictingGroups. There are {0} distinct groups".format(
-            len(contiguousRegions)))
 
 
 def createDistrictFromRedistrictingGroups(redistrictingGroups):
