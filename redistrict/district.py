@@ -128,8 +128,9 @@ class District(BlockBorderGraph):
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)
                     RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
-                self.children = updatedChildren
+
                 assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
+                self.children = updatedChildren
 
             if shouldDrawFillAttempts:
                 plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB],
