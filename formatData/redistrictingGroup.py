@@ -180,7 +180,16 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         leftOverPolygons = [geometry for geometry in splitPolygons if
                             geometry is not aSplitPolygon and geometry is not bSplitPolygon]
         if aSplitPolygon is bSplitPolygon:
-            plotPolygons([self.geometry, aSplitPolygon, bSplitPolygon, seamSplitPolygon,
+            northernChildBlocksPolygon = geometryFromMultipleGeometries(geometryList=self.northernChildBlocks)
+            westernChildBlocksPolygon = geometryFromMultipleGeometries(geometryList=self.westernChildBlocks)
+            easternChildBlocksPolygon = geometryFromMultipleGeometries(geometryList=self.easternChildBlocks)
+            southernChildBlocksPolygon = geometryFromMultipleGeometries(geometryList=self.southernChildBlocks)
+            plotPolygons([self.geometry, aSplitPolygon, bSplitPolygon,
+                          northernChildBlocksPolygon,
+                          westernChildBlocksPolygon,
+                          easternChildBlocksPolygon,
+                          southernChildBlocksPolygon,
+                          seamSplitPolygon,
                           aSplitRepresentativeBlock.geometry,
                           bSplitRepresentativeBlock.geometry])
             raise RuntimeError('The split a and b are the same polygon')

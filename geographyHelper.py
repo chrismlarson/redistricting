@@ -81,7 +81,7 @@ def doesPolygonContainTheOther(container, target, ignoreInteriors=True):
 
 
 def isBoundaryGeometry(parent, child):
-    return parent.geometry.boundary.intersects(child.geometry.boundary)
+    return parent.geometry.exterior.intersects(child.geometry.boundary)
 
 
 def geometryFromMultipleGeometries(geometryList, useEnvelope=False):
