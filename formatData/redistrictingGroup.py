@@ -47,15 +47,20 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
     def getGraphSplits(self, shouldDrawGraph=False, countForProgress=None):
         if countForProgress is not None:
-            tqdm.write('         *** Finding seam for graph split {0} - GraphId: {1} ***'
+            tqdm.write('         *** Finding seams for graph split {0} - GraphId: {1} ***'
                        .format(countForProgress, self.graphId))
-        self.fillPopulationEnergyGraph(Alignment.northSouth)
-        northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
-        self.clearPopulationEnergyGraph()
+        with tqdm(total=4) as pbar:
+            self.fillPopulationEnergyGraph(Alignment.northSouth)
+            pbar.update(1)
+            northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
+            pbar.update(1)
+            self.clearPopulationEnergyGraph()
 
-        self.fillPopulationEnergyGraph(Alignment.westEast)
-        westEastSplit = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
-        self.clearPopulationEnergyGraph()
+            self.fillPopulationEnergyGraph(Alignment.westEast)
+            pbar.update(1)
+            westEastSplit = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
+            pbar.update(1)
+            self.clearPopulationEnergyGraph()
 
         if countForProgress is not None:
             tqdm.write('         *** Re-assigning neighboring blocks to new Redistricting Groups in {0} ***'.format(
