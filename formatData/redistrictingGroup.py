@@ -63,19 +63,19 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
         northWestSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[0]])
-        northWestSplit.assignNeighboringBlocksToBlocks(borderBlocksOnly=True)
+        northWestSplit.removeOutdatedNeighborConnections(borderBlocksOnly=True)
 
         northEastSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[1]])
-        northEastSplit.assignNeighboringBlocksToBlocks(borderBlocksOnly=True)
+        northEastSplit.removeOutdatedNeighborConnections(borderBlocksOnly=True)
 
         southWestSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[0]])
-        southWestSplit.assignNeighboringBlocksToBlocks(borderBlocksOnly=True)
+        southWestSplit.removeOutdatedNeighborConnections(borderBlocksOnly=True)
 
         southEastSplit = RedistrictingGroup(
             childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[1]])
-        southEastSplit.assignNeighboringBlocksToBlocks(borderBlocksOnly=True)
+        southEastSplit.removeOutdatedNeighborConnections(borderBlocksOnly=True)
 
         if shouldDrawGraph:
             plotRedistrictingGroups(
@@ -246,16 +246,11 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             count += 1
         return lowestPopulationEnergySeam
 
-    def assignNeighboringBlocksToBlocks(self, borderBlocksOnly=False):
-        if borderBlocksOnly:
-            blocksToAssign = self.borderChildren
-        else:
-            blocksToAssign = self.children
-
-        with tqdm(total=len(blocksToAssign)) as pbar:
+    def assignNeighboringBlocksToBlocks(self):
+        with tqdm(total=len(self.children)) as pbar:
             threadPool = Pool(4)
             threadPool.starmap(assignNeighborBlocksFromCandiateBlocks,
-                               zip(blocksToAssign,
+                               zip(self.children,
                                    repeat(self.children),
                                    repeat(pbar)))
 

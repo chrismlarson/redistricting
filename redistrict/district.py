@@ -24,12 +24,6 @@ class District(BlockBorderGraph):
         # todo: re-enable once the contiguous bug is fixed
         # validateContiguousRedistrictingGroups(self.children)
 
-    def removeOutdatedNeighborConnections(self):
-        for child in self.children:
-            outdatedNeighborConnections = [neighbor for neighbor in child.allNeighbors if neighbor not in self.children]
-            if outdatedNeighborConnections:
-                child.removeNeighbors(outdatedNeighborConnections)
-
     def getCutStartingCandidates(self):
         longestDirection = alignmentOfPolygon(self.geometry)
 

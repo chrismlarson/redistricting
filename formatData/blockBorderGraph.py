@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 from geographyHelper import isBoundaryGeometry, findDirectionOfBorderGeometries, CardinalDirection
 from formatData.censusContainer import CensusContainer
 
@@ -39,6 +41,19 @@ class BlockBorderGraph(CensusContainer):
                block in self.__westernChildBlocks or \
                block in self.__easternChildBlocks or \
                block in self.__southernChildBlocks
+
+    def removeOutdatedNeighborConnections(self, borderBlocksOnly=False):
+        if borderBlocksOnly:
+            blocksToCheck = self.borderChildren
+        else:
+            blocksToCheck = self.children
+
+        with tqdm(total=len(blocksToCheck)) as pbar:
+            for child in blocksToCheck:
+                outdatedNeighborConnections = [neighbor for neighbor in child.allNeighbors if neighbor not in self.children]
+                if outdatedNeighborConnections:
+                    child.removeNeighbors(outdatedNeighborConnections)
+                pbar.update(1)
 
     def __findBorderBlocks(self):
         self.__northernChildBlocks = []
