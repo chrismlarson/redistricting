@@ -50,3 +50,16 @@ class TestFindDirectionOfShape(TestCase):
         direction = findDirectionOfShape(centerShape, dupeShape)
         self.assertEqual(direction, CardinalDirection.north)
 
+
+
+    # Oblong Parent Tests
+    def test_findDirectionOfShape_northernNarrow(self):
+        baseShape = Polygon([(-1, 5), (1, 5), (1, -5), (-1, -5)])
+        northShape = Polygon([(-1, 10), (1, 10), (1, 8), (-1, 8)])
+        direction = findDirectionOfShape(baseShape, northShape)
+        self.assertEqual(direction, CardinalDirection.north)
+
+        northEasternShape = Polygon([(2, 10), (3, 10), (3, 8), (2, 8)])
+        direction = findDirectionOfShape(baseShape, northEasternShape)
+        self.assertEqual(direction, CardinalDirection.east)
+

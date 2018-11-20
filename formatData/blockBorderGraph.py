@@ -65,7 +65,7 @@ class BlockBorderGraph(CensusContainer):
             if isBoundaryGeometry(parent=self, child=block):
                 borderBlocks.append(block)
         if len(borderBlocks) > 0:
-            blockDirections = findDirectionOfBorderGeometries(parentShape=self, targetShapes=borderBlocks)
+            blockDirections = findDirectionOfBorderGeometries(parentGeometry=self, targetGeometries=borderBlocks)
             for blockDirection in blockDirections:
                 self.__addBorderBlocks(block=blockDirection[0], direction=blockDirection[1])
 

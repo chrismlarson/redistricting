@@ -8,6 +8,7 @@ greenColor = '#66cc78'
 purpleColor = '#b266cc'
 yellowColor = '#e2e54b'
 orangeColor = '#e0974a'
+turquoiseColor = '#66ccbc'
 grayColor = '#636363'
 font = {'family': 'serif',
         'color': grayColor,
@@ -57,7 +58,17 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
                     ax.add_patch(PolygonPatch(block.geometry, fc=heatColor, ec=heatColor, alpha=0.5, zorder=2))
                 else:
                     if redistrictingGroup.isBorderBlock(block):
-                        ax.add_patch(PolygonPatch(block.geometry, fc=purpleColor, ec=purpleColor, alpha=0.5, zorder=2))
+                        if block in redistrictingGroup.northernChildBlocks:
+                            borderBlockColor = purpleColor
+                        elif block in redistrictingGroup.westernChildBlocks:
+                            borderBlockColor = yellowColor
+                        elif block in redistrictingGroup.southernChildBlocks:
+                            borderBlockColor = orangeColor
+                        else:
+                            borderBlockColor = turquoiseColor
+
+                        ax.add_patch(PolygonPatch(block.geometry, fc=borderBlockColor, ec=borderBlockColor,
+                                                  alpha=0.5, zorder=2))
                     else:
                         ax.add_patch(PolygonPatch(block.geometry, fc=greenColor, ec=greenColor, alpha=0.5, zorder=2))
             centerOfBlock = block.geometry.centroid

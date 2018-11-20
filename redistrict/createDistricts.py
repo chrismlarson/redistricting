@@ -1,5 +1,5 @@
 from us import states
-from exportData.displayShapes import plotDistricts
+from exportData.displayShapes import plotDistricts, plotBlocksForRedistrictingGroup
 from exportData.exportData import loadDataFromFileWithDescription, saveDataToFileWithDescription
 from redistrict.district import createDistrictFromRedistrictingGroups
 
@@ -12,6 +12,17 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                       stateName=stateInfo.name,
                                                       descriptionOfInfo='{0}RedistrictingGroup'.format(
                                                           descriptionToWorkWith))
+
+for redistGroup in redistrictingGroups:
+    redistGroup.updateBlockContainerData()
+
+
+saveDataToFileWithDescription(data=redistrictingGroups,
+                              censusYear=censusYear,
+                              stateName=stateInfo,
+                              descriptionOfInfo='{0}RedistrictingGroup'.format(descriptionToWorkWith))
+
+
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
 
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,

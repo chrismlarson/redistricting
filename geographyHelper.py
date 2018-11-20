@@ -110,7 +110,19 @@ class Alignment(Enum):
     westEast = 2
 
 
-def findDirection(basePoint, targetPoint):
+def findCommonEdges(a, b):
+    aLines = getLineListFromBoundary(a.boundary)
+    edgesInCommon = []
+    for aLine in aLines:
+        bLines = getLineListFromBoundary(b.boundary)
+        for bLine in bLines:
+            edgesInCommon.append(shared_paths(aLine, bLine))
+
+    edgesInCommon = [edge for edge in edgesInCommon if not edge.is_empty]
+    return edgesInCommon
+
+
+def findDirection(basePoint, targetPoint, topAngleFromCenter=45.0):
     if basePoint == targetPoint:
         return CardinalDirection.north
 
@@ -126,11 +138,16 @@ def findDirection(basePoint, targetPoint):
 
     degDiff = degrees(radianDiff)
 
-    if 45 <= degDiff and degDiff < 135:
+    northWestAngle = topAngleFromCenter
+    southWestAngle = 180 - topAngleFromCenter
+    southEastAngle = 180 + topAngleFromCenter
+    northEastAngle = 360 - topAngleFromCenter
+
+    if northWestAngle <= degDiff < southWestAngle:
         return CardinalDirection.west
-    elif 135 <= degDiff and degDiff < 225:
+    elif southWestAngle <= degDiff < southEastAngle:
         return CardinalDirection.south
-    elif 225 <= degDiff and degDiff < 315:
+    elif southEastAngle <= degDiff < northEastAngle:
         return CardinalDirection.east
     else:
         return CardinalDirection.north
@@ -139,7 +156,10 @@ def findDirection(basePoint, targetPoint):
 def findDirectionOfShape(baseShape, targetShape):
     basePoint = baseShape.centroid
     targetPoint = targetShape.centroid
-    direction = findDirection(basePoint=basePoint, targetPoint=targetPoint)
+    dimensionsOfBaseShape = dimensionsOfPolygon(baseShape)
+    topAngleFromCenterOfBaseShape = topAngleFromCenterOfRectangle(width=dimensionsOfBaseShape[0],
+                                                                  height=dimensionsOfBaseShape[1])
+    direction = findDirection(basePoint=basePoint, targetPoint=targetPoint, topAngleFromCenter=topAngleFromCenterOfBaseShape)
     return direction
 
 
@@ -149,30 +169,28 @@ def findDirectionOfShapeFromPoint(basePoint, targetShape):
     return direction
 
 
-def findCommonEdges(a, b):
-    aLines = getLineListFromBoundary(a.boundary)
-    edgesInCommon = []
-    for aLine in aLines:
-        bLines = getLineListFromBoundary(b.boundary)
-        for bLine in bLines:
-            edgesInCommon.append(shared_paths(aLine, bLine))
-
-    edgesInCommon = [edge for edge in edgesInCommon if not edge.is_empty]
-    return edgesInCommon
-
-
-def findDirectionOfBorderGeometries(parentShape, targetShapes):
+def findDirectionOfBorderGeometries(parentGeometry, targetGeometries):
     directionOfShapes = []
-    for targetShape in targetShapes:
-        edgesInCommon = findCommonEdges(parentShape.geometry, targetShape.geometry)
+    for targetGeometry in targetGeometries:
+        edgesInCommon = findCommonEdges(parentGeometry.geometry, targetGeometry.geometry)
 
         if not edgesInCommon:  # means we intersect only at a point
-            edgesInCommon = parentShape.geometry.boundary.intersection(targetShape.geometry.boundary)
+            edgesInCommon = parentGeometry.geometry.boundary.intersection(targetGeometry.geometry.boundary)
 
         commomEdgeShape = geometryFromMultiplePolygons(edgesInCommon)
-        direction = findDirectionOfShape(baseShape=targetShape.geometry.centroid, targetShape=commomEdgeShape)
-        directionOfShapes.append((targetShape, direction))
+        direction = findDirectionOfShape(baseShape=parentGeometry.geometry, targetShape=commomEdgeShape)
+        directionOfShapes.append((targetGeometry, direction))
     return directionOfShapes
+
+
+def topAngleFromCenterOfRectangle(width, height):
+    sideAngle = atan2(width, height)
+
+    if sideAngle < 0:
+        sideAngle = sideAngle + (2 * pi)
+
+    sideAngleDegrees = degrees(sideAngle)
+    return sideAngleDegrees
 
 
 def mostCardinalOfGeometries(geometryList, direction):
@@ -417,23 +435,28 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
 
 
 def alignmentOfPolygon(polygon):
-    minX = polygon.bounds[0]
-    minY = polygon.bounds[1]
-    maxX = polygon.bounds[2]
-    maxY = polygon.bounds[3]
-    boxDimensions = getWidthAndHeightOfBoxOnEarth(minX=minX, minY=minY, maxX=maxX, maxY=maxY)
+    boxDimensions = dimensionsOfPolygon(polygon)
     if boxDimensions[0] < boxDimensions[1]:
         return Alignment.northSouth
     else:
         return Alignment.westEast
 
 
-def getWidthAndHeightOfBoxOnEarth(minX, minY, maxX, maxY):
-    aWidth = getDistanceBetweenLatLong(lat1=minY, lon1=maxX, lat2=maxY, lon2=maxX)
-    bWidth = getDistanceBetweenLatLong(lat1=minY, lon1=minX, lat2=maxY, lon2=minX)
+def dimensionsOfPolygon(polygon):
+    minLon = polygon.bounds[0]
+    minLat = polygon.bounds[1]
+    maxLon = polygon.bounds[2]
+    maxLat = polygon.bounds[3]
+    boxDimensions = getWidthAndHeightOfBoxOnEarth(minLat=minLat, minLon=minLon, maxLat=maxLat, maxLon=maxLon)
+    return boxDimensions
+
+
+def getWidthAndHeightOfBoxOnEarth(minLat, minLon, maxLat, maxLon):
+    aWidth = getDistanceBetweenLatLong(lat1=minLon, lon1=maxLat, lat2=maxLon, lon2=maxLat)
+    bWidth = getDistanceBetweenLatLong(lat1=minLon, lon1=minLat, lat2=maxLon, lon2=minLat)
     maxWidth = max(aWidth, bWidth)
-    aHeight = getDistanceBetweenLatLong(lat1=minX, lon1=maxY, lat2=maxX, lon2=maxY)
-    bHeight = getDistanceBetweenLatLong(lat1=minX, lon1=minY, lat2=maxX, lon2=minY)
+    aHeight = getDistanceBetweenLatLong(lat1=minLat, lon1=maxLon, lat2=maxLat, lon2=maxLon)
+    bHeight = getDistanceBetweenLatLong(lat1=minLat, lon1=minLon, lat2=maxLat, lon2=minLon)
     maxHeight = max(aHeight, bHeight)
     return (maxWidth, maxHeight)
 
