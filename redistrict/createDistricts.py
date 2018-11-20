@@ -13,16 +13,6 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                       descriptionOfInfo='{0}RedistrictingGroup'.format(
                                                           descriptionToWorkWith))
 
-for redistGroup in redistrictingGroups:
-    redistGroup.updateBlockContainerData()
-
-
-saveDataToFileWithDescription(data=redistrictingGroups,
-                              censusYear=censusYear,
-                              stateName=stateInfo,
-                              descriptionOfInfo='{0}RedistrictingGroup'.format(descriptionToWorkWith))
-
-
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
 
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,
