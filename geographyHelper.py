@@ -81,7 +81,14 @@ def doesPolygonContainTheOther(container, target, ignoreInteriors=True):
 
 
 def isBoundaryGeometry(parent, child):
-    return parent.geometry.exterior.intersects(child.geometry.boundary)
+    if type(parent.geometry) is MultiPolygon:
+        containerPolygons = list(parent.geometry)
+    else:
+        containerPolygons = [parent.geometry]
+    isChildBoundaryGeometry = False
+    for containerPolygon in containerPolygons:
+        isChildBoundaryGeometry = isChildBoundaryGeometry or containerPolygon.exterior.intersects(child.geometry.boundary)
+    return isChildBoundaryGeometry
 
 
 def geometryFromMultipleGeometries(geometryList, useEnvelope=False):
