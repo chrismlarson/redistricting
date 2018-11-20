@@ -174,6 +174,11 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                                          targetGeometry=bSplitRepresentativeBlock)
         leftOverPolygons = [geometry for geometry in splitPolygons if
                             geometry is not aSplitPolygon and geometry is not bSplitPolygon]
+        if aSplitPolygon is bSplitPolygon:
+            plotPolygons([self.geometry, aSplitPolygon, bSplitPolygon, seamSplitPolygon,
+                          aSplitRepresentativeBlock.geometry,
+                          bSplitRepresentativeBlock.geometry])
+            raise RuntimeError('The split a and b are the same polygon')
         if len(leftOverPolygons) is not len(splitPolygons) - 2:
             raise RuntimeError('Missing some polygons for mapping. Split polygons: {0} Left over polygon: {1}'
                                .format(len(splitPolygons), len(leftOverPolygons)))
