@@ -51,6 +51,7 @@ class District(BlockBorderGraph):
                       numberOfDistricts,
                       populationDeviation,
                       count=None,
+                      shouldDrawFillAttempts=False,
                       shouldDrawEachStep=False):
         if count is None:
             tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
@@ -67,6 +68,7 @@ class District(BlockBorderGraph):
 
         cutDistricts = self.cutDistrictIntoExactRatio(ratio=ratio,
                                                       populationDeviation=populationDeviation,
+                                                      shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                       shouldDrawEachStep=shouldDrawEachStep)
         count += 1
         tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
@@ -87,7 +89,7 @@ class District(BlockBorderGraph):
 
         return districts
 
-    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawEachStep=False):
+    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False, shouldDrawEachStep=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -128,6 +130,12 @@ class District(BlockBorderGraph):
                     RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
                 self.children = updatedChildren
                 assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
+
+            if shouldDrawFillAttempts:
+                plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB],
+                                      showDistrictNeighborConnections=True,
+                                      saveImages=True,
+                                      saveDescription='DistrictSplittingIteration{0}'.format(count))
 
             saveDataToFileWithDescription(data=self,
                                           censusYear='',

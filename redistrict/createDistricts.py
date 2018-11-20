@@ -17,7 +17,7 @@ initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redi
 
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           populationDeviation=1,
-                                          shouldDrawEachStep=False)
+                                          shouldDrawFillAttempts=True)
 plotDistricts(districts=districts,
               showPopulationCounts=True,
               showDistrictNeighborConnections=True)
