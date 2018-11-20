@@ -1,5 +1,5 @@
 from us import states
-from exportData.displayShapes import plotDistricts, plotBlocksForRedistrictingGroup
+from exportData.displayShapes import plotDistricts
 from exportData.exportData import loadDataFromFileWithDescription, saveDataToFileWithDescription
 from redistrict.district import createDistrictFromRedistrictingGroups
 
