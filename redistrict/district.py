@@ -107,6 +107,12 @@ class District(BlockBorderGraph):
             candidateDistrictA = districtCandidates[0]
             candidateDistrictB = districtCandidates[1]
 
+            if shouldDrawFillAttempts:
+                plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB],
+                                      showDistrictNeighborConnections=True,
+                                      saveImages=True,
+                                      saveDescription='DistrictSplittingIteration{0}'.format(count))
+
             candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
             candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
 
@@ -131,12 +137,6 @@ class District(BlockBorderGraph):
 
                 assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
                 self.children = updatedChildren
-
-            if shouldDrawFillAttempts:
-                plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB],
-                                      showDistrictNeighborConnections=True,
-                                      saveImages=True,
-                                      saveDescription='DistrictSplittingIteration{0}'.format(count))
 
             saveDataToFileWithDescription(data=self,
                                           censusYear='',

@@ -151,6 +151,7 @@ def plotDistrict(district,
 
 def plotGraphObjectGroups(graphObjectGroups,
                           showPopulationCounts=False,
+                          showGraphIds=False,
                           showDistrictNeighborConnections=False,
                           showGraphHeatmapForFirstGroup=False,
                           saveImages=False,
@@ -181,6 +182,11 @@ def plotGraphObjectGroups(graphObjectGroups,
                 if showPopulationCounts:
                     centerOfGroup = graphObject.geometry.centroid
                     ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=graphObject.population, fontdict=font)
+
+                if showGraphIds:
+                    centerOfGroup = graphObject.geometry.centroid
+                    ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=graphObject.graphId, fontdict=font)
+
         count += 1
 
     ax.axis('scaled')
