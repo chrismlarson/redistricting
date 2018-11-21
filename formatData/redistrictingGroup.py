@@ -247,13 +247,11 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 # If there are no more starting candidates, we've really failed
                 if len(remainingStartingCandidates) is 0:
                     plotGraphObjectGroups(graphObjectGroups=[self.children,
-                                                             self.northernChildBlocks,
-                                                             self.westernChildBlocks,
-                                                             self.easternChildBlocks,
-                                                             self.southernChildBlocks,
+                                                             self.borderChildren,
                                                              lowestPopulationEnergySeam,
                                                              failedStartingBlocks],
-                                          showGraphHeatmapForFirstGroup=True)
+                                          showGraphHeatmapForFirstGroup=True,
+                                          showDistrictNeighborConnections=True)
                     raise RuntimeError("Can't find a {0} path through {1}. Tried and failed on {2} starting blocks"
                                        .format(alignment, self.graphId, len(failedStartingBlocks)))
 
