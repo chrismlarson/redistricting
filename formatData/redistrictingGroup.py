@@ -1,12 +1,12 @@
 from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, MultiPolygon
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
     assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
-    mostCardinalOfGeometries, CardinalDirection, geometryFromMultipleGeometries, getPolygonThatIntersectsGeometry, \
-    geometryFromMultiplePolygons, doesPolygonContainTheOther
+    mostCardinalOfGeometries, CardinalDirection, geometryFromMultipleGeometries, geometryFromMultiplePolygons, \
+    doesPolygonContainTheOther, getPolygonThatContainsGeometry
 from censusData import censusBlock
 from multiprocessing.dummy import Pool
 from itertools import repeat
@@ -126,7 +126,13 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         polygonSplits = self.getPopulationEnergyPolygonSplit(alignment=alignment, shouldDrawGraph=shouldDrawGraph)
         aSplitPolygon = polygonSplits[0]
         bSplitPolygon = polygonSplits[1]
-        seamSplitPolygon = polygonSplits[2]
+
+        if len(polygonSplits) is 3:
+            seamOnEdge = False
+            seamSplitPolygon = polygonSplits[2]
+        else:
+            seamOnEdge = True
+            seamSplitPolygon = None
 
         aSplit = []
         bSplit = []
@@ -136,7 +142,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 aSplit.append(block)
             elif doesPolygonContainTheOther(container=bSplitPolygon, target=block.geometry, ignoreInteriors=False):
                 bSplit.append(block)
-            elif doesPolygonContainTheOther(container=seamSplitPolygon, target=block.geometry, ignoreInteriors=False):
+            elif not seamOnEdge and doesPolygonContainTheOther(container=seamSplitPolygon, target=block.geometry,
+                                                               ignoreInteriors=False):
                 seamSplit.append(block)
             else:
                 plotPolygons([aSplitPolygon, bSplitPolygon, seamSplitPolygon, block.geometry])
@@ -160,7 +167,13 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
         seamSplitPolygon = geometryFromMultipleGeometries(geometryList=lowestEnergySeam)
         polygonWithoutSeam = self.geometry.difference(seamSplitPolygon)
-        splitPolygons = list(polygonWithoutSeam)
+
+        if type(polygonWithoutSeam) is MultiPolygon:
+            seamOnEdge = False
+            splitPolygons = list(polygonWithoutSeam)
+        else:
+            seamOnEdge = True
+            splitPolygons = [polygonWithoutSeam, seamSplitPolygon]
 
         if alignment is Alignment.northSouth:
             aSplitRepresentativeBlockDirection = CardinalDirection.north
@@ -175,22 +188,14 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         bSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
                                                              direction=bSplitRepresentativeBlockDirection)
 
-        aSplitPolygon = getPolygonThatIntersectsGeometry(polygonList=splitPolygons,
-                                                         targetGeometry=aSplitRepresentativeBlock)
-        bSplitPolygon = getPolygonThatIntersectsGeometry(polygonList=splitPolygons,
-                                                         targetGeometry=bSplitRepresentativeBlock)
+        aSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
+                                                       targetGeometry=aSplitRepresentativeBlock)
+        bSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
+                                                       targetGeometry=bSplitRepresentativeBlock)
         leftOverPolygons = [geometry for geometry in splitPolygons if
                             geometry is not aSplitPolygon and geometry is not bSplitPolygon]
         if aSplitPolygon is bSplitPolygon:
-            northernChildBlocksPolygon = geometryFromMultipleGeometries(geometryList=self.northernChildBlocks)
-            westernChildBlocksPolygon = geometryFromMultipleGeometries(geometryList=self.westernChildBlocks)
-            easternChildBlocksPolygon = geometryFromMultipleGeometries(geometryList=self.easternChildBlocks)
-            southernChildBlocksPolygon = geometryFromMultipleGeometries(geometryList=self.southernChildBlocks)
             plotPolygons([self.geometry, aSplitPolygon, bSplitPolygon,
-                          northernChildBlocksPolygon,
-                          westernChildBlocksPolygon,
-                          easternChildBlocksPolygon,
-                          southernChildBlocksPolygon,
                           seamSplitPolygon,
                           aSplitRepresentativeBlock.geometry,
                           bSplitRepresentativeBlock.geometry])
@@ -198,12 +203,17 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if len(leftOverPolygons) is not len(splitPolygons) - 2:
             raise RuntimeError('Missing some polygons for mapping. Split polygons: {0} Left over polygon: {1}'
                                .format(len(splitPolygons), len(leftOverPolygons)))
-        seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
+
+        if seamOnEdge:
+            polygonSplits = (aSplitPolygon, bSplitPolygon)
+        else:
+            seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
+            polygonSplits = (aSplitPolygon, bSplitPolygon, seamSplitPolygon)
 
         if shouldDrawGraph:
-            plotPolygons([aSplitPolygon, bSplitPolygon, seamSplitPolygon])
+            plotPolygons(polygonSplits)
 
-        return (aSplitPolygon, bSplitPolygon, seamSplitPolygon)
+        return polygonSplits
 
     def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False):
         if alignment is Alignment.northSouth:

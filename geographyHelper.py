@@ -52,10 +52,16 @@ def doesEitherPolygonContainTheOther(a, b):
     return aContainsBBoundary or bContainsABoundary
 
 
-
 def getPolygonThatIntersectsGeometry(polygonList, targetGeometry):
     for polygon in polygonList:
         if intersectingPolygons(polygon, targetGeometry.geometry):
+            return polygon
+    return None
+
+
+def getPolygonThatContainsGeometry(polygonList, targetGeometry):
+    for polygon in polygonList:
+        if doesPolygonContainTheOther(polygon, targetGeometry.geometry):
             return polygon
     return None
 
@@ -87,7 +93,8 @@ def isBoundaryGeometry(parent, child):
         containerPolygons = [parent.geometry]
     isChildBoundaryGeometry = False
     for containerPolygon in containerPolygons:
-        isChildBoundaryGeometry = isChildBoundaryGeometry or containerPolygon.exterior.intersects(child.geometry.boundary)
+        isChildBoundaryGeometry = isChildBoundaryGeometry or containerPolygon.exterior.intersects(
+            child.geometry.boundary)
     return isChildBoundaryGeometry
 
 
@@ -166,7 +173,8 @@ def findDirectionOfShape(baseShape, targetShape):
     dimensionsOfBaseShape = dimensionsOfPolygon(baseShape)
     topAngleFromCenterOfBaseShape = topAngleFromCenterOfRectangle(width=dimensionsOfBaseShape[0],
                                                                   height=dimensionsOfBaseShape[1])
-    direction = findDirection(basePoint=basePoint, targetPoint=targetPoint, topAngleFromCenter=topAngleFromCenterOfBaseShape)
+    direction = findDirection(basePoint=basePoint, targetPoint=targetPoint,
+                              topAngleFromCenter=topAngleFromCenterOfBaseShape)
     return direction
 
 
@@ -311,7 +319,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                                   showDistrictNeighborConnections=True,
                                   saveImages=True,
                                   saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(
-                                       id(candidateObjects), count))
+                                      id(candidateObjects), count))
             count += 1
 
         potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
