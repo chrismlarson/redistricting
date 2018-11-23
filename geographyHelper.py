@@ -6,6 +6,7 @@ from enum import Enum
 from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
 from json import dumps
 from itertools import groupby
+from exportData.displayShapes import plotGraphObjectGroups
 
 # On Windows, I needed to install Shapely manually
 # Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
@@ -15,7 +16,6 @@ from itertools import groupby
 #     main(['install', path])
 # install_whl("path_to_file\\Shapely-1.6.4.post1-cp37-cp37m-win32.whl")
 # but not sure if this worked...
-from exportData.displayShapes import plotRedistrictingGroups, plotGraphObjectGroups
 
 
 def convertGeoJSONToShapely(geoJSON):
@@ -59,19 +59,24 @@ def getPolygonThatIntersectsGeometry(polygonList, targetGeometry):
     return None
 
 
-def getPolygonThatContainsGeometry(polygonList, targetGeometry):
+def getPolygonThatContainsGeometry(polygonList, targetGeometry, useTargetCentroid=False, ignoreInteriors=True):
     for polygon in polygonList:
-        if doesPolygonContainTheOther(polygon, targetGeometry.geometry):
+        if doesPolygonContainTheOther(container=polygon,
+                                      target=targetGeometry.geometry,
+                                      ignoreInteriors=ignoreInteriors,
+                                      useTargetCentroid=useTargetCentroid):
             return polygon
     return None
 
 
-def doesGeographyContainTheOther(container, target):
-    containsTargetBoundary = doesPolygonContainTheOther(container=container.geometry, target=target.geometry)
+def doesGeographyContainTheOther(container, target, useTargetCentroid=False):
+    containsTargetBoundary = doesPolygonContainTheOther(container=container.geometry,
+                                                        target=target.geometry,
+                                                        useTargetCentroid=useTargetCentroid)
     return containsTargetBoundary
 
 
-def doesPolygonContainTheOther(container, target, ignoreInteriors=True):
+def doesPolygonContainTheOther(container, target, ignoreInteriors=True, useTargetCentroid=False):
     if type(container) is MultiPolygon:
         containerPolygons = list(container)
     else:
@@ -79,10 +84,17 @@ def doesPolygonContainTheOther(container, target, ignoreInteriors=True):
     containsTargetBoundary = False
     for containerPolygon in containerPolygons:
         if containerPolygon.interiors and ignoreInteriors:
-            containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(
-                target.boundary)
+            if useTargetCentroid:
+                containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(
+                    target.centroid)
+            else:
+                containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(
+                    target.boundary)
         else:
-            containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target)
+            if useTargetCentroid:
+                containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target.centroid)
+            else:
+                containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target)
     return containsTargetBoundary
 
 
