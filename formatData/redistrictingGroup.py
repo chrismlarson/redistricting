@@ -189,9 +189,13 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                                              direction=bSplitRepresentativeBlockDirection)
 
         aSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
-                                                       targetGeometry=aSplitRepresentativeBlock)
+                                                       targetGeometry=aSplitRepresentativeBlock,
+                                                       ignoreInteriors=False,
+                                                       useTargetCentroid=True)
         bSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
-                                                       targetGeometry=bSplitRepresentativeBlock)
+                                                       targetGeometry=bSplitRepresentativeBlock,
+                                                       ignoreInteriors=False,
+                                                       useTargetCentroid=True)
         leftOverPolygons = [geometry for geometry in splitPolygons if
                             geometry is not aSplitPolygon and geometry is not bSplitPolygon]
         if aSplitPolygon is bSplitPolygon:

@@ -206,7 +206,8 @@ def plotPolygons(polygons):
 
     count = 0
     for polygon in polygons:
-        ax.add_patch(PolygonPatch(polygon, fc=getColor(count), ec=getColor(count), alpha=0.5, zorder=2))
+        if polygon is not None:
+            ax.add_patch(PolygonPatch(polygon, fc=getColor(count), ec=getColor(count), alpha=0.5, zorder=2))
         count += 1
 
     ax.axis('scaled')
