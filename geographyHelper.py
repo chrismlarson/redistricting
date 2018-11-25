@@ -59,43 +59,49 @@ def getPolygonThatIntersectsGeometry(polygonList, targetGeometry):
     return None
 
 
-def getPolygonThatContainsGeometry(polygonList, targetGeometry, useTargetCentroid=False, ignoreInteriors=True):
+def getPolygonThatContainsGeometry(polygonList, targetGeometry, useTargetRepresentativePoint=False, ignoreInteriors=True):
     for polygon in polygonList:
         if doesPolygonContainTheOther(container=polygon,
                                       target=targetGeometry.geometry,
                                       ignoreInteriors=ignoreInteriors,
-                                      useTargetCentroid=useTargetCentroid):
+                                      useTargetRepresentativePoint=useTargetRepresentativePoint):
             return polygon
     return None
 
 
-def doesGeographyContainTheOther(container, target, useTargetCentroid=False):
+def doesGeographyContainTheOther(container, target, useTargetRepresentativePoint=False):
     containsTargetBoundary = doesPolygonContainTheOther(container=container.geometry,
                                                         target=target.geometry,
-                                                        useTargetCentroid=useTargetCentroid)
+                                                        useTargetRepresentativePoint=useTargetRepresentativePoint)
     return containsTargetBoundary
 
 
-def doesPolygonContainTheOther(container, target, ignoreInteriors=True, useTargetCentroid=False):
+def doesPolygonContainTheOther(container, target, ignoreInteriors=True, useTargetRepresentativePoint=False):
     if type(container) is MultiPolygon:
         containerPolygons = list(container)
     else:
         containerPolygons = [container]
-    containsTargetBoundary = False
+    containsTarget = False
     for containerPolygon in containerPolygons:
         if containerPolygon.interiors and ignoreInteriors:
-            if useTargetCentroid:
-                containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(
-                    target.centroid)
+            # MultiLineStrings don't work well with the "contains" method
+            containerPolygonBoundary = containerPolygon.boundary
+            if type(containerPolygonBoundary) is MultiLineString:
+                containerPolygonBoundary = containerPolygonBoundary.convex_hull
+            targetBoundary = target.boundary
+            if type(targetBoundary) is MultiLineString:
+                targetBoundary = targetBoundary.convex_hull
+
+            if useTargetRepresentativePoint:
+                containsTarget = containsTarget or containerPolygonBoundary.contains(target.representative_point())
             else:
-                containsTargetBoundary = containsTargetBoundary or containerPolygon.boundary.contains(
-                    target.boundary)
+                containsTarget = containsTarget or containerPolygonBoundary.contains(targetBoundary)
         else:
-            if useTargetCentroid:
-                containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target.centroid)
+            if useTargetRepresentativePoint:
+                containsTarget = containsTarget or containerPolygon.contains(target.representative_point())
             else:
-                containsTargetBoundary = containsTargetBoundary or containerPolygon.contains(target)
-    return containsTargetBoundary
+                containsTarget = containsTarget or containerPolygon.contains(target)
+    return containsTarget
 
 
 def isBoundaryGeometry(parent, child):

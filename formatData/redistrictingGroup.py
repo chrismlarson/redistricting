@@ -192,13 +192,14 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
         aSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
                                                        targetGeometry=aSplitRepresentativeBlock,
-                                                       useTargetCentroid=True)
+                                                       useTargetRepresentativePoint=True)
         bSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
                                                        targetGeometry=bSplitRepresentativeBlock,
-                                                       useTargetCentroid=True)
+                                                       useTargetRepresentativePoint=True)
         leftOverPolygons = [geometry for geometry in splitPolygons if
                             geometry is not aSplitPolygon and geometry is not bSplitPolygon]
         if aSplitPolygon is None or bSplitPolygon is None:
+            plotPolygons(splitPolygons + [aSplitRepresentativeBlock.geometry, bSplitRepresentativeBlock.geometry])
             saveDataToFileWithDescription(data=self,
                                           censusYear='',
                                           stateName='',
