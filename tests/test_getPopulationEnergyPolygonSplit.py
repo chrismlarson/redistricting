@@ -17,7 +17,7 @@ class TestGetPopulationEnergyPolygonSplit(TestCase):
         self.assertTrue(len(northSouthSplit[1]) > 0)
 
 
-    def test_getPopulationEnergyPolygonSplit_AandBShouldBeFound01(self):
+    def test_getPopulationEnergyPolygonSplit_BoundaryIsMultiLineString(self):
         testDataFilePath = os.path.join(os.path.dirname(__file__),
                                         'testData/RedistrictingGroup-ErrorCase-ContainerBoundaryIsMultiLineString.redistdata')
         testRedistrictingGroup = loadDataFromFile(filePath=testDataFilePath)
@@ -26,3 +26,15 @@ class TestGetPopulationEnergyPolygonSplit(TestCase):
 
         self.assertTrue(len(northSouthSplit[0]) > 0)
         self.assertTrue(len(northSouthSplit[1]) > 0)
+
+    def test_getPopulationEnergyPolygonSplit_SeamInCornerOfGroup(self):
+        testDataFilePath = os.path.join(os.path.dirname(__file__),
+                                        'testData/RedistrictingGroup-ErrorCase-SeamInCornerOfGroup.redistdata')
+        testRedistrictingGroup = loadDataFromFile(filePath=testDataFilePath)
+        testRedistrictingGroup.fillPopulationEnergyGraph(Alignment.westEast)
+        westEastSplit = testRedistrictingGroup.getPopulationEnergySplit(Alignment.westEast)
+
+        self.assertTrue(len(westEastSplit[0]) > 0)
+        self.assertTrue(len(westEastSplit[1]) > 0)
+
+

@@ -184,10 +184,18 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             aSplitRepresentativeBlockDirection = CardinalDirection.west
             bSplitRepresentativeBlockDirection = CardinalDirection.east
 
-        aSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
+        # Identify which polygon is in which direction
+        # Note: Need to make sure we don't select a block in the seam so we supply a list without those blocks
+        #   If the seam is completely on the edge though, let's include the seam
+        if seamOnEdge:
+            borderChildrenRepresentativeCandidates = self.borderChildren
+        else:
+            borderChildrenRepresentativeCandidates = [child for child in self.borderChildren if
+                                                      child not in lowestEnergySeam]
+        aSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=borderChildrenRepresentativeCandidates,
                                                              direction=aSplitRepresentativeBlockDirection)
 
-        bSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=self.borderChildren,
+        bSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=borderChildrenRepresentativeCandidates,
                                                              direction=bSplitRepresentativeBlockDirection)
 
         aSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
@@ -207,10 +215,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             raise RuntimeError('Split a or b not found')
 
         if aSplitPolygon is bSplitPolygon:
-            plotPolygons([self.geometry, aSplitPolygon, bSplitPolygon,
-                          seamSplitPolygon,
-                          aSplitRepresentativeBlock.geometry,
-                          bSplitRepresentativeBlock.geometry])
+            plotPolygons(splitPolygons + [aSplitRepresentativeBlock.geometry, bSplitRepresentativeBlock.geometry])
             saveDataToFileWithDescription(data=self,
                                           censusYear='',
                                           stateName='',
