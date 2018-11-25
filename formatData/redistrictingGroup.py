@@ -1,5 +1,7 @@
 from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups
 from shapely.geometry import Polygon, MultiPolygon
+
+from exportData.exportData import saveDataToFileWithDescription
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
     assignNeighborBlocksFromCandiateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
@@ -190,21 +192,35 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
         aSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
                                                        targetGeometry=aSplitRepresentativeBlock,
-                                                       ignoreInteriors=False,
                                                        useTargetCentroid=True)
         bSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
                                                        targetGeometry=bSplitRepresentativeBlock,
-                                                       ignoreInteriors=False,
                                                        useTargetCentroid=True)
         leftOverPolygons = [geometry for geometry in splitPolygons if
                             geometry is not aSplitPolygon and geometry is not bSplitPolygon]
+        if aSplitPolygon is None or bSplitPolygon is None:
+            saveDataToFileWithDescription(data=self,
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='ErrorCase-AorBSplitIsNone')
+            raise RuntimeError('Split a or b not found')
+
         if aSplitPolygon is bSplitPolygon:
             plotPolygons([self.geometry, aSplitPolygon, bSplitPolygon,
                           seamSplitPolygon,
                           aSplitRepresentativeBlock.geometry,
                           bSplitRepresentativeBlock.geometry])
+            saveDataToFileWithDescription(data=self,
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='ErrorCase-AandBSplitEqual')
             raise RuntimeError('The split a and b are the same polygon')
+
         if len(leftOverPolygons) is not len(splitPolygons) - 2:
+            saveDataToFileWithDescription(data=self,
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='ErrorCase-MissingPolygons')
             raise RuntimeError('Missing some polygons for mapping. Split polygons: {0} Left over polygon: {1}'
                                .format(len(splitPolygons), len(leftOverPolygons)))
 

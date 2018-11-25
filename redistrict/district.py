@@ -111,7 +111,7 @@ class District(BlockBorderGraph):
                 plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB],
                                       showDistrictNeighborConnections=True,
                                       saveImages=True,
-                                      saveDescription='DistrictSplittingIteration{0}'.format(count))
+                                      saveDescription='DistrictSplittingIteration-{0}-{1}'.format(id(self),count))
 
             candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
             candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
