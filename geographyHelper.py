@@ -210,8 +210,8 @@ def findDirectionOfBorderGeometries(parentGeometry, targetGeometries):
         if not edgesInCommon:  # means we intersect only at a point
             edgesInCommon = parentGeometry.geometry.boundary.intersection(targetGeometry.geometry.boundary)
 
-        commomEdgeShape = geometryFromMultiplePolygons(edgesInCommon)
-        direction = findDirectionOfShape(baseShape=parentGeometry.geometry, targetShape=commomEdgeShape)
+        commonEdgeShape = geometryFromMultiplePolygons(edgesInCommon)
+        direction = findDirectionOfShape(baseShape=parentGeometry.geometry, targetShape=commonEdgeShape)
         directionOfShapes.append((targetGeometry, direction))
     return directionOfShapes
 

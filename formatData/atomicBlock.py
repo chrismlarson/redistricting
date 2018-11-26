@@ -30,7 +30,7 @@ class AtomicBlock(CensusContainer, GraphObject):
         return all(block.isWater for block in self.children)
 
 
-def assignNeighborBlocksFromCandiateBlocks(block, candidateBlocks, progressObject=None):
+def assignNeighborBlocksFromCandidateBlocks(block, candidateBlocks, progressObject=None):
     block.clearNeighborGraphObjects()
     neighborBlocks = []
     for candidateBlock in candidateBlocks:

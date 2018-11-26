@@ -1,9 +1,8 @@
-from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups
+from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups, \
+    plotBlocksForRedistrictingGroup
 from shapely.geometry import Polygon, MultiPolygon
-
 from exportData.exportData import saveDataToFileWithDescription
-from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
-    assignNeighborBlocksFromCandiateBlocks
+from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
@@ -33,8 +32,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         self.updateCenterOfObject(self.geometry.centroid)
 
     def removeWaterBlocks(self):
-        nonWaterBlocks = [block for block in self.children if block.isWater == False]
-        waterBlocks = [block for block in self.children if block.isWater == True]
+        nonWaterBlocks = [block for block in self.children if block.isWater is False]
+        waterBlocks = [block for block in self.children if block.isWater is True]
         if any([waterBlock for waterBlock in waterBlocks if waterBlock.population > 0]):
             raise ValueError('Water block had a population')
         self.children = nonWaterBlocks
@@ -117,7 +116,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
                 lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
 
-                blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
+                blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + \
+                                                blockToActOn.population
                 remainingObjects.remove(blockToActOn)
 
     def clearPopulationEnergyGraph(self):
@@ -162,7 +162,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if shouldDrawGraph:
             plotGraphObjectGroups(graphObjectGroups=[aSplit, bSplit])
 
-        return (aSplit, bSplit)
+        return aSplit, bSplit
 
     def getPopulationEnergyPolygonSplit(self, alignment, shouldDrawGraph=False):
         lowestEnergySeam = self.getLowestPopulationEnergySeam(alignment)
@@ -215,7 +215,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             raise RuntimeError('Split a or b not found')
 
         if aSplitPolygon is bSplitPolygon:
-            plotPolygons(splitPolygons + [aSplitRepresentativeBlock.geometry, bSplitRepresentativeBlock.geometry])
+            plotBlocksForRedistrictingGroup(redistrictingGroup=self, showGeometryPoints=True)
+            plotPolygons([polygonWithoutSeam, seamSplitPolygon, aSplitRepresentativeBlock.geometry,
+                          bSplitRepresentativeBlock.geometry])
             saveDataToFileWithDescription(data=self,
                                           censusYear='',
                                           stateName='',
