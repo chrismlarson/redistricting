@@ -2,7 +2,8 @@ from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRe
     plotBlocksForRedistrictingGroup
 from shapely.geometry import Polygon, MultiPolygon
 from exportData.exportData import saveDataToFileWithDescription
-from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks
+from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
+    assignNeighborBlocksFromCandidateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
@@ -336,7 +337,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def assignNeighboringBlocksToBlocks(self):
         with tqdm(total=len(self.children)) as pbar:
             threadPool = Pool(4)
-            threadPool.starmap(assignNeighborBlocksFromCandiateBlocks,
+            threadPool.starmap(assignNeighborBlocksFromCandidateBlocks,
                                zip(self.children,
                                    repeat(self.children),
                                    repeat(pbar)))
