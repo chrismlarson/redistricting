@@ -2,6 +2,7 @@ from os import path, makedirs
 from matplotlib import pyplot, lines, cm, colors
 import matplotlib._color_data as colorData
 from descartes import PolygonPatch
+from shapely.geometry import LineString
 
 blueColor = '#6699cc'
 greenColor = '#66cc78'
@@ -21,28 +22,34 @@ def plotBlocksForRedistrictingGroup(redistrictingGroup,
                                     showPopulationCounts=False,
                                     showDistrictNeighborConnections=False,
                                     showBlockNeighborConnections=False,
-                                    showGraphHeatmap=False):
+                                    showGraphHeatmap=False,
+                                    showGeometryPoints=False):
     plotBlocksForRedistrictingGroups(redistrictingGroups=[redistrictingGroup],
                                      showPopulationCounts=showPopulationCounts,
                                      showDistrictNeighborConnections=showDistrictNeighborConnections,
                                      showBlockNeighborConnections=showBlockNeighborConnections,
-                                     showGraphHeatmap=showGraphHeatmap)
+                                     showGraphHeatmap=showGraphHeatmap,
+                                     showGeometryPoints=showGeometryPoints)
 
 
 def plotBlocksForRedistrictingGroups(redistrictingGroups,
                                      showPopulationCounts=False,
                                      showDistrictNeighborConnections=False,
                                      showBlockNeighborConnections=False,
-                                     showGraphHeatmap=False):
+                                     showGraphHeatmap=False,
+                                     showGeometryPoints=False):
     fig = pyplot.figure()
     ax = fig.gca()
-
 
     for redistrictingGroup in redistrictingGroups:
         if showDistrictNeighborConnections:
             for neighborGroup in redistrictingGroup.allNeighbors:
                 if neighborGroup in redistrictingGroups:
                     ax.add_line(getLineForPair(redistrictingGroup, neighborGroup, grayColor))
+
+        if showGeometryPoints:
+            centroid = redistrictingGroup.geometry.centroid
+            ax.scatter(centroid.x, centroid.y)
 
         maxPopulationEnergy = max([block.populationEnergy for block in redistrictingGroup.children])
         heatMap = cm.get_cmap('hot')
@@ -80,6 +87,43 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
                 for neighborBlock in redistrictingGroup.children:
                     if neighborBlock in redistrictingGroups:
                         ax.add_line(getLineForPair(block, neighborBlock, grayColor))
+
+    ax.axis('scaled')
+    pyplot.show()
+
+
+def plotBlocksWithEdgesRedistrictingGroups(redistrictingGroup, edges):
+    fig = pyplot.figure()
+    ax = fig.gca()
+
+    for block in redistrictingGroup.children:
+        if redistrictingGroup.isBorderBlock(block):
+            if block in redistrictingGroup.northernChildBlocks:
+                borderBlockColor = purpleColor
+            elif block in redistrictingGroup.westernChildBlocks:
+                borderBlockColor = yellowColor
+            elif block in redistrictingGroup.southernChildBlocks:
+                borderBlockColor = orangeColor
+            else:
+                borderBlockColor = turquoiseColor
+
+            ax.add_patch(PolygonPatch(block.geometry, fc=borderBlockColor, ec=borderBlockColor,
+                                      alpha=0.5, zorder=2))
+        else:
+            ax.add_patch(PolygonPatch(block.geometry, fc=greenColor, ec=greenColor, alpha=0.5, zorder=2))
+
+    for edge in edges:
+        if edge is LineString:
+            edgeSegments = [edge]
+        else:
+            edgeSegments = edge
+
+        for edgeSegment in edgeSegments:
+            edgeSegmentPlotLine = lines.Line2D(xdata=edgeSegment.coords.xy[0],
+                                               ydata=edgeSegment.coords.xy[1],
+                                               color='red',
+                                               linewidth=2)
+            ax.add_line(edgeSegmentPlotLine)
 
     ax.axis('scaled')
     pyplot.show()
