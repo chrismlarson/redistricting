@@ -38,7 +38,7 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
                                      showBlockNeighborConnections=False,
                                      showGraphHeatmap=False,
                                      showGeometryPoints=False):
-    fig = pyplot.figure()
+    fig = pyplot.figure(figsize=(8, 8))
     ax = fig.gca()
 
     for redistrictingGroup in redistrictingGroups:
@@ -200,7 +200,7 @@ def plotGraphObjectGroups(graphObjectGroups,
                           showGraphHeatmapForFirstGroup=False,
                           saveImages=False,
                           saveDescription='Temp'):
-    fig = pyplot.figure(figsize=(10, 10))
+    fig = pyplot.figure(figsize=(8, 8))
     ax = fig.gca()
 
     count = 0
@@ -245,7 +245,7 @@ def plotGraphObjectGroups(graphObjectGroups,
 
 
 def plotPolygons(polygons):
-    fig = pyplot.figure(figsize=(10, 10))
+    fig = pyplot.figure(figsize=(8, 8))
     ax = fig.gca()
 
     count = 0

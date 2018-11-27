@@ -1,5 +1,4 @@
-from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups, \
-    plotBlocksForRedistrictingGroup
+from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups
 from shapely.geometry import Polygon, MultiPolygon
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
@@ -70,30 +69,43 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             tqdm.write('         *** Re-assigning neighboring blocks to new Redistricting Groups in {0} ***'.format(
                 countForProgress))
 
-        northWestSplit = RedistrictingGroup(
-            childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[0]])
-        northWestSplit.removeOutdatedNeighborConnections(borderBlocksOnly=True)
+        splitGroups = []
+        if northSouthSplit and not westEastSplit:
+            northSplit = RedistrictingGroup(childrenBlocks=northSouthSplit[0])
+            splitGroups.append(northSplit)
 
-        northEastSplit = RedistrictingGroup(
-            childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[1]])
-        northEastSplit.removeOutdatedNeighborConnections(borderBlocksOnly=True)
+            southSplit = RedistrictingGroup(childrenBlocks=northSouthSplit[1])
+            splitGroups.append(southSplit)
+        elif not northSouthSplit and westEastSplit:
+            westSplit = RedistrictingGroup(childrenBlocks=westEastSplit[0])
+            splitGroups.append(westSplit)
 
-        southWestSplit = RedistrictingGroup(
-            childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[0]])
-        southWestSplit.removeOutdatedNeighborConnections(borderBlocksOnly=True)
+            eastSplit = RedistrictingGroup(childrenBlocks=westEastSplit[1])
+            splitGroups.append(eastSplit)
+        else:
+            northWestSplit = RedistrictingGroup(
+                childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[0]])
+            splitGroups.append(northWestSplit)
 
-        southEastSplit = RedistrictingGroup(
-            childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[1]])
-        southEastSplit.removeOutdatedNeighborConnections(borderBlocksOnly=True)
+            northEastSplit = RedistrictingGroup(
+                childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[1]])
+            splitGroups.append(northEastSplit)
+
+            southWestSplit = RedistrictingGroup(
+                childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[0]])
+            splitGroups.append(southWestSplit)
+
+            southEastSplit = RedistrictingGroup(
+                childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[1]])
+            splitGroups.append(southEastSplit)
+
+        for splitGroup in splitGroups:
+            splitGroup.removeOutdatedNeighborConnections(borderBlocksOnly=True)
 
         if shouldDrawGraph:
-            plotRedistrictingGroups(
-                redistrictingGroups=[northWestSplit, northEastSplit, southWestSplit, southEastSplit])
+            plotRedistrictingGroups(redistrictingGroups=splitGroups)
 
-        return (northWestSplit,
-                northEastSplit,
-                southWestSplit,
-                southEastSplit)
+        return splitGroups
 
     def fillPopulationEnergyGraph(self, alignment):
         remainingObjects = self.children.copy()
@@ -117,8 +129,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
                 lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
 
-                blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + \
-                                                blockToActOn.population
+                blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
                 remainingObjects.remove(blockToActOn)
 
     def clearPopulationEnergyGraph(self):
@@ -127,6 +138,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
     def getPopulationEnergySplit(self, alignment, shouldDrawGraph=False):
         polygonSplits = self.getPopulationEnergyPolygonSplit(alignment=alignment, shouldDrawGraph=shouldDrawGraph)
+        if polygonSplits is None:
+            return None
+
         aSplitPolygon = polygonSplits[0]
         bSplitPolygon = polygonSplits[1]
 
@@ -166,85 +180,86 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         return aSplit, bSplit
 
     def getPopulationEnergyPolygonSplit(self, alignment, shouldDrawGraph=False):
-        lowestEnergySeam = self.getLowestPopulationEnergySeam(alignment)
+        finishingBlocksToAvoid = []
+        while True:
+            lowestEnergySeamResult = self.getLowestPopulationEnergySeam(alignment=alignment,
+                                                                        finishingBlocksToAvoid=finishingBlocksToAvoid)
+            if lowestEnergySeamResult is None:
+                return None
+            lowestEnergySeam = lowestEnergySeamResult[0]
+            energySeamFinishingBlock = lowestEnergySeamResult[1]
 
-        seamSplitPolygon = geometryFromMultipleGeometries(geometryList=lowestEnergySeam)
-        polygonWithoutSeam = self.geometry.difference(seamSplitPolygon)
+            seamSplitPolygon = geometryFromMultipleGeometries(geometryList=lowestEnergySeam)
+            polygonWithoutSeam = self.geometry.difference(seamSplitPolygon)
 
-        if type(polygonWithoutSeam) is MultiPolygon:
-            seamOnEdge = False
-            splitPolygons = list(polygonWithoutSeam)
-        else:
-            seamOnEdge = True
-            splitPolygons = [polygonWithoutSeam, seamSplitPolygon]
+            if type(polygonWithoutSeam) is MultiPolygon:
+                seamOnEdge = False
+                splitPolygons = list(polygonWithoutSeam)
+            else:
+                seamOnEdge = True
+                splitPolygons = [polygonWithoutSeam, seamSplitPolygon]
 
-        if alignment is Alignment.northSouth:
-            aSplitRepresentativeBlockDirection = CardinalDirection.north
-            bSplitRepresentativeBlockDirection = CardinalDirection.south
-        else:
-            aSplitRepresentativeBlockDirection = CardinalDirection.west
-            bSplitRepresentativeBlockDirection = CardinalDirection.east
+            if alignment is Alignment.northSouth:
+                aSplitRepresentativeBlockDirection = CardinalDirection.north
+                bSplitRepresentativeBlockDirection = CardinalDirection.south
+            else:
+                aSplitRepresentativeBlockDirection = CardinalDirection.west
+                bSplitRepresentativeBlockDirection = CardinalDirection.east
 
-        # Identify which polygon is in which direction
-        # Note: Need to make sure we don't select a block in the seam so we supply a list without those blocks
-        #   If the seam is completely on the edge though, let's include the seam
-        if seamOnEdge:
-            borderChildrenRepresentativeCandidates = self.borderChildren
-        else:
-            borderChildrenRepresentativeCandidates = [child for child in self.borderChildren if
-                                                      child not in lowestEnergySeam]
-        aSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=borderChildrenRepresentativeCandidates,
-                                                             direction=aSplitRepresentativeBlockDirection)
+            # Identify which polygon is in which direction
+            # Note: Need to make sure we don't select a block in the seam so we supply a list without those blocks
+            #   If the seam is completely on the edge though, let's include the seam
+            if seamOnEdge:
+                borderChildrenRepresentativeCandidates = self.borderChildren
+            else:
+                borderChildrenRepresentativeCandidates = [child for child in self.borderChildren if
+                                                          child not in lowestEnergySeam]
+            aSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=borderChildrenRepresentativeCandidates,
+                                                                 direction=aSplitRepresentativeBlockDirection)
 
-        bSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=borderChildrenRepresentativeCandidates,
-                                                             direction=bSplitRepresentativeBlockDirection)
+            bSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=borderChildrenRepresentativeCandidates,
+                                                                 direction=bSplitRepresentativeBlockDirection)
 
-        aSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
-                                                       targetGeometry=aSplitRepresentativeBlock,
-                                                       useTargetRepresentativePoint=True)
-        bSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
-                                                       targetGeometry=bSplitRepresentativeBlock,
-                                                       useTargetRepresentativePoint=True)
-        leftOverPolygons = [geometry for geometry in splitPolygons if
-                            geometry is not aSplitPolygon and geometry is not bSplitPolygon]
-        if aSplitPolygon is None or bSplitPolygon is None:
-            plotPolygons(splitPolygons + [aSplitRepresentativeBlock.geometry, bSplitRepresentativeBlock.geometry])
-            saveDataToFileWithDescription(data=self,
-                                          censusYear='',
-                                          stateName='',
-                                          descriptionOfInfo='ErrorCase-AorBSplitIsNone')
-            raise RuntimeError('Split a or b not found')
+            aSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
+                                                           targetGeometry=aSplitRepresentativeBlock,
+                                                           useTargetRepresentativePoint=True)
+            bSplitPolygon = getPolygonThatContainsGeometry(polygonList=splitPolygons,
+                                                           targetGeometry=bSplitRepresentativeBlock,
+                                                           useTargetRepresentativePoint=True)
+            leftOverPolygons = [geometry for geometry in splitPolygons if
+                                geometry is not aSplitPolygon and geometry is not bSplitPolygon]
+            if aSplitPolygon is None or bSplitPolygon is None:
+                plotPolygons(splitPolygons + [aSplitRepresentativeBlock.geometry, bSplitRepresentativeBlock.geometry])
+                saveDataToFileWithDescription(data=self,
+                                              censusYear='',
+                                              stateName='',
+                                              descriptionOfInfo='ErrorCase-AorBSplitIsNone')
+                raise RuntimeError('Split a or b not found')
 
-        if aSplitPolygon is bSplitPolygon:
-            plotBlocksForRedistrictingGroup(redistrictingGroup=self, showGeometryPoints=True)
-            plotPolygons([polygonWithoutSeam, seamSplitPolygon, aSplitRepresentativeBlock.geometry,
-                          bSplitRepresentativeBlock.geometry])
-            saveDataToFileWithDescription(data=self,
-                                          censusYear='',
-                                          stateName='',
-                                          descriptionOfInfo='ErrorCase-AandBSplitEqual')
-            raise RuntimeError('The split a and b are the same polygon')
+            if aSplitPolygon is bSplitPolygon:
+                finishingBlocksToAvoid.append(energySeamFinishingBlock)
+                continue
 
-        if len(leftOverPolygons) is not len(splitPolygons) - 2:
-            saveDataToFileWithDescription(data=self,
-                                          censusYear='',
-                                          stateName='',
-                                          descriptionOfInfo='ErrorCase-MissingPolygons')
-            raise RuntimeError('Missing some polygons for mapping. Split polygons: {0} Left over polygon: {1}'
-                               .format(len(splitPolygons), len(leftOverPolygons)))
+            if len(leftOverPolygons) is not len(splitPolygons) - 2:
+                saveDataToFileWithDescription(data=self,
+                                              censusYear='',
+                                              stateName='',
+                                              descriptionOfInfo='ErrorCase-MissingPolygons')
+                raise RuntimeError('Missing some polygons for mapping. Split polygons: {0} Left over polygon: {1}'
+                                   .format(len(splitPolygons), len(leftOverPolygons)))
 
-        if seamOnEdge:
-            polygonSplits = (aSplitPolygon, bSplitPolygon)
-        else:
-            seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
-            polygonSplits = (aSplitPolygon, bSplitPolygon, seamSplitPolygon)
+            if seamOnEdge:
+                polygonSplits = (aSplitPolygon, bSplitPolygon)
+            else:
+                seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
+                polygonSplits = (aSplitPolygon, bSplitPolygon, seamSplitPolygon)
 
-        if shouldDrawGraph:
-            plotPolygons(polygonSplits)
+            if shouldDrawGraph:
+                plotPolygons(polygonSplits)
 
-        return polygonSplits
+            return polygonSplits
 
-    def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False):
+    def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False, finishingBlocksToAvoid=None):
         if alignment is Alignment.northSouth:
             startingCandidates = self.easternChildBlocks
             borderBlocksToAvoid = self.northernChildBlocks + self.southernChildBlocks + startingCandidates
@@ -254,6 +269,13 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             borderBlocksToAvoid = self.westernChildBlocks + self.easternChildBlocks + startingCandidates
             finishCandidates = self.northernChildBlocks
 
+        if finishingBlocksToAvoid:
+            finishCandidates = [candidate for candidate in finishCandidates if candidate not in finishingBlocksToAvoid]
+
+        if len(finishCandidates) == 0:
+            tqdm.write("      *** Couldn't find a split for {0} ***".format(self.graphId))
+            return None
+
         startingBlock = min(startingCandidates, key=lambda block: block.populationEnergy)
         blockToActOn = startingBlock
 
@@ -261,6 +283,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         failedStartingBlocks = []
         avoidingAdjacentBorderBlocks = True
         finishedSeam = False
+        finishingBlock = None
         count = 1
         while not finishedSeam:
             if alignment is Alignment.northSouth:
@@ -295,13 +318,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                         lowestPopulationEnergySeam = [blockToActOn]
                         continue
                     else:  # not sure there is anything more we can do but split everything up
-                        plotGraphObjectGroups(graphObjectGroups=[self.children,
-                                                                 self.borderChildren,
-                                                                 lowestPopulationEnergySeam,
-                                                                 failedStartingBlocks],
-                                              showDistrictNeighborConnections=True)
-                        raise RuntimeError("Can't find a {0} path through {1}. Tried and failed on {2} starting blocks"
-                                           .format(alignment, self.graphId, len(failedStartingBlocks)))
+                        # plotGraphObjectGroups([self.children, failedStartingBlocks, finishingBlocksToAvoid])
+                        tqdm.write("Can't find a {0} path through {1}. Tried and failed on {2} starting blocks"
+                                   .format(alignment, self.graphId, len(failedStartingBlocks)))
+                        return None
 
                 startingBlock = min(remainingStartingCandidates, key=lambda block: block.populationEnergy)
                 blockToActOn = startingBlock
@@ -330,9 +350,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
             if blockToActOn in finishCandidates:
                 finishedSeam = True
+                finishingBlock = blockToActOn
 
             count += 1
-        return lowestPopulationEnergySeam
+        return lowestPopulationEnergySeam, finishingBlock
 
     def assignNeighboringBlocksToBlocks(self):
         with tqdm(total=len(self.children)) as pbar:
