@@ -101,6 +101,7 @@ class District(BlockBorderGraph):
 
         count = 1
         while districtStillNotExactlyCut:
+            tqdm.write('      *** Starting forest fire fill pass #{0} ***'.format(count))
 
             districtCandidates = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
                                                                 shouldDrawEachStep=shouldDrawEachStep)
@@ -111,7 +112,7 @@ class District(BlockBorderGraph):
                 plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB],
                                       showDistrictNeighborConnections=True,
                                       saveImages=True,
-                                      saveDescription='DistrictSplittingIteration-{0}-{1}'.format(id(self),count))
+                                      saveDescription='DistrictSplittingIteration-{0}-{1}'.format(id(self), count))
 
             candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
             candidateDistrictBPop = sum(group.population for group in candidateDistrictB)

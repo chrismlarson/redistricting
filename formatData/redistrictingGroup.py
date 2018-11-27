@@ -19,6 +19,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         BlockBorderGraph.__init__(self)
         self.children = childrenBlocks
         GraphObject.__init__(self, centerOfObject=self.geometry.centroid)
+        if len(self.children) == 0:
+            raise AttributeError(
+                "Can't create a redistricting group with no children. GraphId: {0}".format(self.graphId))
         RedistrictingGroup.redistrictingGroupList.append(self)
 
     redistrictingGroupList = []
@@ -66,7 +69,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             self.clearPopulationEnergyGraph()
 
         if countForProgress is not None:
-            tqdm.write('         *** Re-assigning neighboring blocks to new Redistricting Groups in {0} ***'.format(
+            tqdm.write('            *** Re-assigning neighboring blocks to new Redistricting Groups in {0} ***'.format(
                 countForProgress))
 
         splitGroups = []
@@ -83,21 +86,20 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             eastSplit = RedistrictingGroup(childrenBlocks=westEastSplit[1])
             splitGroups.append(eastSplit)
         else:
-            northWestSplit = RedistrictingGroup(
-                childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[0]])
-            splitGroups.append(northWestSplit)
+            northWestSplitChildren = [group for group in northSouthSplit[0] if group in westEastSplit[0]]
+            northEastSplitChildren = [group for group in northSouthSplit[0] if group in westEastSplit[1]]
+            southWestSplitChildren = [group for group in northSouthSplit[1] if group in westEastSplit[0]]
+            southEastSplitChildren = [group for group in northSouthSplit[1] if group in westEastSplit[1]]
 
-            northEastSplit = RedistrictingGroup(
-                childrenBlocks=[group for group in northSouthSplit[0] if group in westEastSplit[1]])
-            splitGroups.append(northEastSplit)
+            splitChildrenList = [northWestSplitChildren,
+                                 northEastSplitChildren,
+                                 southWestSplitChildren,
+                                 southEastSplitChildren]
 
-            southWestSplit = RedistrictingGroup(
-                childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[0]])
-            splitGroups.append(southWestSplit)
-
-            southEastSplit = RedistrictingGroup(
-                childrenBlocks=[group for group in northSouthSplit[1] if group in westEastSplit[1]])
-            splitGroups.append(southEastSplit)
+            for splitChildren in splitChildrenList:
+                if len(splitChildren) > 0:
+                    splitGroup = RedistrictingGroup(childrenBlocks=splitChildren)
+                    splitGroups.append(splitGroup)
 
         for splitGroup in splitGroups:
             splitGroup.removeOutdatedNeighborConnections(borderBlocksOnly=True)
