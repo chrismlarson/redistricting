@@ -116,23 +116,25 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         else:
             blocksToActOn = self.northernChildBlocks
 
-        for blockToActOn in blocksToActOn:
-            blockToActOn.populationEnergy = blockToActOn.population
-            remainingObjects.remove(blockToActOn)
-
-        while len(remainingObjects) > 0:
-            blocksToActOn = getNeighborsForGraphObjectsInList(graphObjects=blocksToActOn, inList=remainingObjects)
-            filledBlocks = [block for block in self.children if block not in remainingObjects]
-
+        if len(blocksToActOn) > 0:
             for blockToActOn in blocksToActOn:
-                previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn], inList=filledBlocks)
-                if len(previousNeighbors) is 0:
-                    raise ReferenceError("Can't find previous neighbor for {0}".format(blockToActOn))
-
-                lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
-
-                blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
+                blockToActOn.populationEnergy = blockToActOn.population
                 remainingObjects.remove(blockToActOn)
+
+
+            while len(remainingObjects) > 0:
+                blocksToActOn = getNeighborsForGraphObjectsInList(graphObjects=blocksToActOn, inList=remainingObjects)
+                filledBlocks = [block for block in self.children if block not in remainingObjects]
+
+                for blockToActOn in blocksToActOn:
+                    previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn], inList=filledBlocks)
+                    if len(previousNeighbors) is 0:
+                        raise ReferenceError("Can't find previous neighbor for {0}".format(blockToActOn))
+
+                    lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
+
+                    blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
+                    remainingObjects.remove(blockToActOn)
 
     def clearPopulationEnergyGraph(self):
         for child in self.children:
@@ -274,7 +276,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if finishingBlocksToAvoid:
             finishCandidates = [candidate for candidate in finishCandidates if candidate not in finishingBlocksToAvoid]
 
-        if len(finishCandidates) == 0:
+        if len(startingCandidates) == 0 or len(finishCandidates) == 0:
             tqdm.write("      *** Couldn't find a split for {0} ***".format(self.graphId))
             return None
 
