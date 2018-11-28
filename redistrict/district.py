@@ -146,7 +146,7 @@ class District(BlockBorderGraph):
             saveDataToFileWithDescription(data=self,
                                           censusYear='',
                                           stateName='',
-                                          descriptionOfInfo='DistrictSplittingIteration{0}'.format(count))
+                                          descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
             count += 1
 
         return candidateDistrictA, candidateDistrictB
