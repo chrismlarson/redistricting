@@ -141,16 +141,18 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             child.populationEnergy = 0
 
     def getPopulationEnergySplit(self, alignment, shouldDrawGraph=False):
-        polygonSplits = self.getPopulationEnergyPolygonSplit(alignment=alignment, shouldDrawGraph=shouldDrawGraph)
-        if polygonSplits is None:
+        polygonSplitResult = self.getPopulationEnergyPolygonSplit(alignment=alignment, shouldDrawGraph=shouldDrawGraph)
+        if polygonSplitResult is None:
             return None
+
+        polygonSplits = polygonSplitResult[0]
 
         aSplitPolygon = polygonSplits[0]
         bSplitPolygon = polygonSplits[1]
 
-        if len(polygonSplits) is 3:
+        if polygonSplitResult[1]:
             seamOnEdge = False
-            seamSplitPolygon = polygonSplits[2]
+            seamSplitPolygon = polygonSplitResult[1]
         else:
             seamOnEdge = True
             seamSplitPolygon = None
@@ -195,6 +197,11 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
             seamSplitPolygon = geometryFromMultipleGeometries(geometryList=lowestEnergySeam)
             polygonWithoutSeam = self.geometry.difference(seamSplitPolygon)
+
+            # if the polygon without the seam is empty, that means we have a small enough redistricting group where
+            # we need to break it up completely. Because our seams can no longer break up any further.
+            if polygonWithoutSeam.is_empty:
+                raise NotImplementedError('Need to break up the entire redist group')
 
             if type(polygonWithoutSeam) is MultiPolygon:
                 seamOnEdge = False
@@ -252,16 +259,18 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 raise RuntimeError('Missing some polygons for mapping. Split polygons: {0} Left over polygon: {1}'
                                    .format(len(splitPolygons), len(leftOverPolygons)))
 
+
+            polygonSplits = (aSplitPolygon, bSplitPolygon)
+
             if seamOnEdge:
-                polygonSplits = (aSplitPolygon, bSplitPolygon)
+                seamSplitPolygon = None
             else:
                 seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
-                polygonSplits = (aSplitPolygon, bSplitPolygon, seamSplitPolygon)
 
             if shouldDrawGraph:
                 plotPolygons(polygonSplits)
 
-            return polygonSplits
+            return polygonSplits, seamSplitPolygon
 
     def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False, finishingBlocksToAvoid=None):
         if alignment is Alignment.northSouth:

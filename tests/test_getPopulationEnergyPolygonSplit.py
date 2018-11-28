@@ -51,4 +51,20 @@ class TestGetPopulationEnergyPolygonSplit(TestCase):
         self.assertTrue(len(westEastSplit[0]) > 0)
         self.assertTrue(len(westEastSplit[1]) > 0)
 
+    def test_getPopulationEnergyPolygonSplit_GeometryCollectionAfterSplit(self):
+        testDataFilePath = os.path.join(os.path.dirname(__file__),
+                                        'testData/RedistrictingGroup-ErrorCase-GeometryCollectionAfterSplitInfo.redistdata')
+        testRedistrictingGroup = loadDataFromFile(filePath=testDataFilePath)
+        testRedistrictingGroup.fillPopulationEnergyGraph(Alignment.northSouth)
+        northSouthSplit = testRedistrictingGroup.getPopulationEnergySplit(Alignment.northSouth)
+        self.assertEqual(northSouthSplit, None)
+
+        testRedistrictingGroup.fillPopulationEnergyGraph(Alignment.westEast)
+        westEastSplit = testRedistrictingGroup.getPopulationEnergySplit(Alignment.westEast)
+
+        self.assertTrue(len(westEastSplit[0]) > 0)
+        self.assertTrue(len(westEastSplit[1]) > 0)
+
+
+
 

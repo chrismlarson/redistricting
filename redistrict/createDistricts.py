@@ -10,8 +10,15 @@ stateInfo = states.lookup(stateAbbreviation)
 censusYear = 2010
 descriptionToWorkWith = 'All'
 
-# filePath = path.expanduser('~/Documents/--DistrictSplittingIteration1Info.redistdata')
-# initialDistrict = loadDataFromFile(filePath)
+filePath = path.expanduser('~/Documents/--DistrictSplitLastIteration-2281408322192Info.redistdata')
+initialDistrict = loadDataFromFile(filePath)
+
+for child in initialDistrict.children:
+    if child.graphId == 330040:
+        saveDataToFileWithDescription(data=child,
+                                      censusYear='',
+                                      stateName='',
+                                      descriptionOfInfo='RedistrictingGroup-GeometryGroupAfterSplit')
 
 redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                       stateName=stateInfo.name,
