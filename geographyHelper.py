@@ -317,6 +317,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                                       condition=lambda x, y: True,
                                       weightingScore=lambda x, y, z: 1,
                                       shouldDrawEachStep=False):
+    bestGraphObjectCandidateGroupThisPass = None
     fireFilledObjects = []
     fireQueue = []
     remainingObjects = candidateObjects.copy()
@@ -332,7 +333,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
         # remove objects that we pulled from the queue from the remaining list
         remainingObjects = [object for object in remainingObjects if object not in graphObjectCandidateGroup]
 
-        if shouldDrawEachStep:
+        if shouldDrawEachStep and count > 50:
             plotGraphObjectGroups([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
                                   showDistrictNeighborConnections=True,
                                   saveImages=True,
@@ -344,6 +345,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
         if len(potentiallyIsolatedGroups) <= 1:  # candidate won't block any other groups
             if condition(fireFilledObjects, graphObjectCandidateGroup):
                 fireFilledObjects.extend(graphObjectCandidateGroup)
+                bestGraphObjectCandidateGroupThisPass = None  # set this back to none when we add something
 
                 # find any of objects just added and remove them from the queue
                 remainingItemsFromGroups = []
@@ -370,6 +372,9 @@ def weightedForestFireFillGraphObject(candidateObjects,
                         if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
                             fireQueue.append([neighborObject])
             else:
+                if bestGraphObjectCandidateGroupThisPass is None:
+                    bestGraphObjectCandidateGroupThisPass = graphObjectCandidateGroup
+
                 remainingObjects.extend(graphObjectCandidateGroup)
         else:
             # find the contiguous group with largest population and remove.
@@ -415,7 +420,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
             saveImages=True,
             saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
 
-    return fireFilledObjects
+    return fireFilledObjects, bestGraphObjectCandidateGroupThisPass
 
 
 def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):

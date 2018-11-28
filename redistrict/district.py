@@ -103,13 +103,16 @@ class District(BlockBorderGraph):
         while districtStillNotExactlyCut:
             tqdm.write('      *** Starting forest fire fill pass #{0} ***'.format(count))
 
-            districtCandidates = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
+            districtCandidateResult = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
                                                                 shouldDrawEachStep=shouldDrawEachStep)
+            districtCandidates = districtCandidateResult[0]
+            nextBestGroupForCandidateDistrictA = districtCandidateResult[1]
+
             candidateDistrictA = districtCandidates[0]
             candidateDistrictB = districtCandidates[1]
 
             if shouldDrawFillAttempts:
-                plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB],
+                plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB, nextBestGroupForCandidateDistrictA],
                                       showDistrictNeighborConnections=True,
                                       saveImages=True,
                                       saveDescription='DistrictSplittingIteration-{0}-{1}'.format(id(self), count))
@@ -123,8 +126,9 @@ class District(BlockBorderGraph):
             else:
                 tqdm.write('      *** Unsuccessful fill attempt. {0} off the count. ***'
                            .format(abs(idealDistrictASize - candidateDistrictAPop)))
-                groupsToBreakUp = getRedistrictingGroupsBetweenCandidates(aCandidate=candidateDistrictA,
-                                                                          bCandidate=candidateDistrictB)
+                # groupsToBreakUp = getRedistrictingGroupsBetweenCandidates(aCandidate=candidateDistrictA,
+                #                                                           bCandidate=candidateDistrictB)
+                groupsToBreakUp = nextBestGroupForCandidateDistrictA
 
                 tqdm.write('      *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
                 updatedChildren = self.children.copy()
@@ -145,7 +149,7 @@ class District(BlockBorderGraph):
                                           descriptionOfInfo='DistrictSplittingIteration{0}'.format(count))
             count += 1
 
-        return (candidateDistrictA, candidateDistrictB)
+        return candidateDistrictA, candidateDistrictB
 
     def cutDistrictIntoRoughRatio(self, idealDistrictASize, shouldDrawEachStep=False):
 
@@ -171,15 +175,17 @@ class District(BlockBorderGraph):
 
         i = 0
         while not candidateDistrictA and i <= 3:
-            candidateDistrictA = weightedForestFireFillGraphObject(candidateObjects=self.children,
+            candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
                                                                    startingObject=startingGroupCandidates[i],
                                                                    condition=withinIdealDistrictSize,
                                                                    weightingScore=polsbyPopperScoreOfCombinedGeometry,
                                                                    shouldDrawEachStep=shouldDrawEachStep)
+            candidateDistrictA = candidateDistrictAResult[0]
+            nextBestGroupFromCandidateDistrictA = candidateDistrictAResult[1]
             i += 1
         candidateDistrictB = [group for group in self.children if group not in candidateDistrictA]
 
-        return (candidateDistrictA, candidateDistrictB)
+        return (candidateDistrictA, candidateDistrictB), nextBestGroupFromCandidateDistrictA
 
 
 def createDistrictFromRedistrictingGroups(redistrictingGroups):
