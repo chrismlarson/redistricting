@@ -8,6 +8,7 @@ from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
     mostCardinalOfGeometries, CardinalDirection, geometryFromMultipleGeometries, geometryFromMultiplePolygons, \
     doesPolygonContainTheOther, getPolygonThatContainsGeometry
+from enum import Enum
 from censusData import censusBlock
 from multiprocessing.dummy import Pool
 from itertools import repeat
@@ -58,13 +59,27 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         with tqdm(total=4) as pbar:
             self.fillPopulationEnergyGraph(Alignment.northSouth)
             pbar.update(1)
-            northSouthSplit = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
+            northSouthSplitResult = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
+            northSouthSplitResultType = northSouthSplitResult[0]
+            if northSouthSplitResultType is SplitType.NoSplit:
+                northSouthSplit = None
+            elif northSouthSplitResultType is SplitType.ForceSplitAllBlocks:
+                return self.children.copy()
+            else:
+                northSouthSplit = northSouthSplitResult[1]
             pbar.update(1)
             self.clearPopulationEnergyGraph()
 
             self.fillPopulationEnergyGraph(Alignment.westEast)
             pbar.update(1)
-            westEastSplit = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
+            westEastSplitResult = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
+            westEastSplitResultType = westEastSplitResult[0]
+            if westEastSplitResultType is SplitType.NoSplit:
+                westEastSplit = None
+            elif westEastSplitResultType is SplitType.ForceSplitAllBlocks:
+                return self.children.copy()
+            else:
+                westEastSplit = westEastSplitResult[1]
             pbar.update(1)
             self.clearPopulationEnergyGraph()
 
@@ -142,20 +157,23 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
     def getPopulationEnergySplit(self, alignment, shouldDrawGraph=False):
         polygonSplitResult = self.getPopulationEnergyPolygonSplit(alignment=alignment, shouldDrawGraph=shouldDrawGraph)
-        if polygonSplitResult is None:
-            return None
+        polygonSplitResultType = polygonSplitResult[0]
+        if polygonSplitResultType is SplitType.NoSplit:
+            return SplitType.NoSplit, None
+        elif polygonSplitResultType is SplitType.ForceSplitAllBlocks:
+            return SplitType.ForceSplitAllBlocks, None
 
-        polygonSplits = polygonSplitResult[0]
+        polygonSplits = polygonSplitResult[1]
 
         aSplitPolygon = polygonSplits[0]
         bSplitPolygon = polygonSplits[1]
 
-        if polygonSplitResult[1]:
-            seamOnEdge = False
-            seamSplitPolygon = polygonSplitResult[1]
-        else:
+        if polygonSplitResultType is SplitType.SplitIncludedInSeam:
             seamOnEdge = True
             seamSplitPolygon = None
+        else:
+            seamOnEdge = False
+            seamSplitPolygon = polygonSplitResult[2]
 
         aSplit = []
         bSplit = []
@@ -183,7 +201,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if shouldDrawGraph:
             plotGraphObjectGroups(graphObjectGroups=[aSplit, bSplit])
 
-        return aSplit, bSplit
+        return SplitType.NormalSplit, (aSplit, bSplit)
 
     def getPopulationEnergyPolygonSplit(self, alignment, shouldDrawGraph=False):
         finishingBlocksToAvoid = []
@@ -191,7 +209,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             lowestEnergySeamResult = self.getLowestPopulationEnergySeam(alignment=alignment,
                                                                         finishingBlocksToAvoid=finishingBlocksToAvoid)
             if lowestEnergySeamResult is None:
-                return None
+                return SplitType.NoSplit, None
             lowestEnergySeam = lowestEnergySeamResult[0]
             energySeamFinishingBlock = lowestEnergySeamResult[1]
 
@@ -201,7 +219,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             # if the polygon without the seam is empty, that means we have a small enough redistricting group where
             # we need to break it up completely. Because our seams can no longer break up any further.
             if polygonWithoutSeam.is_empty:
-                raise NotImplementedError('Need to break up the entire redist group')
+                return SplitType.ForceSplitAllBlocks, None
 
             if type(polygonWithoutSeam) is MultiPolygon:
                 seamOnEdge = False
@@ -259,18 +277,18 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 raise RuntimeError('Missing some polygons for mapping. Split polygons: {0} Left over polygon: {1}'
                                    .format(len(splitPolygons), len(leftOverPolygons)))
 
-
             polygonSplits = (aSplitPolygon, bSplitPolygon)
-
-            if seamOnEdge:
-                seamSplitPolygon = None
-            else:
-                seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
 
             if shouldDrawGraph:
                 plotPolygons(polygonSplits)
 
-            return polygonSplits, seamSplitPolygon
+
+            if seamOnEdge:
+                return SplitType.SplitIncludedInSeam, polygonSplits, None
+            else:
+                seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
+                return SplitType.NormalSplit, polygonSplits, seamSplitPolygon
+
 
     def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False, finishingBlocksToAvoid=None):
         if alignment is Alignment.northSouth:
@@ -381,6 +399,12 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             return self.graphId < other.graphId
         return NotImplemented('Can only do a less than comparison with another RedistrictingGroup')
 
+
+class SplitType(Enum):
+    NoSplit = 0
+    NormalSplit = 1
+    SplitIncludedInSeam = 2
+    ForceSplitAllBlocks = 3
 
 def getNeighborsForGraphObjectsInList(graphObjects, inList):
     neighborList = []
