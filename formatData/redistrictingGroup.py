@@ -64,7 +64,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             if northSouthSplitResultType is SplitType.NoSplit:
                 northSouthSplit = None
             elif northSouthSplitResultType is SplitType.ForceSplitAllBlocks:
-                return self.children.copy()
+                splitGroups = []
+                for redistrictingGroupChild in self.children:
+                    splitGroups.append(RedistrictingGroup(childrenBlocks=[redistrictingGroupChild]))
+                return splitGroups
             else:
                 northSouthSplit = northSouthSplitResult[1]
             pbar.update(1)
@@ -526,8 +529,8 @@ def validateAllRedistrictingGroups():
 def validateContiguousRedistrictingGroups(groupList):
     contiguousRegions = findContiguousGroupsOfGraphObjects(groupList)
     if len(contiguousRegions) > 1:
-        nonContiguousDistrict = [item for sublist in contiguousRegions for item in sublist]
-        plotGraphObjectGroups([contiguousRegions, nonContiguousDistrict],
+        # nonContiguousDistrict = [item for sublist in contiguousRegions for item in sublist]
+        plotGraphObjectGroups(contiguousRegions,
                               showDistrictNeighborConnections=True)
         raise ValueError("Don't have a contiguous set of RedistrictingGroups. There are {0} distinct groups".format(
             len(contiguousRegions)))
