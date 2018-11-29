@@ -527,9 +527,9 @@ def validateContiguousRedistrictingGroups(groupList):
     contiguousRegions = findContiguousGroupsOfGraphObjects(groupList)
     if len(contiguousRegions) > 1:
         nonContiguousDistrict = [item for sublist in contiguousRegions for item in sublist]
-        plotRedistrictingGroups(redistrictingGroups=nonContiguousDistrict,
-                                showDistrictNeighborConnections=True)
-        raise ValueError("Don't have a contiguous set of RedictingGroups. There are {0} distinct groups".format(
+        plotGraphObjectGroups([contiguousRegions, nonContiguousDistrict],
+                              showDistrictNeighborConnections=True)
+        raise ValueError("Don't have a contiguous set of RedistrictingGroups. There are {0} distinct groups".format(
             len(contiguousRegions)))
 
 
