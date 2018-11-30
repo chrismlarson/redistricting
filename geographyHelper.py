@@ -6,6 +6,9 @@ from enum import Enum
 from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
 from json import dumps
 from itertools import groupby
+
+from tqdm import tqdm
+
 from exportData.displayShapes import plotGraphObjectGroups
 
 # On Windows, I needed to install Shapely manually
@@ -116,17 +119,20 @@ def isBoundaryGeometry(parent, child):
     return isChildBoundaryGeometry
 
 
-def geometryFromMultipleGeometries(geometryList, useEnvelope=False):
+def polygonFromMultipleGeometries(geometryList, useEnvelope=False, simplificationTolerance=0.0):
+    polygons = [geometry.geometry for geometry in geometryList]
+    return polygonFromMultiplePolygons(polygons,
+                                       useEnvelope=useEnvelope,
+                                       simplificationTolerance=simplificationTolerance)
+
+
+def polygonFromMultiplePolygons(polygonList, useEnvelope=False, simplificationTolerance=0.0):
     if useEnvelope:
-        polygons = [geometry.geometry.envelope for geometry in geometryList]
+        polygonsToCombine = [polygon.envelope for polygon in polygonList]
     else:
-        polygons = [geometry.geometry for geometry in geometryList]
-    return geometryFromMultiplePolygons(polygons)
-
-
-def geometryFromMultiplePolygons(polygonList):
-    union = cascaded_union(polygonList)
-    union = union.simplify(tolerance=0.0)  # to remove excessive points
+        polygonsToCombine = polygonList
+    union = cascaded_union(polygonsToCombine)
+    union = union.simplify(tolerance=simplificationTolerance)  # to remove excessive points
     return union
 
 
@@ -210,7 +216,7 @@ def findDirectionOfBorderGeometries(parentGeometry, targetGeometries):
         if not edgesInCommon:  # means we intersect only at a point
             edgesInCommon = parentGeometry.geometry.boundary.intersection(targetGeometry.geometry.boundary)
 
-        commonEdgeShape = geometryFromMultiplePolygons(edgesInCommon)
+        commonEdgeShape = polygonFromMultiplePolygons(edgesInCommon)
         direction = findDirectionOfShape(baseShape=parentGeometry.geometry, targetShape=commonEdgeShape)
         directionOfShapes.append((targetGeometry, direction))
     return directionOfShapes
@@ -254,14 +260,14 @@ def shapelyGeometryToGeoJSON(geometry):
 
 def distanceBetweenGeometries(a, b):
     if type(a) is list:
-        a = geometryFromMultipleGeometries(a)
+        a = polygonFromMultipleGeometries(a)
     elif isinstance(a, BaseGeometry):
         a = a
     else:
         a = a.geometry
 
     if type(b) is list:
-        b = geometryFromMultipleGeometries(b)
+        b = polygonFromMultipleGeometries(b)
     elif isinstance(b, BaseGeometry):
         b = b
     else:
@@ -326,92 +332,95 @@ def weightedForestFireFillGraphObject(candidateObjects,
     fireQueue.append([startingObject])
 
     count = 1
-    while len(fireQueue) > 0:
-        # pull from the top of the queue
-        graphObjectCandidateGroup = fireQueue.pop(0)
+    with tqdm() as pbar:
+        while len(fireQueue) > 0:
+            pbar.update(1)
+            # pull from the top of the queue
+            graphObjectCandidateGroup = fireQueue.pop(0)
 
-        # remove objects that we pulled from the queue from the remaining list
-        remainingObjects = [object for object in remainingObjects if object not in graphObjectCandidateGroup]
+            # remove objects that we pulled from the queue from the remaining list
+            remainingObjects = [object for object in remainingObjects if object not in graphObjectCandidateGroup]
 
-        if shouldDrawEachStep and count > 50:
-            plotGraphObjectGroups([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
-                                  showDistrictNeighborConnections=True,
-                                  saveImages=True,
-                                  saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(
-                                      id(candidateObjects), count))
-            count += 1
-
-        potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
-        if len(potentiallyIsolatedGroups) <= 1:  # candidate won't block any other groups
-            if condition(fireFilledObjects, graphObjectCandidateGroup):
-                fireFilledObjects.extend(graphObjectCandidateGroup)
-                bestGraphObjectCandidateGroupThisPass = None  # set this back to none when we add something
-
-                # find any of objects just added and remove them from the queue
-                remainingItemsFromGroups = []
-                groupsToRemove = []
-                for queueItemGroup in fireQueue:
-                    if any([queueItem for queueItem in queueItemGroup if queueItem in graphObjectCandidateGroup]):
-                        remainingItems = [queueItem for queueItem in queueItemGroup if
-                                          queueItem not in graphObjectCandidateGroup]
-                        remainingItemsFromGroups.extend(remainingItems)
-                        groupsToRemove.append(queueItemGroup)
-                # remove duplicates from the lists
-                remainingItemsFromGroups = set(remainingItemsFromGroups)
-                # crazy way to remove duplicates from a list of lists
-                groupsToRemove = [list(item) for item in set(tuple(row) for row in groupsToRemove)]
-                for groupToRemove in groupsToRemove:
-                    fireQueue.remove(groupToRemove)
-                for remainingItemFromGroups in remainingItemsFromGroups:
-                    fireQueue.append([remainingItemFromGroups])
-
-                # add neighbors to the queue
-                for graphObjectCandidate in graphObjectCandidateGroup:
-                    for neighborObject in graphObjectCandidate.allNeighbors:
-                        flatFireQueue = [object for objectGroup in fireQueue for object in objectGroup]
-                        if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
-                            fireQueue.append([neighborObject])
-            else:
-                if bestGraphObjectCandidateGroupThisPass is None:
-                    bestGraphObjectCandidateGroupThisPass = graphObjectCandidateGroup
-
-                remainingObjects.extend(graphObjectCandidateGroup)
-        else:
-            # find the contiguous group with largest population and remove.
-            # This will be handled by subsequent fire fill passes
-            potentiallyIsolatedGroups.sort(key=lambda x: sum(group.population for group in x), reverse=True)
-            potentiallyIsolatedGroups.remove(potentiallyIsolatedGroups[0])
-            potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
-
-            if shouldDrawEachStep:
-                plotGraphObjectGroups(
-                    [fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
-                    showDistrictNeighborConnections=True,
-                    saveImages=True,
-                    saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
+            if shouldDrawEachStep and count > 50:
+                plotGraphObjectGroups([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
+                                      showDistrictNeighborConnections=True,
+                                      saveImages=True,
+                                      saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(
+                                          id(candidateObjects), count))
                 count += 1
 
-            # add the potentially isolated groups and the candidate group back to the queue
-            combinationsOfPotentiallyIsolatedObjects = combinationsFromGroup(candidateGroups=potentiallyIsolatedObjects,
-                                                                             mustTouchGroup=fireFilledObjects,
-                                                                             startingGroup=graphObjectCandidateGroup)
+            potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
+            if len(potentiallyIsolatedGroups) <= 1:  # candidate won't block any other groups
+                if condition(fireFilledObjects, graphObjectCandidateGroup):
+                    fireFilledObjects.extend(graphObjectCandidateGroup)
+                    bestGraphObjectCandidateGroupThisPass = None  # set this back to none when we add something
 
-            fireQueue.extend(combinationsOfPotentiallyIsolatedObjects)
-            remainingObjects.extend(graphObjectCandidateGroup)  # add candidate back to the queue
+                    # find any of objects just added and remove them from the queue
+                    remainingItemsFromGroups = []
+                    groupsToRemove = []
+                    for queueItemGroup in fireQueue:
+                        if any([queueItem for queueItem in queueItemGroup if queueItem in graphObjectCandidateGroup]):
+                            remainingItems = [queueItem for queueItem in queueItemGroup if
+                                              queueItem not in graphObjectCandidateGroup]
+                            remainingItemsFromGroups.extend(remainingItems)
+                            groupsToRemove.append(queueItemGroup)
+                    # remove duplicates from the lists
+                    remainingItemsFromGroups = set(remainingItemsFromGroups)
+                    # crazy way to remove duplicates from a list of lists
+                    groupsToRemove = [list(item) for item in set(tuple(row) for row in groupsToRemove)]
+                    for groupToRemove in groupsToRemove:
+                        fireQueue.remove(groupToRemove)
+                    for remainingItemFromGroups in remainingItemsFromGroups:
+                        fireQueue.append([remainingItemFromGroups])
 
-        # remove duplicates from the list
-        fireQueue.sort()
-        fireQueue = list(fireQueueItem for fireQueueItem, _ in groupby(fireQueue))
+                    # add neighbors to the queue
+                    for graphObjectCandidate in graphObjectCandidateGroup:
+                        for neighborObject in graphObjectCandidate.allNeighbors:
+                            flatFireQueue = [object for objectGroup in fireQueue for object in objectGroup]
+                            if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
+                                fireQueue.append([neighborObject])
+                else:
+                    if bestGraphObjectCandidateGroupThisPass is None:
+                        bestGraphObjectCandidateGroupThisPass = graphObjectCandidateGroup
 
-        # apply weights for sorting
-        weightedQueue = []
-        for queueObjectGroup in fireQueue:
-            weightScore = weightingScore(fireFilledObjects, remainingObjects, queueObjectGroup)
-            weightedQueue.append((queueObjectGroup, weightScore))
+                    remainingObjects.extend(graphObjectCandidateGroup)
+            else:
+                # find the contiguous group with largest population and remove.
+                # This will be handled by subsequent fire fill passes
+                potentiallyIsolatedGroups.sort(key=lambda x: sum(group.population for group in x), reverse=True)
+                potentiallyIsolatedGroups.remove(potentiallyIsolatedGroups[0])
+                potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
 
-        # sort queue
-        weightedQueue.sort(key=lambda x: x[1], reverse=True)
-        fireQueue = [x[0] for x in weightedQueue]
+                if shouldDrawEachStep:
+                    plotGraphObjectGroups(
+                        [fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
+                        showDistrictNeighborConnections=True,
+                        saveImages=True,
+                        saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
+                    count += 1
+
+                # add the potentially isolated groups and the candidate group back to the queue
+                combinationsOfPotentiallyIsolatedObjects = combinationsFromGroup(candidateGroups=potentiallyIsolatedObjects,
+                                                                                 mustTouchGroup=fireFilledObjects,
+                                                                                 startingGroup=graphObjectCandidateGroup)
+
+                fireQueue.extend(combinationsOfPotentiallyIsolatedObjects)
+                remainingObjects.extend(graphObjectCandidateGroup)  # add candidate back to the queue
+
+            # remove duplicates from the list
+            fireQueue.sort()
+            fireQueue = list(fireQueueItem for fireQueueItem, _ in groupby(fireQueue))
+
+            # apply weights for sorting
+            weightedQueue = []
+            fireFilledObjectsShape = polygonFromMultipleGeometries(fireFilledObjects)
+            for queueObjectGroup in fireQueue:
+                weightScore = weightingScore(fireFilledObjectsShape, remainingObjects, queueObjectGroup)
+                weightedQueue.append((queueObjectGroup, weightScore))
+
+            # sort queue
+            weightedQueue.sort(key=lambda x: x[1], reverse=True)
+            fireQueue = [x[0] for x in weightedQueue]
 
     if shouldDrawEachStep:
         plotGraphObjectGroups(

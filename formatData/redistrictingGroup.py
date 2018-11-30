@@ -6,7 +6,7 @@ from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllA
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
-    mostCardinalOfGeometries, CardinalDirection, geometryFromMultipleGeometries, geometryFromMultiplePolygons, \
+    mostCardinalOfGeometries, CardinalDirection, polygonFromMultipleGeometries, polygonFromMultiplePolygons, \
     doesPolygonContainTheOther, getPolygonThatContainsGeometry
 from enum import Enum
 from censusData import censusBlock
@@ -216,7 +216,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             lowestEnergySeam = lowestEnergySeamResult[0]
             energySeamFinishingBlock = lowestEnergySeamResult[1]
 
-            seamSplitPolygon = geometryFromMultipleGeometries(geometryList=lowestEnergySeam)
+            seamSplitPolygon = polygonFromMultipleGeometries(geometryList=lowestEnergySeam)
             polygonWithoutSeam = self.geometry.difference(seamSplitPolygon)
 
             # if the polygon without the seam is empty, that means we have a small enough redistricting group where
@@ -289,7 +289,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             if seamOnEdge:
                 return SplitType.SplitIncludedInSeam, polygonSplits, None
             else:
-                seamSplitPolygon = geometryFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
+                seamSplitPolygon = polygonFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
                 return SplitType.NormalSplit, polygonSplits, seamSplitPolygon
 
 

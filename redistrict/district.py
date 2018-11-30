@@ -6,8 +6,8 @@ from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.redistrictingGroup import assignNeighboringRedistrictingGroupsForAllRedistrictingGroups, \
     validateContiguousRedistrictingGroups, RedistrictingGroup
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
-    weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, geometryFromMultipleGeometries, \
-    findContiguousGroupsOfGraphObjects, intersectingGeometries
+    weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, polygonFromMultipleGeometries, \
+    findContiguousGroupsOfGraphObjects, intersectingGeometries, polygonFromMultiplePolygons
 
 
 class District(BlockBorderGraph):
@@ -126,8 +126,6 @@ class District(BlockBorderGraph):
             else:
                 tqdm.write('      *** Unsuccessful fill attempt. {0} off the count. ***'
                            .format(abs(idealDistrictASize - candidateDistrictAPop)))
-                # groupsToBreakUp = getRedistrictingGroupsBetweenCandidates(aCandidate=candidateDistrictA,
-                #                                                           bCandidate=candidateDistrictB)
                 groupsToBreakUp = nextBestGroupForCandidateDistrictA
 
                 tqdm.write('      *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
@@ -158,14 +156,17 @@ class District(BlockBorderGraph):
             candidatePop = sum(group.population for group in candidateGroups)
             return currentPop + candidatePop <= idealDistrictASize
 
-        def polsbyPopperScoreOfCombinedGeometry(currentGroups, remainingGroups, candidateGroups):
-            geos = currentGroups + candidateGroups
-            combinedShape = geometryFromMultipleGeometries(geos,
-                                                           useEnvelope=True)  # todo: consider not using env in final
-            score = polsbyPopperScoreOfPolygon(combinedShape)
+        def polsbyPopperScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups):
+            # todo: consider using a low simplificationTolerance instead of envelope for greater accuracy
+            candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
+                                                                   useEnvelope=True)
+            # never useEnvelope here, because candidateGroupsPolygon is our cached shape
+            candidatePolygon = polygonFromMultiplePolygons([currentGroupPolygon, candidateGroupsPolygon])
+            combinedRemainingPolygon = polygonFromMultipleGeometries(remainingGroups,
+                                                                     useEnvelope=True)
 
-            combinedRemainingShape = geometryFromMultipleGeometries(remainingGroups, useEnvelope=True)
-            remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingShape)
+            score = polsbyPopperScoreOfPolygon(candidatePolygon)
+            remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingPolygon)
 
             return score + remainingScore
 

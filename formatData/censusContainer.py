@@ -1,4 +1,4 @@
-from geographyHelper import geometryFromMultipleGeometries
+from geographyHelper import polygonFromMultipleGeometries
 from censusData import censusBlock
 
 
@@ -9,7 +9,7 @@ class CensusContainer:
         self.population = None
 
     def updateBlockContainerData(self):
-        self.geometry = geometryFromMultipleGeometries(self.children)
+        self.geometry = polygonFromMultipleGeometries(self.children)
         self.population = censusBlock.populationFromBlocks(self.children)
 
     @property
