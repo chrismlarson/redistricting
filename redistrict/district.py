@@ -175,6 +175,7 @@ class District(BlockBorderGraph):
 
         startingGroupCandidates = self.getCutStartingCandidates()
 
+        nextBestGroupFromCandidateDistrictA = None
         i = 0
         while not candidateDistrictA and i <= 3:
             candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
