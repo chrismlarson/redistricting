@@ -89,7 +89,8 @@ class District(BlockBorderGraph):
 
         return districts
 
-    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False, shouldDrawEachStep=False):
+    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False,
+                                  shouldDrawEachStep=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -103,8 +104,13 @@ class District(BlockBorderGraph):
         while districtStillNotExactlyCut:
             tqdm.write('      *** Starting forest fire fill pass #{0} ***'.format(count))
 
+            if len(candidateDistrictA) == 0:
+                districtAStartingGroup=None
+            else:
+                districtAStartingGroup=candidateDistrictA
             districtCandidateResult = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
-                                                                shouldDrawEachStep=shouldDrawEachStep)
+                                                                     districtAStartingGroup=districtAStartingGroup,
+                                                                     shouldDrawEachStep=shouldDrawEachStep)
             districtCandidates = districtCandidateResult[0]
             nextBestGroupForCandidateDistrictA = districtCandidateResult[1]
 
@@ -112,10 +118,11 @@ class District(BlockBorderGraph):
             candidateDistrictB = districtCandidates[1]
 
             if shouldDrawFillAttempts:
-                plotGraphObjectGroups(graphObjectGroups=[candidateDistrictA, candidateDistrictB, nextBestGroupForCandidateDistrictA],
-                                      showDistrictNeighborConnections=True,
-                                      saveImages=True,
-                                      saveDescription='DistrictSplittingIteration-{0}-{1}'.format(id(self), count))
+                plotGraphObjectGroups(
+                    graphObjectGroups=[candidateDistrictA, candidateDistrictB, nextBestGroupForCandidateDistrictA],
+                    showDistrictNeighborConnections=True,
+                    saveImages=True,
+                    saveDescription='DistrictSplittingIteration-{0}-{1}'.format(id(self), count))
 
             candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
             candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
@@ -133,7 +140,7 @@ class District(BlockBorderGraph):
                 for groupToBreakUp in groupsToBreakUp:
                     smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep,
                                                                                countForProgress=groupsToBreakUp
-                                                                               .index(groupToBreakUp)+1)
+                                                                               .index(groupToBreakUp) + 1)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)
                     RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
@@ -150,7 +157,7 @@ class District(BlockBorderGraph):
 
         return candidateDistrictA, candidateDistrictB
 
-    def cutDistrictIntoRoughRatio(self, idealDistrictASize, shouldDrawEachStep=False):
+    def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False):
 
         def withinIdealDistrictSize(currentGroups, candidateGroups):
             currentPop = sum(group.population for group in currentGroups)
@@ -172,22 +179,30 @@ class District(BlockBorderGraph):
             return score + remainingScore
 
         candidateDistrictA = []
-
-        startingGroupCandidates = self.getCutStartingCandidates()
-
         nextBestGroupFromCandidateDistrictA = None
-        i = 0
-        while not candidateDistrictA and i <= 3:
+
+        if districtAStartingGroup:
             candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
-                                                                   startingObjects=[startingGroupCandidates[i]],
-                                                                   condition=withinIdealDistrictSize,
-                                                                   weightingScore=polsbyPopperScoreOfCombinedGeometry,
-                                                                   shouldDrawEachStep=shouldDrawEachStep)
+                                                                         startingObjects=districtAStartingGroup,
+                                                                         condition=withinIdealDistrictSize,
+                                                                         weightingScore=polsbyPopperScoreOfCombinedGeometry,
+                                                                         shouldDrawEachStep=shouldDrawEachStep)
             candidateDistrictA = candidateDistrictAResult[0]
             nextBestGroupFromCandidateDistrictA = candidateDistrictAResult[1]
-            i += 1
-        candidateDistrictB = [group for group in self.children if group not in candidateDistrictA]
+        else:
+            startingGroupCandidates = self.getCutStartingCandidates()
+            i = 0
+            while not candidateDistrictA and i <= 3:
+                candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
+                                                                             startingObjects=[startingGroupCandidates[i]],
+                                                                             condition=withinIdealDistrictSize,
+                                                                             weightingScore=polsbyPopperScoreOfCombinedGeometry,
+                                                                             shouldDrawEachStep=shouldDrawEachStep)
+                candidateDistrictA = candidateDistrictAResult[0]
+                nextBestGroupFromCandidateDistrictA = candidateDistrictAResult[1]
+                i += 1
 
+        candidateDistrictB = [group for group in self.children if group not in candidateDistrictA]
         return (candidateDistrictA, candidateDistrictB), nextBestGroupFromCandidateDistrictA
 
 
