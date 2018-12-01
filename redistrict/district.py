@@ -178,7 +178,7 @@ class District(BlockBorderGraph):
         i = 0
         while not candidateDistrictA and i <= 3:
             candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
-                                                                   startingObject=startingGroupCandidates[i],
+                                                                   startingObjects=[startingGroupCandidates[i]],
                                                                    condition=withinIdealDistrictSize,
                                                                    weightingScore=polsbyPopperScoreOfCombinedGeometry,
                                                                    shouldDrawEachStep=shouldDrawEachStep)

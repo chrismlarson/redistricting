@@ -319,7 +319,7 @@ def forestFireFillGraphObject(candidateObjects, startingObject=None, notInList=N
 
 
 def weightedForestFireFillGraphObject(candidateObjects,
-                                      startingObject=None,
+                                      startingObjects=None,
                                       condition=lambda x, y: True,
                                       weightingScore=lambda x, y, z: 1,
                                       shouldDrawEachStep=False):
@@ -327,9 +327,9 @@ def weightedForestFireFillGraphObject(candidateObjects,
     fireFilledObjects = []
     fireQueue = []
     remainingObjects = candidateObjects.copy()
-    if not startingObject:
-        startingObject = remainingObjects[0]
-    fireQueue.append([startingObject])
+    if not startingObjects:
+        startingObjects = [remainingObjects[0]]
+    fireQueue.append(startingObjects)
 
     count = 1
     with tqdm() as pbar:
