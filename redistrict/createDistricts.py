@@ -1,5 +1,4 @@
 from os import path
-
 from us import states
 from exportData.displayShapes import plotDistricts
 from exportData.exportData import loadDataFromFileWithDescription, saveDataToFileWithDescription, loadDataFromFile
@@ -10,15 +9,15 @@ stateInfo = states.lookup(stateAbbreviation)
 censusYear = 2010
 descriptionToWorkWith = 'All'
 
-# filePath = path.expanduser('~/Documents/--DistrictSplitLastIteration-2281408322192Info.redistdata')
+# filePath = path.expanduser('~/Documents/--DistrictSplitLastIteration-4699386376Info.redistdata')
 # initialDistrict = loadDataFromFile(filePath)
 #
 # for child in initialDistrict.children:
-#     if child.graphId == 330040:
+#     if child.graphId == 329974:
 #         saveDataToFileWithDescription(data=child,
 #                                       censusYear='',
 #                                       stateName='',
-#                                       descriptionOfInfo='RedistrictingGroup-GeometryGroupAfterSplit')
+#                                       descriptionOfInfo='RedistrictingGroup-SplitThatCanProduceOrphans')
 
 redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                       stateName=stateInfo.name,
@@ -29,12 +28,12 @@ initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redi
 
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           populationDeviation=1,
-                                          shouldDrawFillAttempts=True)
-plotDistricts(districts=districts,
-              showPopulationCounts=True,
-              showDistrictNeighborConnections=True)
+                                          shouldDrawFillAttempts=False)
 saveDataToFileWithDescription(data=districts,
                               censusYear=censusYear,
                               stateName=stateInfo,
                               descriptionOfInfo='{0}-InitialDistrictSplitExactly'.format(descriptionToWorkWith))
+plotDistricts(districts=districts,
+              showPopulationCounts=True,
+              showDistrictNeighborConnections=True)
 temp = 0

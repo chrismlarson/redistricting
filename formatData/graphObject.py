@@ -104,7 +104,7 @@ class GraphObject:
 
     def validateNeighborLists(self):
         if len(self.allNeighbors) != len(set(self.allNeighbors)):
-            raise ValueError('Found a duplicate neighbor for GraphObject:{0}'.format(directionSet))
+            raise ValueError('Found a duplicate neighbor for GraphObject:{0}'.format(self.graphId))
 
 def getNextUniqueId():
     if GraphObject.graphObjectDict:

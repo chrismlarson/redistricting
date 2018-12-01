@@ -1,4 +1,5 @@
-from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups
+from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups, \
+    plotBlocksForRedistrictingGroup
 from shapely.geometry import Polygon, MultiPolygon
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
@@ -7,7 +8,7 @@ from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
     mostCardinalOfGeometries, CardinalDirection, polygonFromMultipleGeometries, polygonFromMultiplePolygons, \
-    doesPolygonContainTheOther, getPolygonThatContainsGeometry
+    doesPolygonContainTheOther, getPolygonThatContainsGeometry, intersectingPolygons
 from enum import Enum
 from censusData import censusBlock
 from multiprocessing.dummy import Pool
@@ -87,8 +88,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             self.clearPopulationEnergyGraph()
 
         if countForProgress is not None:
-            tqdm.write('            *** Re-assigning neighboring blocks to new Redistricting Groups in {0} ***'.format(
-                countForProgress))
+            tqdm.write('            *** Creating new Redistricting Groups in {0} ***'.format(countForProgress))
 
         splitGroups = []
         if northSouthSplit and not westEastSplit:
@@ -114,13 +114,38 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                  southWestSplitChildren,
                                  southEastSplitChildren]
 
+            # check for orphan blocks and attach to intersecting split
+            for splitChildren in splitChildrenList:
+                contiguousRegions = findContiguousGroupsOfGraphObjects(splitChildren)
+                while len(contiguousRegions) > 1:
+                    smallestContiguousRegion = min(contiguousRegions, key=lambda contiguousRegion: len(contiguousRegion))
+                    smallestContiguousRegionPolygon = polygonFromMultipleGeometries(smallestContiguousRegion)
+
+                    otherSplitChildrenList = [x for x in splitChildrenList if x is not splitChildren]
+                    for otherSplitChildren in otherSplitChildrenList:
+                        otherSplitChildrenPolygon = polygonFromMultipleGeometries(otherSplitChildren)
+                        if intersectingPolygons(smallestContiguousRegionPolygon, otherSplitChildrenPolygon):
+                            for child in smallestContiguousRegion:
+                                splitChildren.remove(child)
+                                otherSplitChildren.append(child)
+                            contiguousRegions = findContiguousGroupsOfGraphObjects(splitChildren)
+                            break
+
             for splitChildren in splitChildrenList:
                 if len(splitChildren) > 0:
                     splitGroup = RedistrictingGroup(childrenBlocks=splitChildren)
                     splitGroups.append(splitGroup)
 
+        if countForProgress is not None:
+            tqdm.write(
+                '            *** Re-assigning neighboring blocks to new Redistricting Groups in {0} ***'.format(
+                    countForProgress))
+
         for splitGroup in splitGroups:
+            if shouldDrawGraph:
+                plotBlocksForRedistrictingGroup(splitGroup)
             splitGroup.removeOutdatedNeighborConnections(borderBlocksOnly=True)
+            splitGroup.validateBlockNeighbors()
 
         if shouldDrawGraph:
             plotRedistrictingGroups(redistrictingGroups=splitGroups)
@@ -141,7 +166,17 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
 
             while len(remainingObjects) > 0:
-                blocksToActOn = getNeighborsForGraphObjectsInList(graphObjects=blocksToActOn, inList=remainingObjects)
+                neighborsOfBlocks = getNeighborsForGraphObjectsInList(graphObjects=blocksToActOn, inList=remainingObjects)
+                if len(neighborsOfBlocks) > 0:
+                    blocksToActOn = neighborsOfBlocks
+                else:
+                    saveDataToFileWithDescription(data=self,
+                                                  censusYear='',
+                                                  stateName='',
+                                                  descriptionOfInfo='ErrorCase-NoNeighborsForGraphGroups')
+                    plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True)
+                    # plotGraphObjectGroups([self.children, blocksToActOn])
+                    raise RuntimeError("Can't find neighbors for graph objects")
                 filledBlocks = [block for block in self.children if block not in remainingObjects]
 
                 for blockToActOn in blocksToActOn:
@@ -389,6 +424,15 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             count += 1
         return lowestPopulationEnergySeam, finishingBlock
 
+    def validateBlockNeighbors(self):
+        contiguousRegions = findContiguousGroupsOfGraphObjects(self.children)
+        if len(contiguousRegions) > 1:
+            plotGraphObjectGroups(contiguousRegions,
+                                  showDistrictNeighborConnections=True)
+            raise ValueError(
+                "Don't have a contiguous set of AtomicBlocks. There are {0} distinct groups".format(
+                    len(contiguousRegions)))
+
     def assignNeighboringBlocksToBlocks(self):
         with tqdm(total=len(self.children)) as pbar:
             threadPool = Pool(4)
@@ -529,7 +573,6 @@ def validateAllRedistrictingGroups():
 def validateContiguousRedistrictingGroups(groupList):
     contiguousRegions = findContiguousGroupsOfGraphObjects(groupList)
     if len(contiguousRegions) > 1:
-        # nonContiguousDistrict = [item for sublist in contiguousRegions for item in sublist]
         plotGraphObjectGroups(contiguousRegions,
                               showDistrictNeighborConnections=True)
         raise ValueError("Don't have a contiguous set of RedistrictingGroups. There are {0} distinct groups".format(

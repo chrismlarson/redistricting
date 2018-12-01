@@ -138,6 +138,7 @@ class District(BlockBorderGraph):
                     updatedChildren.remove(groupToBreakUp)
                     RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
 
+                tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
                 assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
                 self.children = updatedChildren
 
