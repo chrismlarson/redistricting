@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from exportData.displayShapes import plotGraphObjectGroups
 
+
 # On Windows, I needed to install Shapely manually
 # Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 # And then ran:
@@ -62,7 +63,8 @@ def getPolygonThatIntersectsGeometry(polygonList, targetGeometry):
     return None
 
 
-def getPolygonThatContainsGeometry(polygonList, targetGeometry, useTargetRepresentativePoint=False, ignoreInteriors=True):
+def getPolygonThatContainsGeometry(polygonList, targetGeometry, useTargetRepresentativePoint=False,
+                                   ignoreInteriors=True):
     for polygon in polygonList:
         if doesPolygonContainTheOther(container=polygon,
                                       target=targetGeometry.geometry,
@@ -341,7 +343,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
             # remove objects that we pulled from the queue from the remaining list
             remainingObjects = [object for object in remainingObjects if object not in graphObjectCandidateGroup]
 
-            if shouldDrawEachStep and count > 50:
+            if shouldDrawEachStep:
                 plotGraphObjectGroups([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
                                       showDistrictNeighborConnections=True,
                                       saveImages=True,
@@ -386,7 +388,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                     remainingObjects.extend(graphObjectCandidateGroup)
             else:
                 # find the contiguous group with largest population and remove.
-                # This will be handled by subsequent fire fill passes
+                # This everything else and will be handled by subsequent fire fill passes
                 potentiallyIsolatedGroups.sort(key=lambda x: sum(group.population for group in x), reverse=True)
                 potentiallyIsolatedGroups.remove(potentiallyIsolatedGroups[0])
                 potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
@@ -400,11 +402,19 @@ def weightedForestFireFillGraphObject(candidateObjects,
                     count += 1
 
                 # add the potentially isolated groups and the candidate group back to the queue
-                combinationsOfPotentiallyIsolatedObjects = combinationsFromGroup(candidateGroups=potentiallyIsolatedObjects,
-                                                                                 mustTouchGroup=fireFilledObjects,
-                                                                                 startingGroup=graphObjectCandidateGroup)
+                combinationsOfPotentiallyIsolatedObjects = combinationsFromGroup(
+                    candidateGroups=potentiallyIsolatedObjects,
+                    mustTouchGroup=fireFilledObjects,
+                    startingGroup=graphObjectCandidateGroup)
 
-                fireQueue.extend(combinationsOfPotentiallyIsolatedObjects)
+                # make sure the combinations have at least one neighbor to the current fireFilledObjects
+                verifiedCombinations = []
+                for combinationOfPotentiallyIsolatedObjects in combinationsOfPotentiallyIsolatedObjects:
+                    if any(comboGroupNeighbor in fireFilledObjects
+                           for comboGroup in combinationOfPotentiallyIsolatedObjects
+                           for comboGroupNeighbor in comboGroup.allNeighbors):
+                        verifiedCombinations.append(combinationOfPotentiallyIsolatedObjects)
+                fireQueue.extend(verifiedCombinations)
                 remainingObjects.extend(graphObjectCandidateGroup)  # add candidate back to the queue
 
             # remove duplicates from the list
