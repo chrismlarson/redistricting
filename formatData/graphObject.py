@@ -76,14 +76,15 @@ class GraphObject:
             self.addNeighbor(graphObject=neighbor, direction=direction)
 
     def addNeighbor(self, graphObject, direction):
-        if direction == CardinalDirection.north:
-            self.__northernNeighbors.append(graphObject.graphId)
-        elif direction == CardinalDirection.west:
-            self.__westernNeighbors.append(graphObject.graphId)
-        elif direction == CardinalDirection.east:
-            self.__easternNeighbors.append(graphObject.graphId)
-        elif direction == CardinalDirection.south:
-            self.__southernNeighbors.append(graphObject.graphId)
+        if graphObject not in self.allNeighbors:
+            if direction == CardinalDirection.north:
+                self.__northernNeighbors.append(graphObject.graphId)
+            elif direction == CardinalDirection.west:
+                self.__westernNeighbors.append(graphObject.graphId)
+            elif direction == CardinalDirection.east:
+                self.__easternNeighbors.append(graphObject.graphId)
+            elif direction == CardinalDirection.south:
+                self.__southernNeighbors.append(graphObject.graphId)
 
 
     def removeNeighbors(self, neighbors):

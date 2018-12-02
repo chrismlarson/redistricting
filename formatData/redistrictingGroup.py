@@ -121,7 +121,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             for splitChildren in splitChildrenList:
                 contiguousRegions = findContiguousGroupsOfGraphObjects(splitChildren)
                 while len(contiguousRegions) > 1:
-                    smallestContiguousRegion = min(contiguousRegions, key=lambda contiguousRegion: len(contiguousRegion))
+                    smallestContiguousRegion = min(contiguousRegions,
+                                                   key=lambda contiguousRegion: len(contiguousRegion))
                     smallestContiguousRegionPolygon = polygonFromMultipleGeometries(smallestContiguousRegion)
 
                     otherSplitChildrenList = [x for x in splitChildrenList if x is not splitChildren]
@@ -167,9 +168,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 blockToActOn.populationEnergy = blockToActOn.population
                 remainingObjects.remove(blockToActOn)
 
-
             while len(remainingObjects) > 0:
-                neighborsOfBlocks = getNeighborsForGraphObjectsInList(graphObjects=blocksToActOn, inList=remainingObjects)
+                neighborsOfBlocks = getNeighborsForGraphObjectsInList(graphObjects=blocksToActOn,
+                                                                      inList=remainingObjects)
                 if len(neighborsOfBlocks) > 0:
                     blocksToActOn = neighborsOfBlocks
                 else:
@@ -183,7 +184,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 filledBlocks = [block for block in self.children if block not in remainingObjects]
 
                 for blockToActOn in blocksToActOn:
-                    previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn], inList=filledBlocks)
+                    previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn],
+                                                                          inList=filledBlocks)
                     if len(previousNeighbors) is 0:
                         raise ReferenceError("Can't find previous neighbor for {0}".format(blockToActOn))
 
@@ -323,13 +325,11 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             if shouldDrawGraph:
                 plotPolygons(polygonSplits)
 
-
             if seamOnEdge:
                 return SplitType.SplitIncludedInSeam, polygonSplits, None
             else:
                 seamSplitPolygon = polygonFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
                 return SplitType.NormalSplit, polygonSplits, seamSplitPolygon
-
 
     def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False, finishingBlocksToAvoid=None):
         if alignment is Alignment.northSouth:
@@ -456,6 +456,7 @@ class SplitType(Enum):
     SplitIncludedInSeam = 2
     ForceSplitAllBlocks = 3
 
+
 def getNeighborsForGraphObjectsInList(graphObjects, inList):
     neighborList = []
     for graphObject in graphObjects:
@@ -535,12 +536,27 @@ def attachOrphanRedistrictingGroupsToClosestNeighbor():
 
 
 def assignNeighboringRedistrictingGroupsForAllRedistrictingGroups():
-    for redistrictingGroupToAssign in RedistrictingGroup.redistrictingGroupList:
-        redistrictingGroupToAssign.clearNeighborGraphObjects()
-        for redistrictingGroupToCheckAgainst in RedistrictingGroup.redistrictingGroupList:
-            if redistrictingGroupToAssign != redistrictingGroupToCheckAgainst:
-                if intersectingGeometries(redistrictingGroupToAssign, redistrictingGroupToCheckAgainst):
-                    redistrictingGroupToAssign.addNeighbors([redistrictingGroupToCheckAgainst])
+    assignNeighboringRedistrictingGroupsToRedistrictingGroups(
+        changedRedistrictingGroups=RedistrictingGroup.redistrictingGroupList,
+        allNeighborCandidates=RedistrictingGroup.redistrictingGroupList)
+
+
+def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistrictingGroups, allNeighborCandidates):
+    # remove outdated neighbor connections
+    for redistrictingGroup in allNeighborCandidates:
+        outdatedNeighborConnections = [neighbor for neighbor in redistrictingGroup.allNeighbors
+                                       if neighbor not in allNeighborCandidates]
+        if outdatedNeighborConnections:
+            redistrictingGroup.removeNeighbors(outdatedNeighborConnections)
+
+    # assign neighbors to changed groups and those that they touch
+    for changedRedistrictingGroup in changedRedistrictingGroups:
+        changedRedistrictingGroup.clearNeighborGraphObjects()
+        for redistrictingGroupToCheckAgainst in [aGroup for aGroup in allNeighborCandidates
+                                                 if aGroup is not changedRedistrictingGroup]:
+            if intersectingGeometries(changedRedistrictingGroup, redistrictingGroupToCheckAgainst):
+                changedRedistrictingGroup.addNeighbors([redistrictingGroupToCheckAgainst])
+                redistrictingGroupToCheckAgainst.addNeighbors([changedRedistrictingGroup])
 
     attachOrphanRedistrictingGroupsToClosestNeighbor()
 

@@ -4,7 +4,8 @@ from exportData.displayShapes import plotGraphObjectGroups, plotRedistrictingGro
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.redistrictingGroup import assignNeighboringRedistrictingGroupsForAllRedistrictingGroups, \
-    validateContiguousRedistrictingGroups, RedistrictingGroup
+    validateContiguousRedistrictingGroups, RedistrictingGroup, validateAllRedistrictingGroups, \
+    assignNeighboringRedistrictingGroupsToRedistrictingGroups
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, polygonFromMultipleGeometries, \
     findContiguousGroupsOfGraphObjects, intersectingGeometries, polygonFromMultiplePolygons
@@ -154,6 +155,7 @@ class District(BlockBorderGraph):
 
                 tqdm.write('      *** Graph splitting {0} redistricting groups ***'.format(len(groupsCapableOfBreaking)))
                 updatedChildren = self.children.copy()
+                newRedistrictingGroups = []
                 for groupToBreakUp in groupsCapableOfBreaking:
                     smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep,
                                                                                countForProgress=groupsCapableOfBreaking
@@ -162,8 +164,15 @@ class District(BlockBorderGraph):
                     updatedChildren.remove(groupToBreakUp)
                     RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
 
+                    newRedistrictingGroups.extend(smallerRedistrictingGroups)
+
                 tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
-                assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
+                assignNeighboringRedistrictingGroupsToRedistrictingGroups(
+                    changedRedistrictingGroups=newRedistrictingGroups,
+                    allNeighborCandidates=updatedChildren)
+                validateAllRedistrictingGroups()
+
+                tqdm.write('      *** Updating District Candidate Data ***')
                 self.children = updatedChildren
 
             saveDataToFileWithDescription(data=self,
