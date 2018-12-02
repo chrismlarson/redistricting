@@ -380,12 +380,15 @@ def weightedForestFireFillGraphObject(candidateObjects,
                     # add neighbors to the queue
                     for graphObjectCandidate in graphObjectCandidateGroup:
                         for neighborObject in graphObjectCandidate.allNeighbors:
-                            flatFireQueue = [object for objectGroup in fireQueue for object in objectGroup]
+                            flatFireQueue = [graphObject for graphObjectGroup in fireQueue
+                                             for graphObject in graphObjectGroup]
                             if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
                                 fireQueue.append([neighborObject])
                 else:
                     if bestGraphObjectCandidateGroupThisPass is None:
-                        bestGraphObjectCandidateGroupThisPass = graphObjectCandidateGroup
+                        if all([len(graphObjectCandidate.children) > 1
+                                for graphObjectCandidate in graphObjectCandidateGroup]):
+                            bestGraphObjectCandidateGroupThisPass = graphObjectCandidateGroup
 
                     remainingObjects.extend(graphObjectCandidateGroup)
                     candidateGroupsThatDidNotMeetConditionThisPass.append(graphObjectCandidateGroup)
