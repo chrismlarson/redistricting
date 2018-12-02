@@ -52,7 +52,8 @@ class District(BlockBorderGraph):
                       populationDeviation,
                       count=None,
                       shouldDrawFillAttempts=False,
-                      shouldDrawEachStep=False):
+                      shouldDrawEachStep=False,
+                      splitBestCandidateGroup=False):
         if count is None:
             tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
             count = 0
@@ -69,7 +70,8 @@ class District(BlockBorderGraph):
         cutDistricts = self.cutDistrictIntoExactRatio(ratio=ratio,
                                                       populationDeviation=populationDeviation,
                                                       shouldDrawFillAttempts=shouldDrawFillAttempts,
-                                                      shouldDrawEachStep=shouldDrawEachStep)
+                                                      shouldDrawEachStep=shouldDrawEachStep,
+                                                      splitBestCandidateGroup=splitBestCandidateGroup)
         count += 1
         tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
 
@@ -77,20 +79,22 @@ class District(BlockBorderGraph):
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
                                                   count=count,
-                                                  shouldDrawEachStep=shouldDrawEachStep)
+                                                  shouldDrawEachStep=shouldDrawEachStep,
+                                                  splitBestCandidateGroup=splitBestCandidateGroup)
         districts.extend(aDistrictSplits)
 
         bDistrict = District(childrenGroups=cutDistricts[1])
         bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
                                                   populationDeviation=populationDeviation,
                                                   count=count,
-                                                  shouldDrawEachStep=shouldDrawEachStep)
+                                                  shouldDrawEachStep=shouldDrawEachStep,
+                                                  splitBestCandidateGroup=splitBestCandidateGroup)
         districts.extend(bDistrictSplits)
 
         return districts
 
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False,
-                                  shouldDrawEachStep=False):
+                                  shouldDrawEachStep=False, splitBestCandidateGroup=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -133,13 +137,26 @@ class District(BlockBorderGraph):
             else:
                 tqdm.write('      *** Unsuccessful fill attempt. {0} off the count. ***'
                            .format(abs(idealDistrictASize - candidateDistrictAPop)))
-                groupsToBreakUp = nextBestGroupForCandidateDistrictA
+                if splitBestCandidateGroup:
+                    groupsToBreakUp = nextBestGroupForCandidateDistrictA
+                else:
+                    groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
+                                                                                      candidateDistrictB)
+                    groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
+                                       if groupToBreakUp not in candidateDistrictA]
 
-                tqdm.write('      *** Graph splitting {0} redistricting groups ***'.format(len(groupsToBreakUp)))
+                groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
+                                           if len(groupToBreakUp.children) > 1]
+                if len(groupsCapableOfBreaking) == 0:
+                    raise RuntimeError("Groups to break up don't meet criteria. Groups: {0}".format(
+                        [groupToBreakUp.graphId for groupToBreakUp in groupsToBreakUp]
+                    ))
+
+                tqdm.write('      *** Graph splitting {0} redistricting groups ***'.format(len(groupsCapableOfBreaking)))
                 updatedChildren = self.children.copy()
-                for groupToBreakUp in groupsToBreakUp:
+                for groupToBreakUp in groupsCapableOfBreaking:
                     smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep,
-                                                                               countForProgress=groupsToBreakUp
+                                                                               countForProgress=groupsCapableOfBreaking
                                                                                .index(groupToBreakUp) + 1)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)

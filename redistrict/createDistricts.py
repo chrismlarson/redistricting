@@ -9,15 +9,15 @@ stateInfo = states.lookup(stateAbbreviation)
 censusYear = 2010
 descriptionToWorkWith = 'All'
 
-# filePath = path.expanduser('~/Documents/--DistrictSplitLastIteration-4699386376Info.redistdata')
+# filePath = path.expanduser('~/Documents/--DistrictSplitLastIteration-1420308615120Info.redistdata')
 # initialDistrict = loadDataFromFile(filePath)
 #
 # for child in initialDistrict.children:
-#     if child.graphId == 329974:
+#     if child.graphId == 330019:
 #         saveDataToFileWithDescription(data=child,
 #                                       censusYear='',
 #                                       stateName='',
-#                                       descriptionOfInfo='RedistrictingGroup-SplitThatCanProduceOrphans')
+#                                       descriptionOfInfo='RedistrictingGroup-CouldNotFindSplit')
 
 redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                       stateName=stateInfo.name,
@@ -28,7 +28,8 @@ initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redi
 
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           populationDeviation=1,
-                                          shouldDrawFillAttempts=False)
+                                          shouldDrawFillAttempts=False,
+                                          splitBestCandidateGroup=True)
 saveDataToFileWithDescription(data=districts,
                               censusYear=censusYear,
                               stateName=stateInfo,
