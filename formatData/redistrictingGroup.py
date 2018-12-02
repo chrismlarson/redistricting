@@ -54,6 +54,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         return [block for block in self.children if block.hasNeighbors is False]
 
     def getGraphSplits(self, shouldDrawGraph=False, countForProgress=None):
+        if len(self.children) == 1:
+            raise RuntimeError("Can't split RedistrictingGroup with a single child. GraphId: {0}".format(self.graphId))
+
         if countForProgress is not None:
             tqdm.write('         *** Finding seams for graph split {0} - GraphId: {1} - Block count: {2} ***'
                        .format(countForProgress, self.graphId, len(self.children)))
