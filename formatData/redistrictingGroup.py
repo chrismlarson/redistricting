@@ -17,11 +17,11 @@ from tqdm import tqdm
 
 
 class RedistrictingGroup(BlockBorderGraph, GraphObject):
-    def __init__(self, childrenBlocks):
+    def __init__(self, childrenBlocks, allowEmpty=False):
         BlockBorderGraph.__init__(self)
         self.children = childrenBlocks
         GraphObject.__init__(self, centerOfObject=self.geometry.centroid)
-        if len(self.children) == 0:
+        if not allowEmpty and len(self.children) == 0:
             raise AttributeError(
                 "Can't create a redistricting group with no children. GraphId: {0}".format(self.graphId))
         RedistrictingGroup.redistrictingGroupList.append(self)
@@ -605,7 +605,7 @@ def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
         for censusBlockDict in censusData:
             redistrictingGroupWithCountyFIPS = getRedistrictingGroupWithCountyFIPS(censusBlockDict['county'])
             if redistrictingGroupWithCountyFIPS is None:
-                redistrictingGroupWithCountyFIPS = RedistrictingGroup(childrenBlocks=[])
+                redistrictingGroupWithCountyFIPS = RedistrictingGroup(childrenBlocks=[], allowEmpty=True)
                 redistrictingGroupWithCountyFIPS.FIPS = censusBlockDict['county']
 
             isWater = False
