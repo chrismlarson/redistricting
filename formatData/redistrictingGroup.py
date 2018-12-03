@@ -8,7 +8,7 @@ from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
     mostCardinalOfGeometries, CardinalDirection, polygonFromMultipleGeometries, polygonFromMultiplePolygons, \
-    doesPolygonContainTheOther, getPolygonThatContainsGeometry, intersectingPolygons
+    doesPolygonContainTheOther, getPolygonThatContainsGeometry, intersectingPolygons, shapelyGeometryToGeoJSON
 from enum import Enum
 from censusData import censusBlock
 from multiprocessing.dummy import Pool
@@ -585,6 +585,12 @@ def validateAllRedistrictingGroups():
     for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
         redistrictingGroup.validateNeighborLists()
         if type(redistrictingGroup.geometry) is not Polygon:
+            saveDataToFileWithDescription(data=redistrictingGroup,
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='ErrorCase-GeometryIsNotPolygon')
+            jsonFriendlyGeometry = shapelyGeometryToGeoJSON(redistrictingGroup.geometry)
+            plotPolygons([redistrictingGroup.geometry])
             raise RuntimeError(
                 "Found a redistricting group without a Polygon geometry: {0}".format(redistrictingGroup.graphId))
 
