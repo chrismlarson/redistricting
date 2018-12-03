@@ -590,7 +590,7 @@ def validateAllRedistrictingGroups():
                                           stateName='',
                                           descriptionOfInfo='ErrorCase-GeometryIsNotPolygon')
             jsonFriendlyGeometry = shapelyGeometryToGeoJSON(redistrictingGroup.geometry)
-            plotPolygons([redistrictingGroup.geometry])
+            plotBlocksForRedistrictingGroup(redistrictingGroup, showBlockNeighborConnections=True)
             raise RuntimeError(
                 "Found a redistricting group without a Polygon geometry: {0}".format(redistrictingGroup.graphId))
 
