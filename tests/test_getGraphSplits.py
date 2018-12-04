@@ -1,6 +1,7 @@
 import os
 from unittest import TestCase
 from exportData.exportData import loadDataFromFile
+from shapely.geometry import Polygon
 
 
 class TestGetGraphSplits(TestCase):
@@ -32,3 +33,13 @@ class TestGetGraphSplits(TestCase):
 
         self.assertEqual(len(graphSplits), 4)
 
+    def test_getGraphSplits_NormalSplitCausesIsolatedBlockInfo(self):
+        testDataFilePath = os.path.join(os.path.dirname(__file__),
+                                        'testData/RedistrictingGroup-ErrorCase-NormalSplitCausesIsolatedBlockInfo.redistdata')
+
+        testRedistrictingGroup = loadDataFromFile(filePath=testDataFilePath)
+        graphSplits = testRedistrictingGroup.getGraphSplits()
+
+        self.assertEqual(len(graphSplits), 4)
+        for graphSplit in graphSplits:
+            self.assertEqual(type(graphSplit.geometry), Polygon)

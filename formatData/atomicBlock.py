@@ -45,33 +45,6 @@ def assignNeighborBlocksFromCandidateBlocks(block, candidateBlocks, progressObje
         progressObject.update(1)
 
 
-def reorganizeAtomicBlockGroups(atomicBlockGroups):
-    for block in [block for atomicBlockGroup in atomicBlockGroups for block in atomicBlockGroup]:
-        block.removeNonIntersectingNeighbors()
-
-    for atomicBlockGroup in atomicBlockGroups:
-        contiguousRegions = findContiguousGroupsOfGraphObjects(atomicBlockGroup)
-        while len(contiguousRegions) > 1:
-            smallestContiguousRegion = min(contiguousRegions,
-                                           key=lambda contiguousRegion: len(contiguousRegion))
-            smallestContiguousRegionPolygon = polygonFromMultipleGeometries(smallestContiguousRegion)
-
-            otherSplitChildrenList = [x for x in atomicBlockGroups if x is not atomicBlockGroup]
-            for otherSplitChildren in otherSplitChildrenList:
-                otherSplitChildrenPolygon = polygonFromMultipleGeometries(otherSplitChildren)
-                if intersectingPolygons(smallestContiguousRegionPolygon, otherSplitChildrenPolygon):
-                    for childBlock in smallestContiguousRegion:
-                        atomicBlockGroup.remove(childBlock)
-                        childBlock.removeNeighborConnections()
-
-                        otherSplitChildren.append(childBlock)
-                        assignNeighborBlocksFromCandidateBlocks(block=childBlock, candidateBlocks=otherSplitChildren)
-                    contiguousRegions = findContiguousGroupsOfGraphObjects(atomicBlockGroup)
-                    break
-
-    return atomicBlockGroups
-
-
 def createAtomicBlockFromCensusBlock(censusBlock):
     newAtomicBlock = AtomicBlock(childrenBlocks=[censusBlock])
     return newAtomicBlock
