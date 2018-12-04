@@ -84,9 +84,8 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
                 ax.text(x=centerOfBlock.x, y=centerOfBlock.y, s=block.population, fontdict=font)
 
             if showBlockNeighborConnections:
-                for neighborBlock in redistrictingGroup.children:
-                    if neighborBlock in redistrictingGroups:
-                        ax.add_line(getLineForPair(block, neighborBlock, grayColor))
+                for neighborBlock in block.allNeighbors:
+                    ax.add_line(getLineForPair(block, neighborBlock, grayColor))
 
     ax.axis('scaled')
     pyplot.show()
