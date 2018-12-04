@@ -1,4 +1,4 @@
-from geographyHelper import findDirectionOfShapeFromPoint, CardinalDirection
+from geographyHelper import findDirectionOfShapeFromPoint, CardinalDirection, intersectingGeometries
 
 
 class GraphObject:
@@ -71,11 +71,12 @@ class GraphObject:
 
     def addNeighbors(self, neighbors):
         for neighbor in neighbors:
-            direction = findDirectionOfShapeFromPoint(basePoint=self.__centerOfObject,
-                                                      targetShape=neighbor.geometry)
-            self.addNeighbor(graphObject=neighbor, direction=direction)
+            self.addNeighbor(graphObject=neighbor)
 
-    def addNeighbor(self, graphObject, direction):
+    def addNeighbor(self, graphObject, direction=None):
+        if direction is None:
+            direction = findDirectionOfShapeFromPoint(basePoint=self.__centerOfObject,
+                                                      targetShape=graphObject.geometry)
         if graphObject not in self.allNeighbors:
             if direction == CardinalDirection.north:
                 self.__northernNeighbors.append(graphObject.graphId)
@@ -86,22 +87,33 @@ class GraphObject:
             elif direction == CardinalDirection.south:
                 self.__southernNeighbors.append(graphObject.graphId)
 
-
     def removeNeighbors(self, neighbors):
         for neighbor in neighbors:
-            for northernNeighbor in self.northernNeighbors:
-                if neighbor is northernNeighbor:
-                    self.__northernNeighbors.remove(neighbor.graphId)
-            for westernNeighbor in self.westernNeighbors:
-                if neighbor is westernNeighbor:
-                    self.__westernNeighbors.remove(neighbor.graphId)
-            for easternNeighbor in self.easternNeighbors:
-                if neighbor is easternNeighbor:
-                    self.__easternNeighbors.remove(neighbor.graphId)
-            for southernNeighbor in self.southernNeighbors:
-                if neighbor is southernNeighbor:
-                    self.__southernNeighbors.remove(neighbor.graphId)
+            self.removeNeighbor(neighbor)
 
+    def removeNeighbor(self, neighbor):
+        for northernNeighbor in self.northernNeighbors:
+            if neighbor is northernNeighbor:
+                self.__northernNeighbors.remove(neighbor.graphId)
+        for westernNeighbor in self.westernNeighbors:
+            if neighbor is westernNeighbor:
+                self.__westernNeighbors.remove(neighbor.graphId)
+        for easternNeighbor in self.easternNeighbors:
+            if neighbor is easternNeighbor:
+                self.__easternNeighbors.remove(neighbor.graphId)
+        for southernNeighbor in self.southernNeighbors:
+            if neighbor is southernNeighbor:
+                self.__southernNeighbors.remove(neighbor.graphId)
+
+    def removeNonIntersectingNeighbors(self):
+        for neighbor in self.allNeighbors:
+            if not intersectingGeometries(self, neighbor):
+                self.removeNeighbor(neighbor)
+
+    def removeNeighborConnections(self):
+        for neighbor in self.allNeighbors:
+            neighbor.removeNeighbor(self)
+        self.clearNeighborGraphObjects()
 
     def validateNeighborLists(self):
         if len(self.allNeighbors) != len(set(self.allNeighbors)):

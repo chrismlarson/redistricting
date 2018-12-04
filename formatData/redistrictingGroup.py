@@ -3,7 +3,7 @@ from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRe
 from shapely.geometry import Polygon, MultiPolygon
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
-    assignNeighborBlocksFromCandidateBlocks
+    assignNeighborBlocksFromCandidateBlocks, reorganizeAtomicBlockGroups
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
@@ -117,23 +117,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                  southWestSplitChildren,
                                  southEastSplitChildren]
 
-            # check for orphan blocks and attach to intersecting split
-            for splitChildren in splitChildrenList:
-                contiguousRegions = findContiguousGroupsOfGraphObjects(splitChildren)
-                while len(contiguousRegions) > 1:
-                    smallestContiguousRegion = min(contiguousRegions,
-                                                   key=lambda contiguousRegion: len(contiguousRegion))
-                    smallestContiguousRegionPolygon = polygonFromMultipleGeometries(smallestContiguousRegion)
-
-                    otherSplitChildrenList = [x for x in splitChildrenList if x is not splitChildren]
-                    for otherSplitChildren in otherSplitChildrenList:
-                        otherSplitChildrenPolygon = polygonFromMultipleGeometries(otherSplitChildren)
-                        if intersectingPolygons(smallestContiguousRegionPolygon, otherSplitChildrenPolygon):
-                            for child in smallestContiguousRegion:
-                                splitChildren.remove(child)
-                                otherSplitChildren.append(child)
-                            contiguousRegions = findContiguousGroupsOfGraphObjects(splitChildren)
-                            break
+            # check for orphan blocks and validate existing neighboring blocks and attach to intersecting split
+            splitChildrenList = reorganizeAtomicBlockGroups(atomicBlockGroups=splitChildrenList)
 
             for splitChildren in splitChildrenList:
                 if len(splitChildren) > 0:
@@ -430,8 +415,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def validateBlockNeighbors(self):
         contiguousRegions = findContiguousGroupsOfGraphObjects(self.children)
         if len(contiguousRegions) > 1:
-            plotGraphObjectGroups(contiguousRegions,
-                                  showDistrictNeighborConnections=True)
+            smallestContiguousRegion = min(contiguousRegions, key=lambda contiguousRegion: len(contiguousRegion))
+            plotGraphObjectGroups(contiguousRegions, showDistrictNeighborConnections=True)
+            plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showBlockGraphIds=True)
             raise ValueError(
                 "Don't have a contiguous set of AtomicBlocks. There are {0} distinct groups".format(
                     len(contiguousRegions)))
@@ -592,7 +578,8 @@ def validateAllRedistrictingGroups():
             jsonFriendlyGeometry = shapelyGeometryToGeoJSON(redistrictingGroup.geometry)
             plotBlocksForRedistrictingGroup(redistrictingGroup, showBlockNeighborConnections=True)
             raise RuntimeError(
-                "Found a redistricting group without a Polygon geometry: {0}".format(redistrictingGroup.graphId))
+                "Found a redistricting group without a Polygon geometry: {0} \n{1}".format(redistrictingGroup.graphId,
+                                                                                            jsonFriendlyGeometry))
 
 
 def validateContiguousRedistrictingGroups(groupList):
