@@ -20,12 +20,14 @@ font = {'family': 'serif',
 
 def plotBlocksForRedistrictingGroup(redistrictingGroup,
                                     showPopulationCounts=False,
+                                    showBlockGraphIds=False,
                                     showDistrictNeighborConnections=False,
                                     showBlockNeighborConnections=False,
                                     showGraphHeatmap=False,
                                     showGeometryPoints=False):
     plotBlocksForRedistrictingGroups(redistrictingGroups=[redistrictingGroup],
                                      showPopulationCounts=showPopulationCounts,
+                                     showBlockGraphIds=showBlockGraphIds,
                                      showDistrictNeighborConnections=showDistrictNeighborConnections,
                                      showBlockNeighborConnections=showBlockNeighborConnections,
                                      showGraphHeatmap=showGraphHeatmap,
@@ -34,6 +36,7 @@ def plotBlocksForRedistrictingGroup(redistrictingGroup,
 
 def plotBlocksForRedistrictingGroups(redistrictingGroups,
                                      showPopulationCounts=False,
+                                     showBlockGraphIds=False,
                                      showDistrictNeighborConnections=False,
                                      showBlockNeighborConnections=False,
                                      showGraphHeatmap=False,
@@ -82,6 +85,9 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
 
             if showPopulationCounts:
                 ax.text(x=centerOfBlock.x, y=centerOfBlock.y, s=block.population, fontdict=font)
+
+            if showBlockGraphIds:
+                ax.text(x=centerOfBlock.x, y=centerOfBlock.y, s=block.graphId, fontdict=font)
 
             if showBlockNeighborConnections:
                 for neighborBlock in block.allNeighbors:
