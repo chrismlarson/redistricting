@@ -1,5 +1,7 @@
 import os
 from unittest import TestCase
+
+from exportData.displayShapes import plotBlocksForRedistrictingGroup
 from exportData.exportData import loadDataFromFile
 from shapely.geometry import Polygon
 
@@ -43,3 +45,12 @@ class TestGetGraphSplits(TestCase):
         self.assertEqual(len(graphSplits), 4)
         for graphSplit in graphSplits:
             self.assertEqual(type(graphSplit.geometry), Polygon)
+
+    def test_getGraphSplits_CouldNotFindSplit(self):
+        testDataFilePath = os.path.join(os.path.dirname(__file__),
+                                        'testData/RedistrictingGroup-ErrorCase-CouldNotFindSplit.redistdata')
+
+        testRedistrictingGroup = loadDataFromFile(filePath=testDataFilePath)
+        graphSplits = testRedistrictingGroup.getGraphSplits()
+
+        self.assertEqual(len(graphSplits), len(testRedistrictingGroup.children))

@@ -53,6 +53,13 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def findOrphanBlocks(self):
         return [block for block in self.children if block.hasNeighbors is False]
 
+    def createRedistrictingGroupForEachChild(self):
+        tqdm.write('            *** Creating Redistricting Group for each child: {0} ***'.format(self.graphId))
+        childGroups = []
+        for redistrictingGroupChild in self.children:
+            childGroups.append(RedistrictingGroup(childrenBlocks=[redistrictingGroupChild]))
+        return childGroups
+
     def getGraphSplits(self, shouldDrawGraph=False, countForProgress=None):
         if len(self.children) == 1:
             raise RuntimeError("Can't split RedistrictingGroup with a single child. GraphId: {0}".format(self.graphId))
@@ -68,10 +75,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             if northSouthSplitResultType is SplitType.NoSplit:
                 northSouthSplit = None
             elif northSouthSplitResultType is SplitType.ForceSplitAllBlocks:
-                splitGroups = []
-                for redistrictingGroupChild in self.children:
-                    splitGroups.append(RedistrictingGroup(childrenBlocks=[redistrictingGroupChild]))
-                return splitGroups
+                return self.createRedistrictingGroupForEachChild()
             else:
                 northSouthSplit = northSouthSplitResult[1]
             pbar.update(1)
@@ -84,11 +88,14 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             if westEastSplitResultType is SplitType.NoSplit:
                 westEastSplit = None
             elif westEastSplitResultType is SplitType.ForceSplitAllBlocks:
-                return self.children.copy()
+                return self.createRedistrictingGroupForEachChild()
             else:
                 westEastSplit = westEastSplitResult[1]
             pbar.update(1)
             self.clearPopulationEnergyGraph()
+
+            if northSouthSplit is None and westEastSplit is None:
+                return self.createRedistrictingGroupForEachChild()
 
         if countForProgress is not None:
             tqdm.write('            *** Creating new Redistricting Groups in {0} ***'.format(countForProgress))
