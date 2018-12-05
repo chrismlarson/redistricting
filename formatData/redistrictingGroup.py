@@ -174,26 +174,30 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                     plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True)
                     raise RuntimeError("Can't find neighbors for graph objects")
 
-                for blockToActOn in blocksToActOn:
-                    previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn],
-                                                                          inList=filledBlocks)
+                blocksToActOnThisRound = blocksToActOn.copy()
+                while len(blocksToActOnThisRound) > 0:
+                    blocksActedUpon = []
+                    for blockToActOn in blocksToActOnThisRound:
+                        previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn],
+                                                                              inList=filledBlocks)
+                        if len(previousNeighbors) is not 0:
+                            lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
 
-                    if len(previousNeighbors) is 0:
+                            blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
+                            remainingObjects.remove(blockToActOn)
+                            blocksActedUpon.append(blockToActOn)
+                            filledBlocks.append(blockToActOn)
+                    blocksToActOnThisRound = [block for block in blocksToActOnThisRound if block not in blocksActedUpon]
+                    if len(blocksActedUpon) == 0:
                         saveDataToFileWithDescription(data=self,
                                                       censusYear='',
                                                       stateName='',
-                                                      descriptionOfInfo='ErrorCase-BlockCanNotFindPreviousNeighbor')
-                        allBlockNeighbors = blockToActOn.allNeighbors
-                        plotGraphObjectGroups([filledBlocks, allBlockNeighbors, [blockToActOn]])
+                                                      descriptionOfInfo='ErrorCase-BlocksCanNotFindPreviousNeighbor')
+                        plotGraphObjectGroups([filledBlocks, blocksToActOnThisRound])
                         plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showGraphHeatmap=True,
                                                         showBlockGraphIds=True)
-                        raise ReferenceError("Can't find previous neighbor for {0}".format(blockToActOn))
+                        raise ReferenceError("Can't find previous neighbor for {0}".format(blocksToActOnThisRound))
 
-                    lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
-
-                    blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
-                    remainingObjects.remove(blockToActOn)
-                    filledBlocks.append(blockToActOn)
 
     def clearPopulationEnergyGraph(self):
         for child in self.children:
