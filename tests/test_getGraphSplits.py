@@ -54,3 +54,12 @@ class TestGetGraphSplits(TestCase):
         graphSplits = testRedistrictingGroup.getGraphSplits()
 
         self.assertEqual(len(graphSplits), len(testRedistrictingGroup.children))
+
+    def test_getGraphSplits_BlockCanNotFindPreviousNeighborInfo(self):
+        testDataFilePath = os.path.join(os.path.dirname(__file__),
+                                        'testData/RedistrictingGroup-ErrorCase-BlockCanNotFindPreviousNeighborInfo.redistdata')
+
+        testRedistrictingGroup = loadDataFromFile(filePath=testDataFilePath)
+        graphSplits = testRedistrictingGroup.getGraphSplits()
+
+        self.assertEqual(len(graphSplits), 3)

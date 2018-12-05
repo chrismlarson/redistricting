@@ -160,6 +160,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 blockToActOn.populationEnergy = blockToActOn.population
                 remainingObjects.remove(blockToActOn)
 
+            filledBlocks = blocksToActOn.copy()
             while len(remainingObjects) > 0:
                 neighborsOfBlocks = getNeighborsForGraphObjectsInList(graphObjects=blocksToActOn,
                                                                       inList=remainingObjects)
@@ -171,20 +172,28 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                                   stateName='',
                                                   descriptionOfInfo='ErrorCase-NoNeighborsForGraphGroups')
                     plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True)
-                    # plotGraphObjectGroups([self.children, blocksToActOn])
                     raise RuntimeError("Can't find neighbors for graph objects")
-                filledBlocks = [block for block in self.children if block not in remainingObjects]
 
                 for blockToActOn in blocksToActOn:
                     previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn],
                                                                           inList=filledBlocks)
+
                     if len(previousNeighbors) is 0:
+                        saveDataToFileWithDescription(data=self,
+                                                      censusYear='',
+                                                      stateName='',
+                                                      descriptionOfInfo='ErrorCase-BlockCanNotFindPreviousNeighbor')
+                        allBlockNeighbors = blockToActOn.allNeighbors
+                        plotGraphObjectGroups([filledBlocks, allBlockNeighbors, [blockToActOn]])
+                        plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showGraphHeatmap=True,
+                                                        showBlockGraphIds=True)
                         raise ReferenceError("Can't find previous neighbor for {0}".format(blockToActOn))
 
                     lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
 
                     blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
                     remainingObjects.remove(blockToActOn)
+                    filledBlocks.append(blockToActOn)
 
     def clearPopulationEnergyGraph(self):
         for child in self.children:
