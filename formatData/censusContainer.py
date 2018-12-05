@@ -1,3 +1,4 @@
+from exportData.exportData import saveDataToFileWithDescription
 from geographyHelper import polygonFromMultipleGeometries
 from censusData import censusBlock
 
@@ -18,5 +19,12 @@ class CensusContainer:
 
     @children.setter
     def children(self, children):
+        if len(children) != len(set(children)):
+            saveDataToFileWithDescription(data=self,
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='ErrorCase-DuplicateChildren')
+            raise RuntimeError("Children contains duplicates: {0}".format(self))
+
         self.__children = children
         self.updateBlockContainerData()
