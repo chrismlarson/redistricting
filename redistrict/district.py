@@ -175,7 +175,7 @@ class District(BlockBorderGraph):
                 tqdm.write('      *** Updating District Candidate Data ***')
                 self.children = updatedChildren
 
-            saveDataToFileWithDescription(data=self,
+            saveDataToFileWithDescription(data=(self, candidateDistrictA),
                                           censusYear='',
                                           stateName='',
                                           descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
