@@ -181,6 +181,7 @@ class District(BlockBorderGraph):
                                           descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
             count += 1
 
+        tqdm.write('   *** Sucessful fill attempt!!! *** <------------------------------------------------------------')
         return candidateDistrictA, candidateDistrictB
 
     def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False):
