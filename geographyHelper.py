@@ -399,33 +399,37 @@ def weightedForestFireFillGraphObject(candidateObjects,
                 potentiallyIsolatedGroups.remove(potentiallyIsolatedGroups[0])
                 potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
 
-                if shouldDrawEachStep:
-                    plotGraphObjectGroups(
-                        [fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
-                        showDistrictNeighborConnections=True,
-                        saveImages=True,
-                        saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
-                    count += 1
+                if condition(fireFilledObjects, potentiallyIsolatedObjects + graphObjectCandidateGroup):
 
-                # add the potentially isolated groups and the candidate group back to the queue
-                combinationsOfPotentiallyIsolatedObjects = combinationsFromGroup(
-                    candidateGroups=potentiallyIsolatedObjects,
-                    mustTouchGroup=fireFilledObjects,
-                    startingGroup=graphObjectCandidateGroup)
+                    if shouldDrawEachStep:
+                        plotGraphObjectGroups(
+                            [fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
+                            showDistrictNeighborConnections=True,
+                            saveImages=True,
+                            saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
+                        count += 1
 
-                # make sure the combinations have at least one neighbor to the current fireFilledObjects
-                verifiedCombinations = []
-                for combinationOfPotentiallyIsolatedObjects in combinationsOfPotentiallyIsolatedObjects:
-                    if any(comboGroupNeighbor in fireFilledObjects
-                           for comboGroup in combinationOfPotentiallyIsolatedObjects
-                           for comboGroupNeighbor in comboGroup.allNeighbors):
-                        verifiedCombinations.append(combinationOfPotentiallyIsolatedObjects)
+                    # add the potentially isolated groups and the candidate group back to the queue
+                    combinationsOfPotentiallyIsolatedObjects = combinationsFromGroup(
+                        candidateGroups=potentiallyIsolatedObjects,
+                        mustTouchGroup=fireFilledObjects,
+                        startingGroup=graphObjectCandidateGroup)
 
-                # make sure we don't add anything to the queue that's already been ruled out this pass
-                verifiedCombinations = [combination for combination in verifiedCombinations
-                                        if combination not in candidateGroupsThatDidNotMeetConditionThisPass]
+                    # make sure the combinations have at least one neighbor to the current fireFilledObjects
+                    verifiedCombinations = []
+                    for combinationOfPotentiallyIsolatedObjects in combinationsOfPotentiallyIsolatedObjects:
+                        if any(comboGroupNeighbor in fireFilledObjects
+                               for comboGroup in combinationOfPotentiallyIsolatedObjects
+                               for comboGroupNeighbor in comboGroup.allNeighbors):
+                            verifiedCombinations.append(combinationOfPotentiallyIsolatedObjects)
 
-                fireQueue.extend(verifiedCombinations)
+                    # make sure we don't add anything to the queue that's already been ruled out this pass
+                    verifiedCombinations = [combination for combination in verifiedCombinations
+                                            if combination not in candidateGroupsThatDidNotMeetConditionThisPass]
+
+                    fireQueue.extend(verifiedCombinations)
+                else:
+                    candidateGroupsThatDidNotMeetConditionThisPass.append(graphObjectCandidateGroup)
 
                 remainingObjects.extend(graphObjectCandidateGroup)  # add candidate back to the queue
 
