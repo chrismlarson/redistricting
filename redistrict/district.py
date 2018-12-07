@@ -1,14 +1,13 @@
 import math
 from tqdm import tqdm
-from exportData.displayShapes import plotGraphObjectGroups, plotRedistrictingGroups, plotDistrict
+from exportData.displayShapes import plotGraphObjectGroups
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.blockBorderGraph import BlockBorderGraph
-from formatData.redistrictingGroup import assignNeighboringRedistrictingGroupsForAllRedistrictingGroups, \
-    validateContiguousRedistrictingGroups, RedistrictingGroup, validateAllRedistrictingGroups, \
-    assignNeighboringRedistrictingGroupsToRedistrictingGroups
+from formatData.redistrictingGroup import validateContiguousRedistrictingGroups, RedistrictingGroup, \
+    assignNeighboringRedistrictingGroupsToRedistrictingGroups, validateRedistrictingGroups
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, polygonFromMultipleGeometries, \
-    findContiguousGroupsOfGraphObjects, intersectingGeometries, polygonFromMultiplePolygons
+    intersectingGeometries, polygonFromMultiplePolygons
 
 
 class District(BlockBorderGraph):
@@ -110,9 +109,9 @@ class District(BlockBorderGraph):
             tqdm.write('      *** Starting forest fire fill pass #{0} ***'.format(count))
 
             if len(candidateDistrictA) == 0:
-                districtAStartingGroup=None
+                districtAStartingGroup = None
             else:
-                districtAStartingGroup=candidateDistrictA
+                districtAStartingGroup = candidateDistrictA
             districtCandidateResult = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
                                                                      districtAStartingGroup=districtAStartingGroup,
                                                                      shouldDrawEachStep=shouldDrawEachStep)
@@ -153,7 +152,8 @@ class District(BlockBorderGraph):
                         [groupToBreakUp.graphId for groupToBreakUp in groupsToBreakUp]
                     ))
 
-                tqdm.write('      *** Graph splitting {0} redistricting groups ***'.format(len(groupsCapableOfBreaking)))
+                tqdm.write(
+                    '      *** Graph splitting {0} redistricting groups ***'.format(len(groupsCapableOfBreaking)))
                 updatedChildren = self.children.copy()
                 newRedistrictingGroups = []
                 for groupToBreakUp in groupsCapableOfBreaking:
@@ -221,7 +221,8 @@ class District(BlockBorderGraph):
             i = 0
             while not candidateDistrictA and i <= 3:
                 candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
-                                                                             startingObjects=[startingGroupCandidates[i]],
+                                                                             startingObjects=[
+                                                                                 startingGroupCandidates[i]],
                                                                              condition=withinIdealDistrictSize,
                                                                              weightingScore=polsbyPopperScoreOfCombinedGeometry,
                                                                              shouldDrawEachStep=shouldDrawEachStep)
