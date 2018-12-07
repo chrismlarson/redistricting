@@ -626,9 +626,13 @@ def convertAllCensusBlocksToAtomicBlocks():
 
 
 def validateAllRedistrictingGroups():
-    validateContiguousRedistrictingGroups(RedistrictingGroup.redistrictingGroupList)
+    validateRedistrictingGroups(RedistrictingGroup.redistrictingGroupList)
 
-    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+
+def validateRedistrictingGroups(groupList):
+    validateContiguousRedistrictingGroups(groupList)
+
+    for redistrictingGroup in groupList:
         redistrictingGroup.validateNeighborLists()
         if type(redistrictingGroup.geometry) is not Polygon:
             saveDataToFileWithDescription(data=redistrictingGroup,

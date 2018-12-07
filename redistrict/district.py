@@ -170,7 +170,7 @@ class District(BlockBorderGraph):
                 assignNeighboringRedistrictingGroupsToRedistrictingGroups(
                     changedRedistrictingGroups=newRedistrictingGroups,
                     allNeighborCandidates=updatedChildren)
-                validateAllRedistrictingGroups()
+                validateRedistrictingGroups(self.children)
 
                 tqdm.write('      *** Updating District Candidate Data ***')
                 self.children = updatedChildren
