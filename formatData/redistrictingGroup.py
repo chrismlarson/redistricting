@@ -559,8 +559,8 @@ def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
     attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
 
 
-def attachOrphanRedistrictingGroupsToClosestNeighbor():
-    contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
+def attachOrphanRedistrictingGroupsToClosestNeighbor(neighborsToAttach):
+    contiguousRegions = findContiguousGroupsOfGraphObjects(neighborsToAttach)
     while len(contiguousRegions) > 1:
         for isolatedRegion in contiguousRegions:
             closestRegion = findClosestGeometry(originGeometry=isolatedRegion,
@@ -576,7 +576,7 @@ def attachOrphanRedistrictingGroupsToClosestNeighbor():
             if not closestGroupInIsolatedRegion.isNeighbor(closestGroupInClosestRegion):
                 closestGroupInIsolatedRegion.addNeighbors(neighbors=[closestGroupInClosestRegion])
                 closestGroupInClosestRegion.addNeighbors(neighbors=[closestGroupInIsolatedRegion])
-        contiguousRegions = findContiguousGroupsOfGraphObjects(RedistrictingGroup.redistrictingGroupList)
+        contiguousRegions = findContiguousGroupsOfGraphObjects(neighborsToAttach)
 
 
 def assignNeighboringRedistrictingGroupsForAllRedistrictingGroups():
@@ -602,7 +602,9 @@ def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistricti
                 changedRedistrictingGroup.addNeighbors([redistrictingGroupToCheckAgainst])
                 redistrictingGroupToCheckAgainst.addNeighbors([changedRedistrictingGroup])
 
-    attachOrphanRedistrictingGroupsToClosestNeighbor()
+    unionOfRedistrictingGroups = list(set(changedRedistrictingGroups) | set(allNeighborCandidates))
+
+    attachOrphanRedistrictingGroupsToClosestNeighbor(unionOfRedistrictingGroups)
 
 
 def getRedistrictingGroupWithCountyFIPS(countyFIPS):
