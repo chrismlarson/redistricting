@@ -125,6 +125,8 @@ class District(BlockBorderGraph):
             candidateDistrictB = districtCandidates[1]
 
             if shouldDrawFillAttempts:
+                if nextBestGroupForCandidateDistrictA is None:
+                    nextBestGroupForCandidateDistrictA = []
                 plotGraphObjectGroups(
                     graphObjectGroups=[candidateDistrictA, candidateDistrictB, nextBestGroupForCandidateDistrictA],
                     showDistrictNeighborConnections=True,
