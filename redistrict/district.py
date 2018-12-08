@@ -189,7 +189,10 @@ class District(BlockBorderGraph):
         def withinIdealDistrictSize(currentGroups, candidateGroups):
             currentPop = sum(group.population for group in currentGroups)
             candidatePop = sum(group.population for group in candidateGroups)
-            return currentPop + candidatePop <= idealDistrictASize
+            proposedPop = currentPop + candidatePop
+            isWithinIdealPop = proposedPop <= idealDistrictASize
+            proposedPopDiff = idealDistrictASize - proposedPop
+            return isWithinIdealPop, proposedPopDiff
 
         def polsbyPopperScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups):
             # todo: consider using a low simplificationTolerance instead of envelope for greater accuracy

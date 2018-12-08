@@ -322,7 +322,7 @@ def forestFireFillGraphObject(candidateObjects, startingObject=None, notInList=N
 
 def weightedForestFireFillGraphObject(candidateObjects,
                                       startingObjects=None,
-                                      condition=lambda x, y: True,
+                                      condition=lambda x, y: (True, 0),
                                       weightingScore=lambda x, y, z: 1,
                                       shouldDrawEachStep=False):
     bestGraphObjectCandidateGroupThisPass = None
@@ -354,7 +354,9 @@ def weightedForestFireFillGraphObject(candidateObjects,
 
             potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
             if len(potentiallyIsolatedGroups) <= 1:  # candidate won't block any other groups
-                if condition(fireFilledObjects, graphObjectCandidateGroup):
+                conditionResult = condition(fireFilledObjects, graphObjectCandidateGroup)
+                if conditionResult[0]:
+                    pbar.set_description('Still {0} off the count'.format(conditionResult[1]))
                     fireFilledObjects.extend(graphObjectCandidateGroup)
                     bestGraphObjectCandidateGroupThisPass = None  # set this back to none when we add something
                     candidateGroupsThatDidNotMeetConditionThisPass = []  # clear this when we add something
@@ -399,8 +401,8 @@ def weightedForestFireFillGraphObject(candidateObjects,
                 potentiallyIsolatedGroups.remove(potentiallyIsolatedGroups[0])
                 potentiallyIsolatedObjects = [group for groupList in potentiallyIsolatedGroups for group in groupList]
 
-                if condition(fireFilledObjects, potentiallyIsolatedObjects + graphObjectCandidateGroup):
-
+                conditionResult = condition(fireFilledObjects, potentiallyIsolatedObjects + graphObjectCandidateGroup)
+                if conditionResult[0]:
                     if shouldDrawEachStep:
                         plotGraphObjectGroups(
                             [fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
