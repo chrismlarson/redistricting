@@ -62,20 +62,20 @@ As far as I understand this method (correct me if I'm wrong): The primary advant
 ## Proposed Solution
 Evenly split a state into a set number of districts by using county lines and population borders while keeping districts as compact as possible. Splitting is done by finding the lowest population paths through each county.
 
-### Rules we will follow
+### Rules the method will follow
 
 #### Keep communities together
-By using the [2010 US Census data](https://www2.census.gov/census_2010/04-Summary_File_1/Michigan/), this experiment will break up each state (starting with Michigan) into individual census blocks (the smallest population Census unit). With those blocks, form a population density map where each Census block knows its nearest neighboring blocks. Forming a state-wide population graph.
+By using the [2010 US Census data](https://www2.census.gov/census_2010/04-Summary_File_1/Michigan/), this experiment will break up each state (starting with Michigan) into individual census blocks (the smallest population Census unit). With those blocks, form a population density map where each Census block knows its nearest neighboring blocks. Forming a state-wide population graph, in which the method initially splits the state using county lines.
 
-The splits will use a form of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming)(an image analyzing method used for content-aware resizing). By finding the lowest population path through a group of Census blocks, it will avoid breaking apart communities.
+Further splits will use a form of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming)(an image analyzing method used for content-aware resizing). By finding the lowest population path through a group of Census blocks, it will avoid breaking apart communities.
 
-Hopefully by doing this maps will naturally comply with the Voting Rights Act, but as mentioned before, using demographics other than location can lead to bias. So this experiment won't be using any of that information. And will leave the evaluation of the maps under the Voting Rights Act to third parties after map creation. 
+Ideally by doing this, maps will naturally comply with the Voting Rights Act, but as mentioned before, using demographics other than location can lead to bias. So this experiment won't be using any of that information. And will leave the evaluation of the maps under the Voting Rights Act to third parties after map creation. 
 
 #### Use of population borders
-The algorithm starts with state county borders, an already familiar set of dividing lines to most constituents. And then will create its own split lines that will avoid population dense areas or communities. The smallest possible population group will be Census blocks.
+The algorithm starts with state county borders, an already familiar set of dividing lines to most constituents. And then it will create its own split lines that will avoid population dense areas or communities. The smallest possible population group will be Census blocks.
 
 #### Keep districts as round or compact as possible
-Using the [Polsby-Popper Test](https://en.wikipedia.org/wiki/Polsby-Popper_Test) and setting a threshold. If a district doesn't meet that threshold, that electoral map won't be acceptable.
+Using the [Polsby-Popper Test](https://en.wikipedia.org/wiki/Polsby-Popper_Test) the method assigns a weight to each group of blocks when forming a district. This way, it always creates the most compact districts given the groups of blocks available.
 
 ### Technical process
 There are two main parts to this algorithm:
@@ -92,13 +92,13 @@ If the population ratio cannot be met or the resulting district split doesn’t 
 
 Example of the population energy heatmap used for splitting up a group:
 ![Directional Heatmap](https://content.screencast.com/media/d3510401-bfdb-4e3f-8761-860932dfe98c_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_2018-11-16_23-44-20.png)
-Drawn from west to east. To find a sensible split, we take the values along the eastern border and work our way back to the western border, finding the least energetic neighbor along the way to find the least disruptive path.
+Drawn from west to east. To find a sensible split, the method takes the values along the eastern border and work our way back to the western border, finding the least energetic neighbor along the way to find the least disruptive path.
 
 Example of finding a low population energy seam:
 ![Finding seam with western neighbors first](https://content.screencast.com/media/5361b9ad-dcac-4b09-8d8c-3d6d02e8d11a_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_Finding%20Seam%20-%20Western%20Neighbors%20First.gif)
 
 ### Potential problems
-The experiment results may break up rural areas more than urban areas, so we may need to find path that follow the edges of population dense areas. But in the theme of keeping this simple, we will first rely on the roundness/compactness tests first to overcome this challenge.
+The experiment results may break up rural areas more than urban areas, so the method may need to find path that follows the edges of population dense areas. But in the theme of keeping this simple, it will first rely on the roundness/compactness tests first to overcome this challenge.
 
 ## Results
 Coming soon.
@@ -113,10 +113,7 @@ Start of the Forest Fire fill to find district candidates to feed the recursive 
 A complete Forest Fire fill without breaking up counties (This is next):
 ![Forest Fire Fill - No Breaking](https://content.screencast.com/users/ChrisLars/folders/Snagit/media/e4ce9633-7523-4a81-b0f1-8e33e4a277f9/11.15.2018-06.43.png)
 
-
-
-
-## Notes
-Notice that we are only using population maps to create the district maps
+# Notes
+Notice that the method is only using population maps to create the district maps
 
 [Third Party Licensing](ThirdPartyLicensing.md)
