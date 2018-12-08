@@ -6,9 +6,7 @@ from enum import Enum
 from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
 from json import dumps
 from itertools import groupby
-
 from tqdm import tqdm
-
 from exportData.displayShapes import plotGraphObjectGroups
 
 
@@ -323,8 +321,9 @@ def forestFireFillGraphObject(candidateObjects, startingObject=None, notInList=N
 def weightedForestFireFillGraphObject(candidateObjects,
                                       startingObjects=None,
                                       condition=lambda x, y: (True, 0),
-                                      weightingScore=lambda x, y, z: 1,
-                                      shouldDrawEachStep=False):
+                                      weightingScore=lambda w, x, y, z: 1,
+                                      shouldDrawEachStep=False,
+                                      fastCalculations=True):
     bestGraphObjectCandidateGroupThisPass = None
     candidateGroupsThatDidNotMeetConditionThisPass = []
     fireFilledObjects = []
@@ -405,10 +404,12 @@ def weightedForestFireFillGraphObject(candidateObjects,
                 if conditionResult[0]:
                     if shouldDrawEachStep:
                         plotGraphObjectGroups(
-                            [fireFilledObjects, graphObjectCandidateGroup, remainingObjects, potentiallyIsolatedObjects],
+                            [fireFilledObjects, graphObjectCandidateGroup, remainingObjects,
+                             potentiallyIsolatedObjects],
                             showDistrictNeighborConnections=True,
                             saveImages=True,
-                            saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
+                            saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects),
+                                                                                               count))
                         count += 1
 
                     # add the potentially isolated groups and the candidate group back to the queue
@@ -443,7 +444,8 @@ def weightedForestFireFillGraphObject(candidateObjects,
             weightedQueue = []
             fireFilledObjectsShape = polygonFromMultipleGeometries(fireFilledObjects)
             for queueObjectGroup in fireQueue:
-                weightScore = weightingScore(fireFilledObjectsShape, remainingObjects, queueObjectGroup)
+                weightScore = weightingScore(fireFilledObjectsShape, remainingObjects, queueObjectGroup,
+                                             fastCalculations)
                 weightedQueue.append((queueObjectGroup, weightScore))
 
             # sort queue
