@@ -291,6 +291,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             else:
                 borderChildrenRepresentativeCandidates = [child for child in self.borderChildren if
                                                           child not in lowestEnergySeam]
+
+            if len(borderChildrenRepresentativeCandidates) == 0:
+                return SplitType.NoSplit, None
+
             aSplitRepresentativeBlock = mostCardinalOfGeometries(geometryList=borderChildrenRepresentativeCandidates,
                                                                  direction=aSplitRepresentativeBlockDirection)
 

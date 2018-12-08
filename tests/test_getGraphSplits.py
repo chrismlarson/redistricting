@@ -72,3 +72,12 @@ class TestGetGraphSplits(TestCase):
         graphSplits = testRedistrictingGroup.getGraphSplits()
 
         self.assertEqual(len(graphSplits), 4)
+
+    def test_getGraphSplits_CouldNotFindRepresentativeBlock(self):
+        testDataFilePath = os.path.join(os.path.dirname(__file__),
+                                        'testData/RedistrictingGroup-ErrorCase-CouldNotFindRepresentativeBlock.redistdata')
+
+        testRedistrictingGroup = loadDataFromFile(filePath=testDataFilePath)
+        graphSplits = testRedistrictingGroup.getGraphSplits()
+
+        self.assertEqual(len(graphSplits), 11)
