@@ -323,6 +323,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                                       condition=lambda x, y: (True, 0),
                                       weightingScore=lambda w, x, y, z: 1,
                                       shouldDrawEachStep=False,
+                                      returnBestCandidateGroup=True,
                                       fastCalculations=True):
     bestGraphObjectCandidateGroupThisPass = None
     candidateGroupsThatDidNotMeetConditionThisPass = []
@@ -385,8 +386,14 @@ def weightedForestFireFillGraphObject(candidateObjects,
                                              for graphObject in graphObjectGroup]
                             if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
                                 fireQueue.append([neighborObject])
+
+                    # if we don't need to return the next best candidate, we can remove groups from the queue
+                    # that don't meet the condition right now to speed up processing
+                    if not returnBestCandidateGroup:
+                        fireQueue = [fireQueueGroup for fireQueueGroup in fireQueue if
+                                     condition(fireFilledObjects, fireQueueGroup)[0]]
                 else:
-                    if bestGraphObjectCandidateGroupThisPass is None:
+                    if returnBestCandidateGroup and bestGraphObjectCandidateGroupThisPass is None:
                         if all([len(graphObjectCandidate.children) > 1
                                 for graphObjectCandidate in graphObjectCandidateGroup]):
                             bestGraphObjectCandidateGroupThisPass = graphObjectCandidateGroup
