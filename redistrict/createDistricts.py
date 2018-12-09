@@ -28,7 +28,6 @@ initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redi
 
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           populationDeviation=1,
-                                          shouldDrawFillAttempts=False,
                                           splitBestCandidateGroup=False,
                                           fastCalculations=False)
 saveDataToFileWithDescription(data=districts,

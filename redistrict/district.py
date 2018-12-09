@@ -120,6 +120,7 @@ class District(BlockBorderGraph):
             districtCandidateResult = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
                                                                      districtAStartingGroup=districtAStartingGroup,
                                                                      shouldDrawEachStep=shouldDrawEachStep,
+                                                                     returnBestCandidateGroup=splitBestCandidateGroup,
                                                                      fastCalculations=fastCalculations)
             districtCandidates = districtCandidateResult[0]
             nextBestGroupForCandidateDistrictA = districtCandidateResult[1]
@@ -128,6 +129,8 @@ class District(BlockBorderGraph):
             candidateDistrictB = districtCandidates[1]
 
             if shouldDrawFillAttempts:
+                if nextBestGroupForCandidateDistrictA is None:
+                    nextBestGroupForCandidateDistrictA = []
                 plotGraphObjectGroups(
                     graphObjectGroups=[candidateDistrictA, candidateDistrictB, nextBestGroupForCandidateDistrictA],
                     showDistrictNeighborConnections=True,
@@ -201,7 +204,8 @@ class District(BlockBorderGraph):
         tqdm.write('   *** Sucessful fill attempt!!! *** <------------------------------------------------------------')
         return candidateDistrictA, candidateDistrictB
 
-    def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False, fastCalculations=True):
+    def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False,
+                                  returnBestCandidateGroup=False, fastCalculations=True):
 
         def withinIdealDistrictSize(currentGroups, candidateGroups):
             currentPop = sum(group.population for group in currentGroups)
@@ -234,6 +238,7 @@ class District(BlockBorderGraph):
                                                                          condition=withinIdealDistrictSize,
                                                                          weightingScore=polsbyPopperScoreOfCombinedGeometry,
                                                                          shouldDrawEachStep=shouldDrawEachStep,
+                                                                         returnBestCandidateGroup=returnBestCandidateGroup,
                                                                          fastCalculations=fastCalculations)
             candidateDistrictA = candidateDistrictAResult[0]
             nextBestGroupFromCandidateDistrictA = candidateDistrictAResult[1]
@@ -247,6 +252,7 @@ class District(BlockBorderGraph):
                                                                              condition=withinIdealDistrictSize,
                                                                              weightingScore=polsbyPopperScoreOfCombinedGeometry,
                                                                              shouldDrawEachStep=shouldDrawEachStep,
+                                                                             returnBestCandidateGroup=returnBestCandidateGroup,
                                                                              fastCalculations=fastCalculations)
                 candidateDistrictA = candidateDistrictAResult[0]
                 nextBestGroupFromCandidateDistrictA = candidateDistrictAResult[1]
