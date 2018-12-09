@@ -355,7 +355,9 @@ def weightedForestFireFillGraphObject(candidateObjects,
             if len(potentiallyIsolatedGroups) <= 1:  # candidate won't block any other groups
                 conditionResult = condition(fireFilledObjects, graphObjectCandidateGroup)
                 if conditionResult[0]:
-                    pbar.set_description('Still {0} off the count'.format(conditionResult[1]))
+                    pbar.set_description(
+                        'FireFilled: {0} - FireQueue: {1} - Remaining: {2} - Pop off count: {3}'.format(
+                            len(fireFilledObjects), len(fireQueue), len(remainingObjects), conditionResult[1]))
                     fireFilledObjects.extend(graphObjectCandidateGroup)
                     bestGraphObjectCandidateGroupThisPass = None  # set this back to none when we add something
                     candidateGroupsThatDidNotMeetConditionThisPass = []  # clear this when we add something
