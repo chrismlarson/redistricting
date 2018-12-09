@@ -64,38 +64,48 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if len(self.children) == 1:
             raise RuntimeError("Can't split RedistrictingGroup with a single child. GraphId: {0}".format(self.graphId))
 
-        if countForProgress is not None:
+        if countForProgress is None:
+            pbar = None
+        else:
             tqdm.write('         *** Finding seams for graph split {0} - GraphId: {1} - Block count: {2} ***'
                        .format(countForProgress, self.graphId, len(self.children)))
-        with tqdm(total=4) as pbar:
-            self.fillPopulationEnergyGraph(Alignment.northSouth)
-            pbar.update(1)
-            northSouthSplitResult = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
-            northSouthSplitResultType = northSouthSplitResult[0]
-            if northSouthSplitResultType is SplitType.NoSplit:
-                northSouthSplit = None
-            elif northSouthSplitResultType is SplitType.ForceSplitAllBlocks:
-                return self.createRedistrictingGroupForEachChild()
-            else:
-                northSouthSplit = northSouthSplitResult[1]
-            pbar.update(1)
-            self.clearPopulationEnergyGraph()
+            pbar = tqdm(total=4)
 
-            self.fillPopulationEnergyGraph(Alignment.westEast)
+        self.fillPopulationEnergyGraph(Alignment.northSouth)
+        if pbar is not None:
             pbar.update(1)
-            westEastSplitResult = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
-            westEastSplitResultType = westEastSplitResult[0]
-            if westEastSplitResultType is SplitType.NoSplit:
-                westEastSplit = None
-            elif westEastSplitResultType is SplitType.ForceSplitAllBlocks:
-                return self.createRedistrictingGroupForEachChild()
-            else:
-                westEastSplit = westEastSplitResult[1]
+        northSouthSplitResult = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
+        northSouthSplitResultType = northSouthSplitResult[0]
+        if northSouthSplitResultType is SplitType.NoSplit:
+            northSouthSplit = None
+        elif northSouthSplitResultType is SplitType.ForceSplitAllBlocks:
+            return self.createRedistrictingGroupForEachChild()
+        else:
+            northSouthSplit = northSouthSplitResult[1]
+        if pbar is not None:
             pbar.update(1)
-            self.clearPopulationEnergyGraph()
+        self.clearPopulationEnergyGraph()
 
-            if northSouthSplit is None and westEastSplit is None:
-                return self.createRedistrictingGroupForEachChild()
+        self.fillPopulationEnergyGraph(Alignment.westEast)
+        if pbar is not None:
+            pbar.update(1)
+        westEastSplitResult = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
+        westEastSplitResultType = westEastSplitResult[0]
+        if westEastSplitResultType is SplitType.NoSplit:
+            westEastSplit = None
+        elif westEastSplitResultType is SplitType.ForceSplitAllBlocks:
+            return self.createRedistrictingGroupForEachChild()
+        else:
+            westEastSplit = westEastSplitResult[1]
+        if pbar is not None:
+            pbar.update(1)
+        self.clearPopulationEnergyGraph()
+
+        if pbar is not None:
+            pbar.close()
+
+        if northSouthSplit is None and westEastSplit is None:
+            return self.createRedistrictingGroupForEachChild()
 
         if countForProgress is not None:
             tqdm.write('            *** Creating new Redistricting Groups in {0} ***'.format(countForProgress))

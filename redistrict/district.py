@@ -54,7 +54,8 @@ class District(BlockBorderGraph):
                       shouldDrawFillAttempts=False,
                       shouldDrawEachStep=False,
                       splitBestCandidateGroup=False,
-                      fastCalculations=True):
+                      fastCalculations=True,
+                      showDetailedProgress=False):
         if count is None:
             tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
             count = 0
@@ -73,7 +74,8 @@ class District(BlockBorderGraph):
                                                       shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                       shouldDrawEachStep=shouldDrawEachStep,
                                                       splitBestCandidateGroup=splitBestCandidateGroup,
-                                                      fastCalculations=fastCalculations)
+                                                      fastCalculations=fastCalculations,
+                                                      showDetailedProgress=showDetailedProgress)
         count += 1
         tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
 
@@ -96,7 +98,8 @@ class District(BlockBorderGraph):
         return districts
 
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False,
-                                  shouldDrawEachStep=False, splitBestCandidateGroup=False, fastCalculations=True):
+                                  shouldDrawEachStep=False, splitBestCandidateGroup=False, fastCalculations=True,
+                                  showDetailedProgress=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -159,15 +162,26 @@ class District(BlockBorderGraph):
                     '      *** Graph splitting {0} redistricting groups ***'.format(len(groupsCapableOfBreaking)))
                 updatedChildren = self.children.copy()
                 newRedistrictingGroups = []
+                if showDetailedProgress:
+                    pbar = None
+                else:
+                    pbar = tqdm(total=len(groupsCapableOfBreaking))
                 for groupToBreakUp in groupsCapableOfBreaking:
+                    if showDetailedProgress:
+                        countForProgress = groupsCapableOfBreaking.index(groupToBreakUp) + 1
+                    else:
+                        countForProgress = None
                     smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep,
-                                                                               countForProgress=groupsCapableOfBreaking
-                                                                               .index(groupToBreakUp) + 1)
+                                                                               countForProgress=countForProgress)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)
                     RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
 
                     newRedistrictingGroups.extend(smallerRedistrictingGroups)
+                    if pbar is not None:
+                        pbar.update(1)
+                if pbar is not None:
+                    pbar.close()
 
                 tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
                 assignNeighboringRedistrictingGroupsToRedistrictingGroups(
