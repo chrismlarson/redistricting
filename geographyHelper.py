@@ -325,6 +325,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                                       shouldDrawEachStep=False,
                                       fastCalculations=True):
     bestGraphObjectCandidateGroupThisPass = None
+    offCount = 0
     candidateGroupsThatDidNotMeetConditionThisPass = []
     fireFilledObjects = []
     fireQueue = []
@@ -337,6 +338,10 @@ def weightedForestFireFillGraphObject(candidateObjects,
     with tqdm() as pbar:
         while len(fireQueue) > 0:
             pbar.update(1)
+            pbar.set_description(
+                'FireFilled: {0} - FireQueue: {1} - Remaining: {2} - Off count: {3}'.format(
+                    len(fireFilledObjects), len(fireQueue), len(remainingObjects), offCount))
+
             # pull from the top of the queue
             graphObjectCandidateGroup = fireQueue.pop(0)
 
@@ -355,9 +360,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
             if len(potentiallyIsolatedGroups) <= 1:  # candidate won't block any other groups
                 conditionResult = condition(fireFilledObjects, graphObjectCandidateGroup)
                 if conditionResult[0]:
-                    pbar.set_description(
-                        'FireFilled: {0} - FireQueue: {1} - Remaining: {2} - Pop off count: {3}'.format(
-                            len(fireFilledObjects), len(fireQueue), len(remainingObjects), conditionResult[1]))
+                    offCount = conditionResult[1]
                     fireFilledObjects.extend(graphObjectCandidateGroup)
                     bestGraphObjectCandidateGroupThisPass = None  # set this back to none when we add something
                     candidateGroupsThatDidNotMeetConditionThisPass = []  # clear this when we add something
