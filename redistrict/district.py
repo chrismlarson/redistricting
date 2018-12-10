@@ -110,7 +110,8 @@ class District(BlockBorderGraph):
         candidateDistrictA = []
         candidateDistrictB = []
         districtStillNotExactlyCut = True
-        tqdm.write('   *** Attempting forest fire fill for a {0} to {1} ratio ***'.format(ratio[0], ratio[1]))
+        tqdm.write(
+            '   *** Attempting forest fire fill for a {0} to {1} ratio on: ***'.format(ratio[0], ratio[1], id(self)))
 
         count = 1
         while districtStillNotExactlyCut:
