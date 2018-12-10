@@ -24,12 +24,15 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if not allowEmpty and len(self.children) == 0:
             raise AttributeError(
                 "Can't create a redistricting group with no children. GraphId: {0}".format(self.graphId))
+        self.previousParentId = None
         RedistrictingGroup.redistrictingGroupList.append(self)
 
     redistrictingGroupList = []
 
     def __setstate__(self, state):
         RedistrictingGroup.redistrictingGroupList.append(self)
+        if not hasattr(state, 'previousParentId'):
+            state['previousParentId'] = None
         super(RedistrictingGroup, self).__setstate__(state)
 
     def updateBlockContainerData(self):
@@ -191,7 +194,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                         previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn],
                                                                               inList=filledBlocks)
                         if len(previousNeighbors) is not 0:
-                            lowestPopulationEnergyNeighbor = min(previousNeighbors, key=lambda block: block.populationEnergy)
+                            lowestPopulationEnergyNeighbor = min(previousNeighbors,
+                                                                 key=lambda block: block.populationEnergy)
 
                             blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
                             remainingObjects.remove(blockToActOn)
@@ -207,7 +211,6 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                         plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showGraphHeatmap=True,
                                                         showBlockGraphIds=True)
                         raise ReferenceError("Can't find previous neighbor for {0}".format(blocksToActOnThisRound))
-
 
     def clearPopulationEnergyGraph(self):
         for child in self.children:
@@ -364,7 +367,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             finishCandidates = [candidate for candidate in finishCandidates if candidate not in finishingBlocksToAvoid]
 
         if len(startingCandidates) == 0 or len(finishCandidates) == 0:
-            tqdm.write("      *** Couldn't find a split for {0} ***".format(self.graphId))
+            tqdm.write("      *** Couldn't find a split for {0} - {1} total blocks ***".format(self.graphId,
+                                                                                               len(self.children)))
             return None
 
         startingBlock = min(startingCandidates, key=lambda block: block.populationEnergy)

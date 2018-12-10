@@ -2,12 +2,13 @@ import math
 from tqdm import tqdm
 from exportData.displayShapes import plotGraphObjectGroups
 from exportData.exportData import saveDataToFileWithDescription
+from formatData.atomicBlock import assignNeighborBlocksFromCandidateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.redistrictingGroup import validateContiguousRedistrictingGroups, RedistrictingGroup, \
     assignNeighboringRedistrictingGroupsToRedistrictingGroups, validateRedistrictingGroups
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, polygonFromMultipleGeometries, \
-    intersectingGeometries, polygonFromMultiplePolygons
+    intersectingGeometries, polygonFromMultiplePolygons, findContiguousGroupsOfGraphObjects
 
 
 class District(BlockBorderGraph):
@@ -51,6 +52,7 @@ class District(BlockBorderGraph):
                       numberOfDistricts,
                       populationDeviation,
                       count=None,
+                      shouldMergeIntoFormerRedistrictingGroups=False,
                       shouldDrawFillAttempts=False,
                       shouldDrawEachStep=False,
                       splitBestCandidateGroup=False,
@@ -69,17 +71,18 @@ class District(BlockBorderGraph):
         bRatio = math.ceil(numberOfDistricts / 2)
         ratio = (aRatio, bRatio)
 
-        cutDistricts = self.cutDistrictIntoExactRatio(ratio=ratio,
-                                                      populationDeviation=populationDeviation,
-                                                      shouldDrawFillAttempts=shouldDrawFillAttempts,
-                                                      shouldDrawEachStep=shouldDrawEachStep,
-                                                      splitBestCandidateGroup=splitBestCandidateGroup,
-                                                      fastCalculations=fastCalculations,
-                                                      showDetailedProgress=showDetailedProgress)
+        cutDistrict = self.cutDistrictIntoExactRatio(ratio=ratio,
+                                                     populationDeviation=populationDeviation,
+                                                     shouldDrawFillAttempts=shouldDrawFillAttempts,
+                                                     shouldDrawEachStep=shouldDrawEachStep,
+                                                     shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
+                                                     splitBestCandidateGroup=splitBestCandidateGroup,
+                                                     fastCalculations=fastCalculations,
+                                                     showDetailedProgress=showDetailedProgress)
         count += 1
         tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
 
-        aDistrict = District(childrenGroups=cutDistricts[0])
+        aDistrict = District(childrenGroups=cutDistrict[0])
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
                                                   count=count,
@@ -87,7 +90,7 @@ class District(BlockBorderGraph):
                                                   splitBestCandidateGroup=splitBestCandidateGroup)
         districts.extend(aDistrictSplits)
 
-        bDistrict = District(childrenGroups=cutDistricts[1])
+        bDistrict = District(childrenGroups=cutDistrict[1])
         bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
                                                   populationDeviation=populationDeviation,
                                                   count=count,
@@ -98,8 +101,8 @@ class District(BlockBorderGraph):
         return districts
 
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False,
-                                  shouldDrawEachStep=False, splitBestCandidateGroup=False, fastCalculations=True,
-                                  showDetailedProgress=False):
+                                  shouldDrawEachStep=False, shouldMergeIntoFormerRedistrictingGroups=False,
+                                  splitBestCandidateGroup=False, fastCalculations=True, showDetailedProgress=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -180,6 +183,14 @@ class District(BlockBorderGraph):
                     updatedChildren.remove(groupToBreakUp)
                     RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
 
+                    # assign the previous parent graphId so that we can combine the parts again after the exact split
+                    for smallerRedistrictingGroup in smallerRedistrictingGroups:
+                        if groupToBreakUp.previousParentId is None:
+                            previousParentId = groupToBreakUp.graphId
+                        else:
+                            previousParentId = groupToBreakUp.previousParentId
+                        smallerRedistrictingGroup.previousParentId = previousParentId
+
                     newRedistrictingGroups.extend(smallerRedistrictingGroups)
                     if pbar is not None:
                         pbar.update(1)
@@ -200,6 +211,21 @@ class District(BlockBorderGraph):
                                           stateName='',
                                           descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
             count += 1
+
+        if shouldMergeIntoFormerRedistrictingGroups:
+            # todo: remove the saves after debugged tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
+            saveDataToFileWithDescription(data=[candidateDistrictA, candidateDistrictB],
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='PreMergedCandidates')
+            mergedCandidates = mergeCandidatesIntoPreviousGroups(
+                candidates=[candidateDistrictA, candidateDistrictB])
+            candidateDistrictA = mergedCandidates[0]
+            candidateDistrictB = mergedCandidates[1]
+            saveDataToFileWithDescription(data=[candidateDistrictA, candidateDistrictB],
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='PostMergedCandidates')
 
         tqdm.write('   *** Sucessful fill attempt!!! *** <------------------------------------------------------------')
         return candidateDistrictA, candidateDistrictB
@@ -279,3 +305,52 @@ def getRedistrictingGroupsBetweenCandidates(aCandidate, bCandidate):
                     groupsBetween.append(bGroup)
 
     return groupsBetween
+
+
+def mergeCandidatesIntoPreviousGroups(candidates):
+    mergedCandidates = []
+    for candidate in candidates:
+
+        # group redistricting groups together based on previous parent
+        parentDict = {}
+        for redistrictingGroup in candidate:
+            # if it doesn't have a previous parent, that means it wasn't broken up, so we will just let is pass through
+            if redistrictingGroup.previousParentId is None:
+                parentDict[redistrictingGroup.graphId] = [redistrictingGroup]
+            else:
+                if redistrictingGroup.previousParentId in parentDict:
+                    parentDict[redistrictingGroup.previousParentId].append(redistrictingGroup)
+                else:
+                    parentDict[redistrictingGroup.previousParentId] = [redistrictingGroup]
+
+        # merge the grouped groups together
+        mergedRedistrictingGroups = []
+        with tqdm(total=len(parentDict)) as pbar:
+            for redistrictingGroupList in parentDict.values():
+                if len(redistrictingGroupList) == 1:
+                    mergedRedistrictingGroups.append(redistrictingGroupList[0])
+                else:
+                    allBorderBlocks = []
+                    allBlocks = []
+                    for redistrictingGroup in redistrictingGroupList:
+                        allBorderBlocks.extend(redistrictingGroup.borderChildren)
+                        allBlocks.extend(redistrictingGroup.children)
+
+                    # assign block neighbors to former border blocks
+                    for formerBorderBlock in allBorderBlocks:
+                        assignNeighborBlocksFromCandidateBlocks(block=formerBorderBlock,
+                                                                candidateBlocks=allBorderBlocks)
+
+                    contiguousRegions = findContiguousGroupsOfGraphObjects(allBlocks)
+
+                    mergedRedistrictingGroupsForPrevious = []
+                    for contiguousRegion in contiguousRegions:
+                        contiguousRegionGroup = RedistrictingGroup(childrenBlocks=contiguousRegion)
+                        contiguousRegionGroup.validateBlockNeighbors()
+                        mergedRedistrictingGroupsForPrevious.append(contiguousRegionGroup)
+                    mergedRedistrictingGroups.extend(mergedRedistrictingGroupsForPrevious)
+                pbar.update(1)
+
+        mergedCandidates.append(mergedRedistrictingGroups)
+
+    return mergedCandidates
