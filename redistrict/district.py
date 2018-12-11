@@ -214,21 +214,21 @@ class District(BlockBorderGraph):
             count += 1
 
         if shouldMergeIntoFormerRedistrictingGroups:
-            # todo: remove the saves after debugged tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
-            # saveDataToFileWithDescription(data=[candidateDistrictA, candidateDistrictB],
-            #                               censusYear='',
-            #                               stateName='',
-            #                               descriptionOfInfo='PreMergedCandidates')
             mergedCandidates = mergeCandidatesIntoPreviousGroups(
                 candidates=[candidateDistrictA, candidateDistrictB])
             candidateDistrictA = mergedCandidates[0]
             candidateDistrictB = mergedCandidates[1]
-            # saveDataToFileWithDescription(data=[candidateDistrictA, candidateDistrictB],
-            #                               censusYear='',
-            #                               stateName='',
-            #                               descriptionOfInfo='PostMergedCandidates')
+            tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
+            assignNeighboringRedistrictingGroupsToRedistrictingGroups(
+                changedRedistrictingGroups=candidateDistrictA,
+                allNeighborCandidates=candidateDistrictA)
+            assignNeighboringRedistrictingGroupsToRedistrictingGroups(
+                changedRedistrictingGroups=candidateDistrictB,
+                allNeighborCandidates=candidateDistrictB)
+            validateRedistrictingGroups(candidateDistrictA)
+            validateRedistrictingGroups(candidateDistrictB)
 
-        tqdm.write('   *** Sucessful fill attempt!!! *** <------------------------------------------------------------')
+        tqdm.write('   *** Successful fill attempt!!! *** <------------------------------------------------------------')
         return candidateDistrictA, candidateDistrictB
 
     def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False,
