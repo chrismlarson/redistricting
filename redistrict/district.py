@@ -57,7 +57,8 @@ class District(BlockBorderGraph):
                       shouldDrawEachStep=False,
                       splitBestCandidateGroup=False,
                       fastCalculations=True,
-                      showDetailedProgress=False):
+                      showDetailedProgress=False,
+                      useDistanceScoring=False):
         if count is None:
             tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
             count = 0
@@ -78,7 +79,8 @@ class District(BlockBorderGraph):
                                                      shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                      splitBestCandidateGroup=splitBestCandidateGroup,
                                                      fastCalculations=fastCalculations,
-                                                     showDetailedProgress=showDetailedProgress)
+                                                     showDetailedProgress=showDetailedProgress,
+                                                     useDistanceScoring=useDistanceScoring)
         count += 1
         tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
 
@@ -102,7 +104,8 @@ class District(BlockBorderGraph):
 
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False,
                                   shouldDrawEachStep=False, shouldMergeIntoFormerRedistrictingGroups=False,
-                                  splitBestCandidateGroup=False, fastCalculations=True, showDetailedProgress=False):
+                                  splitBestCandidateGroup=False, fastCalculations=True, showDetailedProgress=False,
+                                  useDistanceScoring=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -125,7 +128,8 @@ class District(BlockBorderGraph):
                                                                      districtAStartingGroup=districtAStartingGroup,
                                                                      shouldDrawEachStep=shouldDrawEachStep,
                                                                      returnBestCandidateGroup=splitBestCandidateGroup,
-                                                                     fastCalculations=fastCalculations)
+                                                                     fastCalculations=fastCalculations,
+                                                                     useDistanceScoring=useDistanceScoring)
             districtCandidates = districtCandidateResult[0]
             nextBestGroupForCandidateDistrictA = districtCandidateResult[1]
 
@@ -232,7 +236,7 @@ class District(BlockBorderGraph):
         return candidateDistrictA, candidateDistrictB
 
     def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False,
-                                  returnBestCandidateGroup=False, fastCalculations=True):
+                                  returnBestCandidateGroup=False, fastCalculations=True, useDistanceScoring=False):
 
         def withinIdealDistrictSize(currentGroups, candidateGroups):
             currentPop = sum(group.population for group in currentGroups)
@@ -246,7 +250,7 @@ class District(BlockBorderGraph):
                                                 fastCalculations=True):
             candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
                                                                    useEnvelope=fastCalculations)
-            # never useEnvelope here, because candidateGroupsPolygon is our cached shape
+            # never useEnvelope here, because currentGroupPolygon is our cached shape
             candidatePolygon = polygonFromMultiplePolygons([currentGroupPolygon, candidateGroupsPolygon])
             combinedRemainingPolygon = polygonFromMultipleGeometries(remainingGroups,
                                                                      useEnvelope=fastCalculations)
@@ -256,6 +260,19 @@ class District(BlockBorderGraph):
 
             return score + remainingScore
 
+        def distanceScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups, fastCalculations=True):
+            candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
+                                                                   useEnvelope=fastCalculations)
+            distanceFromCurrentGroup = currentGroupPolygon.centroid.distance(candidateGroupsPolygon)
+            score = 1 / distanceFromCurrentGroup
+
+            return score
+
+        if useDistanceScoring:
+            chosenWeightingAlgorithm = distanceScoreOfCombinedGeometry
+        else:
+            chosenWeightingAlgorithm = polsbyPopperScoreOfCombinedGeometry
+
         candidateDistrictA = []
         nextBestGroupFromCandidateDistrictA = None
 
@@ -263,7 +280,7 @@ class District(BlockBorderGraph):
             candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
                                                                          startingObjects=districtAStartingGroup,
                                                                          condition=withinIdealDistrictSize,
-                                                                         weightingScore=polsbyPopperScoreOfCombinedGeometry,
+                                                                         weightingScore=chosenWeightingAlgorithm,
                                                                          shouldDrawEachStep=shouldDrawEachStep,
                                                                          returnBestCandidateGroup=returnBestCandidateGroup,
                                                                          fastCalculations=fastCalculations)
@@ -277,7 +294,7 @@ class District(BlockBorderGraph):
                                                                              startingObjects=[
                                                                                  startingGroupCandidates[i]],
                                                                              condition=withinIdealDistrictSize,
-                                                                             weightingScore=polsbyPopperScoreOfCombinedGeometry,
+                                                                             weightingScore=chosenWeightingAlgorithm,
                                                                              shouldDrawEachStep=shouldDrawEachStep,
                                                                              returnBestCandidateGroup=returnBestCandidateGroup,
                                                                              fastCalculations=fastCalculations)
