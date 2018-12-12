@@ -357,13 +357,17 @@ def mergeCandidatesIntoPreviousGroups(candidates):
                     # assign block neighbors to former border blocks
                     for formerBorderBlock in allBorderBlocks:
                         assignNeighborBlocksFromCandidateBlocks(block=formerBorderBlock,
-                                                                candidateBlocks=allBorderBlocks)
+                                                                candidateBlocks=allBlocks)
 
                     contiguousRegions = findContiguousGroupsOfGraphObjects(allBlocks)
 
                     mergedRedistrictingGroupsForPrevious = []
                     for contiguousRegion in contiguousRegions:
                         contiguousRegionGroup = RedistrictingGroup(childrenBlocks=contiguousRegion)
+                        # assign block neighbors to former border blocks
+                        for borderBlock in contiguousRegionGroup.borderChildren:
+                            assignNeighborBlocksFromCandidateBlocks(block=borderBlock,
+                                                                    candidateBlocks=contiguousRegionGroup.children)
                         contiguousRegionGroup.validateBlockNeighbors()
                         mergedRedistrictingGroupsForPrevious.append(contiguousRegionGroup)
                     mergedRedistrictingGroups.extend(mergedRedistrictingGroupsForPrevious)
