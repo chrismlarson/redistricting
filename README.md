@@ -76,9 +76,11 @@ The algorithm starts with state county borders, an already familiar set of divid
 
 #### Keep districts as round or compact as possible
 Originally the method attempted to use the [Polsby-Popper Test](https://en.wikipedia.org/wiki/Polsby-Popper_Test) when forming a district, it would assign a weight to each group of blocks. And then choose which block was next by finding the group of blocks by finding the largest Polsby-Popper value. But this caused the algorithm to avoid lakeside counties due to the complexity of the shoreline. Seen here:
+
 ![Polsby-Popper Forest Fire Fill](https://content.screencast.com/media/944eee16-1600-42ea-8e63-7a0fbbe1aefc_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_Forest%20Fire%20Fill%20-%20Michigan%20-%20Even%20Split.gif)
 
 So instead it uses a simple distance from center comparison. So it chooses the closest groups of blocks to form compact districts:
+
 ![Distance Weighted Forest Fire Fill](https://content.screencast.com/media/42621953-e940-4139-a6b9-40fcb62ab38a_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_DistanceWeight.gif)
 
 ### Technical process
