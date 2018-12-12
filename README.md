@@ -75,7 +75,11 @@ Ideally by doing this, maps will naturally comply with the Voting Rights Act, bu
 The algorithm starts with state county borders, an already familiar set of dividing lines to most constituents. And then it will create its own split lines that will avoid population dense areas or communities. The smallest possible population group will be Census blocks.
 
 #### Keep districts as round or compact as possible
-Using the [Polsby-Popper Test](https://en.wikipedia.org/wiki/Polsby-Popper_Test) the method assigns a weight to each group of blocks when forming a district. This way, it always creates the most compact districts given the groups of blocks available.
+Originally the method attempted to use the [Polsby-Popper Test](https://en.wikipedia.org/wiki/Polsby-Popper_Test) when forming a district, it would assign a weight to each group of blocks. And then choose which block was next by finding the group of blocks by finding the largest Polsby-Popper value. But this caused the algorithm to avoid lakeside counties due to the complexity of the shoreline. Seen here:
+![Polsby-Popper Forest Fire Fill](https://content.screencast.com/media/944eee16-1600-42ea-8e63-7a0fbbe1aefc_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_Forest%20Fire%20Fill%20-%20Michigan%20-%20Even%20Split.gif)
+
+So instead it uses a simple distance from center comparison. So it chooses the closest groups of blocks to form compact districts:
+![Distance Weighted Forest Fire Fill](https://content.screencast.com/media/42621953-e940-4139-a6b9-40fcb62ab38a_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_DistanceWeight.gif)
 
 ### Technical process
 There are two main parts to this algorithm:
@@ -85,8 +89,9 @@ There are two main parts to this algorithm:
 
 When attempting to create districts, it recursively splits the state into districts of appropriately sized ratios and stops when the desired number of districts are created. The recursive splitting based on ratios is similar to the [shortest-splitline](#Shortest-splitline) method. But instead of trying to find a dividing line, it uses a [Forest Fire algorithm](https://en.wikipedia.org/wiki/Flood_fill#Alternative_implementations) to find candidate groups that most closely match the desired population ratio. The Forest Fire fill is weighted by compactness of the potential district.
 
-Example of Weighted Forest Fire fill:
-![Forest Fire Fill](https://content.screencast.com/media/944eee16-1600-42ea-8e63-7a0fbbe1aefc_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_Forest%20Fire%20Fill%20-%20Michigan%20-%20Even%20Split.gif)
+Example:
+![Distance Weighted Forest Fire Fill](https://content.screencast.com/media/42621953-e940-4139-a6b9-40fcb62ab38a_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_DistanceWeight.gif)
+*A weighted forest fire fill attempting to split the state of Michigan in half by population. Blue groups are part of the proposed fill. Green is the next best candidate based on the compactness value. And orange groups are potentially isolated groups (districts must be contiguous).*
 
 If the population ratio cannot be met or the resulting district split doesn’t meet a roundness threshold, a selection of groups are split via the method of [dynamic programming used in seam carving](https://en.wikipedia.org/wiki/Seam_carving#Dynamic_programming) that has been mentioned above.
 
