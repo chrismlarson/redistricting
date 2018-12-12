@@ -88,16 +88,26 @@ class District(BlockBorderGraph):
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
                                                   count=count,
+                                                  shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
+                                                  splitBestCandidateGroup=splitBestCandidateGroup,
+                                                  shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
-                                                  splitBestCandidateGroup=splitBestCandidateGroup)
+                                                  fastCalculations=fastCalculations,
+                                                  showDetailedProgress=showDetailedProgress,
+                                                  useDistanceScoring=useDistanceScoring)
         districts.extend(aDistrictSplits)
 
         bDistrict = District(childrenGroups=cutDistrict[1])
         bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
                                                   populationDeviation=populationDeviation,
                                                   count=count,
+                                                  shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
+                                                  splitBestCandidateGroup=splitBestCandidateGroup,
+                                                  shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
-                                                  splitBestCandidateGroup=splitBestCandidateGroup)
+                                                  fastCalculations=fastCalculations,
+                                                  showDetailedProgress=showDetailedProgress,
+                                                  useDistanceScoring=useDistanceScoring)
         districts.extend(bDistrictSplits)
 
         return districts
@@ -232,7 +242,8 @@ class District(BlockBorderGraph):
             validateRedistrictingGroups(candidateDistrictA)
             validateRedistrictingGroups(candidateDistrictB)
 
-        tqdm.write('   *** Successful fill attempt!!! *** <------------------------------------------------------------')
+        tqdm.write(
+            '   *** Successful fill attempt!!! *** <------------------------------------------------------------')
         return candidateDistrictA, candidateDistrictB
 
     def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False,
@@ -260,7 +271,8 @@ class District(BlockBorderGraph):
 
             return score + remainingScore
 
-        def distanceScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups, fastCalculations=True):
+        def distanceScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups,
+                                            fastCalculations=True):
             candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
                                                                    useEnvelope=fastCalculations)
             distanceFromCurrentGroup = currentGroupPolygon.centroid.distance(candidateGroupsPolygon)
