@@ -456,9 +456,17 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             smallestContiguousRegion = min(contiguousRegions, key=lambda contiguousRegion: len(contiguousRegion))
             plotGraphObjectGroups(contiguousRegions, showDistrictNeighborConnections=True)
             plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showBlockGraphIds=True)
-            raise ValueError(
+            raise RuntimeError(
                 "Don't have a contiguous set of AtomicBlocks. There are {0} distinct groups. The smallest group count: {1}".format(
                     len(contiguousRegions), len(smallestContiguousRegion)))
+
+        for block in self.children:
+            neighborBlocksNotInGroup = [neighborBlock for neighborBlock in block.allNeighbors
+                                        if neighborBlock not in self.children]
+            if len(neighborBlocksNotInGroup):
+                plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showBlockGraphIds=True)
+                raise RuntimeError("Some blocks have neighbor connections with block outside the redistricting group")
+
 
     def assignNeighboringBlocksToBlocks(self):
         with tqdm(total=len(self.children)) as pbar:
