@@ -660,16 +660,16 @@ def validateRedistrictingGroups(groupList):
 
     for redistrictingGroup in groupList:
         redistrictingGroup.validateNeighborLists()
-        if type(redistrictingGroup.geometry) is not Polygon:
-            saveDataToFileWithDescription(data=redistrictingGroup,
-                                          censusYear='',
-                                          stateName='',
-                                          descriptionOfInfo='ErrorCase-GeometryIsNotPolygon')
-            jsonFriendlyGeometry = shapelyGeometryToGeoJSON(redistrictingGroup.geometry)
-            plotBlocksForRedistrictingGroup(redistrictingGroup, showBlockNeighborConnections=True)
-            raise RuntimeError(
-                "Found a redistricting group without a Polygon geometry: {0} \n{1}".format(redistrictingGroup.graphId,
-                                                                                           jsonFriendlyGeometry))
+        # if type(redistrictingGroup.geometry) is not Polygon:
+        #     saveDataToFileWithDescription(data=redistrictingGroup,
+        #                                   censusYear='',
+        #                                   stateName='',
+        #                                   descriptionOfInfo='ErrorCase-GeometryIsNotPolygon')
+        #     jsonFriendlyGeometry = shapelyGeometryToGeoJSON(redistrictingGroup.geometry)
+        #     plotBlocksForRedistrictingGroup(redistrictingGroup, showBlockNeighborConnections=True)
+        #     raise RuntimeError(
+        #         "Found a redistricting group without a Polygon geometry: {0} \n{1}".format(redistrictingGroup.graphId,
+        #                                                                                    jsonFriendlyGeometry))
 
 
 def validateContiguousRedistrictingGroups(groupList):
