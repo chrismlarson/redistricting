@@ -175,6 +175,13 @@ class District(BlockBorderGraph):
                 groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
                                            if len(groupToBreakUp.children) > 1]
                 if len(groupsCapableOfBreaking) == 0:
+                    saveDataToFileWithDescription(data=[self, districtAStartingGroup,
+                                                        candidateDistrictA, candidateDistrictB,
+                                                        nextBestGroupForCandidateDistrictA],
+                                                  censusYear='',
+                                                  stateName='',
+                                                  descriptionOfInfo='ErrorCase-NoGroupsCapableOfBreaking')
+                    plotGraphObjectGroups([self.children,districtAStartingGroup], showBlockNeighborConnections=True)
                     raise RuntimeError("Groups to break up don't meet criteria. Groups: {0}".format(
                         [groupToBreakUp.graphId for groupToBreakUp in groupsToBreakUp]
                     ))
