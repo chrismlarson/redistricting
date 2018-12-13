@@ -164,13 +164,18 @@ class District(BlockBorderGraph):
             else:
                 tqdm.write('      *** Unsuccessful fill attempt. {0} off the count. ***'
                            .format(abs(idealDistrictASize - candidateDistrictAPop)))
-                if splitBestCandidateGroup:
-                    groupsToBreakUp = nextBestGroupForCandidateDistrictA
+                if len(self.children) == 1:
+                    # this means that the candidate couldn't fill because there a single redistricting group
+                    # likely because there was a single county
+                    groupsToBreakUp = [self.children[0]]
                 else:
-                    groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
-                                                                                      candidateDistrictB)
-                    groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
-                                       if groupToBreakUp not in candidateDistrictA]
+                    if splitBestCandidateGroup:
+                        groupsToBreakUp = nextBestGroupForCandidateDistrictA
+                    else:
+                        groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
+                                                                                          candidateDistrictB)
+                        groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
+                                           if groupToBreakUp not in candidateDistrictA]
 
                 groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
                                            if len(groupToBreakUp.children) > 1]
@@ -181,7 +186,7 @@ class District(BlockBorderGraph):
                                                   censusYear='',
                                                   stateName='',
                                                   descriptionOfInfo='ErrorCase-NoGroupsCapableOfBreaking')
-                    plotGraphObjectGroups([self.children,districtAStartingGroup], showBlockNeighborConnections=True)
+                    plotGraphObjectGroups([self.children,districtAStartingGroup])
                     raise RuntimeError("Groups to break up don't meet criteria. Groups: {0}".format(
                         [groupToBreakUp.graphId for groupToBreakUp in groupsToBreakUp]
                     ))
