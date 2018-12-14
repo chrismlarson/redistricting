@@ -19,6 +19,7 @@ districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           populationDeviation=1,
                                           splitBestCandidateGroup=False,
                                           shouldMergeIntoFormerRedistrictingGroups=True,
+                                          shouldRefillEachPass=True,
                                           fastCalculations=False,
                                           showDetailedProgress=False,
                                           useDistanceScoring=True)

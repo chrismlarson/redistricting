@@ -53,6 +53,7 @@ class District(BlockBorderGraph):
                       populationDeviation,
                       count=None,
                       shouldMergeIntoFormerRedistrictingGroups=False,
+                      shouldRefillEachPass=False,
                       shouldDrawFillAttempts=False,
                       shouldDrawEachStep=False,
                       splitBestCandidateGroup=False,
@@ -77,6 +78,7 @@ class District(BlockBorderGraph):
                                                      shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                      shouldDrawEachStep=shouldDrawEachStep,
                                                      shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
+                                                     shouldRefillEachPass=shouldRefillEachPass,
                                                      splitBestCandidateGroup=splitBestCandidateGroup,
                                                      fastCalculations=fastCalculations,
                                                      showDetailedProgress=showDetailedProgress,
@@ -89,6 +91,7 @@ class District(BlockBorderGraph):
                                                   populationDeviation=populationDeviation,
                                                   count=count,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
+                                                  shouldRefillEachPass=shouldRefillEachPass,
                                                   splitBestCandidateGroup=splitBestCandidateGroup,
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
@@ -102,6 +105,7 @@ class District(BlockBorderGraph):
                                                   populationDeviation=populationDeviation,
                                                   count=count,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
+                                                  shouldRefillEachPass=shouldRefillEachPass,
                                                   splitBestCandidateGroup=splitBestCandidateGroup,
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
@@ -114,8 +118,8 @@ class District(BlockBorderGraph):
 
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False,
                                   shouldDrawEachStep=False, shouldMergeIntoFormerRedistrictingGroups=False,
-                                  splitBestCandidateGroup=False, fastCalculations=True, showDetailedProgress=False,
-                                  useDistanceScoring=False):
+                                  shouldRefillEachPass=False, splitBestCandidateGroup=False, fastCalculations=True,
+                                  showDetailedProgress=False, useDistanceScoring=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -133,7 +137,10 @@ class District(BlockBorderGraph):
             if len(candidateDistrictA) == 0:
                 districtAStartingGroup = None
             else:
-                districtAStartingGroup = candidateDistrictA
+                if shouldRefillEachPass:
+                    districtAStartingGroup = None
+                else:
+                    districtAStartingGroup = candidateDistrictA
             districtCandidateResult = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
                                                                      districtAStartingGroup=districtAStartingGroup,
                                                                      shouldDrawEachStep=shouldDrawEachStep,
@@ -174,8 +181,13 @@ class District(BlockBorderGraph):
                     else:
                         groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
                                                                                           candidateDistrictB)
-                        groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
-                                           if groupToBreakUp not in candidateDistrictA]
+                        # if we are refilling each time and merging after a split,
+                        # we can break up groups on both sides of the boundary
+                        if shouldMergeIntoFormerRedistrictingGroups and shouldRefillEachPass:
+                            groupsToBreakUp = groupsBetweenCandidates
+                        else:
+                            groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
+                                               if groupToBreakUp not in candidateDistrictA]
 
                 groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
                                            if len(groupToBreakUp.children) > 1]
@@ -240,6 +252,7 @@ class District(BlockBorderGraph):
             count += 1
 
         if shouldMergeIntoFormerRedistrictingGroups:
+            tqdm.write('      *** Merging candidates into remaining starting groups ***')
             mergedCandidates = mergeCandidatesIntoPreviousGroups(
                 candidates=[candidateDistrictA, candidateDistrictB])
             candidateDistrictA = mergedCandidates[0]
