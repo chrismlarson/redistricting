@@ -1,7 +1,5 @@
 import os
 from unittest import TestCase
-
-from exportData.displayShapes import plotBlocksForRedistrictingGroup
 from exportData.exportData import loadDataFromFile
 from shapely.geometry import Polygon
 
