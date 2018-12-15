@@ -323,13 +323,8 @@ class District(BlockBorderGraph):
                                                 fastCalculations=True):
                 candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
                                                                        useEnvelope=fastCalculations)
-                minDistanceFromComparisonGroups = min(
-                    [comparisonGroupCandidate.geometry.centroid.distance(candidateGroupsPolygon)
-                     for comparisonGroupCandidate in comparisonGroupCandidates])
-                if minDistanceFromComparisonGroups == 0:
-                    score = math.inf
-                else:
-                    score = 1 / minDistanceFromComparisonGroups
+                distance = currentGroupPolygon.centroid.distance(candidateGroupsPolygon)
+                score = 1 / distance
 
                 return score
 
