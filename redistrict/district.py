@@ -37,14 +37,14 @@ class District(BlockBorderGraph):
                                                              direction=CardinalDirection.south)
         if longestDirection == Alignment.northSouth:
             startingGroupCandidatesAndComparisons = ((northernStartingCandidate, self.northernChildBlocks),
-                                       (southernStartingCandidate, self.southernChildBlocks),
-                                       (westernStartingCandidate, self.westernChildBlocks),
-                                       (easternStartingCandidate, self.easternChildBlocks))
+                                                     (southernStartingCandidate, self.southernChildBlocks),
+                                                     (westernStartingCandidate, self.westernChildBlocks),
+                                                     (easternStartingCandidate, self.easternChildBlocks))
         else:
             startingGroupCandidatesAndComparisons = ((westernStartingCandidate, self.westernChildBlocks),
-                                       (easternStartingCandidate, self.easternChildBlocks),
-                                       (northernStartingCandidate, self.northernChildBlocks),
-                                       (southernStartingCandidate, self.southernChildBlocks))
+                                                     (easternStartingCandidate, self.easternChildBlocks),
+                                                     (northernStartingCandidate, self.northernChildBlocks),
+                                                     (southernStartingCandidate, self.southernChildBlocks))
 
         return startingGroupCandidatesAndComparisons
 
@@ -198,7 +198,7 @@ class District(BlockBorderGraph):
                                                   censusYear='',
                                                   stateName='',
                                                   descriptionOfInfo='ErrorCase-NoGroupsCapableOfBreaking')
-                    plotGraphObjectGroups([self.children,districtAStartingGroup])
+                    plotGraphObjectGroups([self.children, districtAStartingGroup])
                     raise RuntimeError("Groups to break up don't meet criteria. Groups: {0}".format(
                         [groupToBreakUp.graphId for groupToBreakUp in groupsToBreakUp]
                     ))
@@ -284,7 +284,9 @@ class District(BlockBorderGraph):
 
             for startingGroupCandidateAndComparison in startingGroupCandidateAndComparisons:
                 startingObjectCandidateGroups = [startingGroupCandidateAndComparison[0]]
-                comparisonGroupCandidates = startingGroupCandidateAndComparison[1].copy()
+                comparisonGroupCandidates = [comparisonGroupCandidate
+                                             for comparisonGroupCandidate in startingGroupCandidateAndComparison[1]
+                                             if comparisonGroupCandidate not in startingObjectCandidateGroups]
                 cutCandidateCombos.append((startingObjectCandidateGroups, comparisonGroupCandidates))
 
         i = 0
@@ -321,8 +323,13 @@ class District(BlockBorderGraph):
                                                 fastCalculations=True):
                 candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
                                                                        useEnvelope=fastCalculations)
-                distanceFromCurrentGroup = currentGroupPolygon.centroid.distance(candidateGroupsPolygon)
-                score = 1 / distanceFromCurrentGroup
+                minDistanceFromComparisonGroups = min(
+                    [comparisonGroupCandidate.geometry.centroid.distance(candidateGroupsPolygon)
+                     for comparisonGroupCandidate in comparisonGroupCandidates])
+                if minDistanceFromComparisonGroups == 0:
+                    score = math.inf
+                else:
+                    score = 1 / minDistanceFromComparisonGroups
 
                 return score
 
