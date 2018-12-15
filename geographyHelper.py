@@ -332,6 +332,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
     fireQueue = []
     remainingObjects = candidateObjects.copy()
     if not startingObjects:
+        # this doesn't occur during the forest fire fill when creating districts
         startingObjects = [remainingObjects[0]]
     fireQueue.append(startingObjects)
 

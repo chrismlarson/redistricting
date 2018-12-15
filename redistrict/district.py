@@ -24,7 +24,7 @@ class District(BlockBorderGraph):
         super(District, self).updateBlockContainerData()
         validateContiguousRedistrictingGroups(self.children)
 
-    def getCutStartingCandidates(self):
+    def getCutStartingCandidateAndComparisons(self):
         longestDirection = alignmentOfPolygon(self.geometry)
 
         northernStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
@@ -36,17 +36,17 @@ class District(BlockBorderGraph):
         southernStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
                                                              direction=CardinalDirection.south)
         if longestDirection == Alignment.northSouth:
-            startingGroupCandidates = (northernStartingCandidate,
-                                       southernStartingCandidate,
-                                       westernStartingCandidate,
-                                       easternStartingCandidate)
+            startingGroupCandidatesAndComparisons = ((northernStartingCandidate, self.northernChildBlocks),
+                                       (southernStartingCandidate, self.southernChildBlocks),
+                                       (westernStartingCandidate, self.westernChildBlocks),
+                                       (easternStartingCandidate, self.easternChildBlocks))
         else:
-            startingGroupCandidates = (westernStartingCandidate,
-                                       easternStartingCandidate,
-                                       northernStartingCandidate,
-                                       southernStartingCandidate)
+            startingGroupCandidatesAndComparisons = ((westernStartingCandidate, self.westernChildBlocks),
+                                       (easternStartingCandidate, self.easternChildBlocks),
+                                       (northernStartingCandidate, self.northernChildBlocks),
+                                       (southernStartingCandidate, self.southernChildBlocks))
 
-        return startingGroupCandidates
+        return startingGroupCandidatesAndComparisons
 
     def splitDistrict(self,
                       numberOfDistricts,
@@ -273,49 +273,66 @@ class District(BlockBorderGraph):
 
     def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False,
                                   returnBestCandidateGroup=False, fastCalculations=True, useDistanceScoring=False):
-
-        def withinIdealDistrictSize(currentGroups, candidateGroups):
-            currentPop = sum(group.population for group in currentGroups)
-            candidatePop = sum(group.population for group in candidateGroups)
-            proposedPop = currentPop + candidatePop
-            isWithinIdealPop = proposedPop <= idealDistrictASize
-            proposedPopDiff = idealDistrictASize - proposedPop
-            return isWithinIdealPop, proposedPopDiff
-
-        def polsbyPopperScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups,
-                                                fastCalculations=True):
-            candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
-                                                                   useEnvelope=fastCalculations)
-            # never useEnvelope here, because currentGroupPolygon is our cached shape
-            candidatePolygon = polygonFromMultiplePolygons([currentGroupPolygon, candidateGroupsPolygon])
-            combinedRemainingPolygon = polygonFromMultipleGeometries(remainingGroups,
-                                                                     useEnvelope=fastCalculations)
-
-            score = polsbyPopperScoreOfPolygon(candidatePolygon)
-            remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingPolygon)
-
-            return score + remainingScore
-
-        def distanceScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups,
-                                            fastCalculations=True):
-            candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
-                                                                   useEnvelope=fastCalculations)
-            distanceFromCurrentGroup = currentGroupPolygon.centroid.distance(candidateGroupsPolygon)
-            score = 1 / distanceFromCurrentGroup
-
-            return score
-
-        if useDistanceScoring:
-            chosenWeightingAlgorithm = distanceScoreOfCombinedGeometry
-        else:
-            chosenWeightingAlgorithm = polsbyPopperScoreOfCombinedGeometry
-
-        candidateDistrictA = []
-        nextBestGroupFromCandidateDistrictA = None
+        cutCandidateCombos = []
 
         if districtAStartingGroup:
+            startingObjectCandidateGroups = districtAStartingGroup.copy()
+            comparisonGroupCandidates = districtAStartingGroup.copy()
+            cutCandidateCombos.append((startingObjectCandidateGroups, comparisonGroupCandidates))
+        else:
+            startingGroupCandidateAndComparisons = self.getCutStartingCandidateAndComparisons()
+
+            for startingGroupCandidateAndComparison in startingGroupCandidateAndComparisons:
+                startingObjectCandidateGroups = [startingGroupCandidateAndComparison[0]]
+                comparisonGroupCandidates = startingGroupCandidateAndComparison[1].copy()
+                cutCandidateCombos.append((startingObjectCandidateGroups, comparisonGroupCandidates))
+
+        i = 0
+        candidateDistrictA = []
+        nextBestGroupFromCandidateDistrictA = None
+        while not candidateDistrictA and i < len(cutCandidateCombos):
+            cutCandidateCombo = cutCandidateCombos[i]
+            startingObjects = cutCandidateCombo[0]
+            comparisonGroupCandidates = cutCandidateCombo[1]
+
+            def withinIdealDistrictSize(currentGroups, candidateGroups):
+                currentPop = sum(group.population for group in currentGroups)
+                candidatePop = sum(group.population for group in candidateGroups)
+                proposedPop = currentPop + candidatePop
+                isWithinIdealPop = proposedPop <= idealDistrictASize
+                proposedPopDiff = idealDistrictASize - proposedPop
+                return isWithinIdealPop, proposedPopDiff
+
+            def polsbyPopperScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups,
+                                                    fastCalculations=True):
+                candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
+                                                                       useEnvelope=fastCalculations)
+                # never useEnvelope here, because currentGroupPolygon is our cached shape
+                candidatePolygon = polygonFromMultiplePolygons([currentGroupPolygon, candidateGroupsPolygon])
+                combinedRemainingPolygon = polygonFromMultipleGeometries(remainingGroups,
+                                                                         useEnvelope=fastCalculations)
+
+                score = polsbyPopperScoreOfPolygon(candidatePolygon)
+                remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingPolygon)
+
+                return score + remainingScore
+
+            def distanceScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups,
+                                                fastCalculations=True):
+                candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
+                                                                       useEnvelope=fastCalculations)
+                distanceFromCurrentGroup = currentGroupPolygon.centroid.distance(candidateGroupsPolygon)
+                score = 1 / distanceFromCurrentGroup
+
+                return score
+
+            if useDistanceScoring:
+                chosenWeightingAlgorithm = distanceScoreOfCombinedGeometry
+            else:
+                chosenWeightingAlgorithm = polsbyPopperScoreOfCombinedGeometry
+
             candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
-                                                                         startingObjects=districtAStartingGroup,
+                                                                         startingObjects=startingObjects,
                                                                          condition=withinIdealDistrictSize,
                                                                          weightingScore=chosenWeightingAlgorithm,
                                                                          shouldDrawEachStep=shouldDrawEachStep,
@@ -323,21 +340,7 @@ class District(BlockBorderGraph):
                                                                          fastCalculations=fastCalculations)
             candidateDistrictA = candidateDistrictAResult[0]
             nextBestGroupFromCandidateDistrictA = candidateDistrictAResult[1]
-        else:
-            startingGroupCandidates = self.getCutStartingCandidates()
-            i = 0
-            while not candidateDistrictA and i <= 3:
-                candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
-                                                                             startingObjects=[
-                                                                                 startingGroupCandidates[i]],
-                                                                             condition=withinIdealDistrictSize,
-                                                                             weightingScore=chosenWeightingAlgorithm,
-                                                                             shouldDrawEachStep=shouldDrawEachStep,
-                                                                             returnBestCandidateGroup=returnBestCandidateGroup,
-                                                                             fastCalculations=fastCalculations)
-                candidateDistrictA = candidateDistrictAResult[0]
-                nextBestGroupFromCandidateDistrictA = candidateDistrictAResult[1]
-                i += 1
+            i += 1
 
         candidateDistrictB = [group for group in self.children if group not in candidateDistrictA]
         return (candidateDistrictA, candidateDistrictB), nextBestGroupFromCandidateDistrictA
