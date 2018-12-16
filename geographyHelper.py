@@ -1,7 +1,6 @@
-from shapely.geometry import shape, mapping, MultiPolygon, LineString, MultiLineString
-from shapely.ops import shared_paths
+from shapely.geometry import shape, mapping, Point, Polygon, MultiPolygon, LineString, MultiLineString
 from shapely.geometry.base import BaseGeometry
-from shapely.ops import cascaded_union
+from shapely.ops import shared_paths, nearest_points, cascaded_union
 from enum import Enum
 from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
 from json import dumps
@@ -566,3 +565,30 @@ def getDistanceBetweenLatLong(lat1, lon1, lat2, lon2):
 def polsbyPopperScoreOfPolygon(polygon):
     # score= 4 * pi() * (area/(perimeter^2))
     return 4 * pi * (polygon.area / (pow(polygon.length, 2)))
+
+
+def simplifyPolygonsBasedOnAnotherPolygon(polygonsToSimplify, referencePolygon):
+    simplifiedPolygons = []
+    with tqdm(total=len(polygonsToSimplify)) as pbar:
+        for polygonToSimplify in polygonsToSimplify:
+            snappedPolygon = snapPolygonToPolygon(polygonToSimplify, referencePolygon, tolerance=0.05)
+            simplifiedPolygon = snappedPolygon.simplify(tolerance=0.0)  # remove excess points
+            simplifiedPolygons.append(simplifiedPolygon)
+            pbar.update(1)
+    return simplifiedPolygons
+
+
+def snapPolygonToPolygon(polygonToSnap, referencePolygon, tolerance):
+    coordinates = []
+    for x, y in polygonToSnap.exterior.coords:  # for each vertex in the first polygon
+        point = Point(x, y)
+        p1, p2 = nearest_points(point, referencePolygon)  # find the nearest point on the second polygon
+
+        if p1.distance(p2) <= tolerance:
+            # it's within the snapping tolerance, use the snapped vertex
+            coordinates.append(p2.coords[0])
+        else:
+            # it's too far, use the original vertex
+            coordinates.append((x, y))
+    # convert coordinates back to a Polygon and return
+    return Polygon(coordinates)
