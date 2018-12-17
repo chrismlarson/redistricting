@@ -1,7 +1,7 @@
 from us import states
 from exportData.displayShapes import plotDistricts, plotPolygons
 from exportData.exportData import loadDataFromFileWithDescription, saveDataToFileWithDescription
-from redistrict.district import createDistrictFromRedistrictingGroups, WeightingMethod
+from redistrict.district import createDistrictFromRedistrictingGroups, WeightingMethod, BreakingMethod
 
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
@@ -19,6 +19,7 @@ initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redi
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           populationDeviation=1,
                                           weightingMethod=WeightingMethod.cardinalDistance,
+                                          breakingMethod=BreakingMethod.splitGroupsOnEdge,
                                           splitBestCandidateGroup=False,
                                           shouldMergeIntoFormerRedistrictingGroups=True,
                                           shouldDrawEachStep=False,

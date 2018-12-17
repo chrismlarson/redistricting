@@ -2,7 +2,7 @@ from unittest import TestCase
 from censusData.censusBlock import CensusBlock
 from formatData.atomicBlock import AtomicBlock
 from formatData.redistrictingGroup import RedistrictingGroup
-from redistrict.district import createDistrictFromRedistrictingGroups, WeightingMethod
+from redistrict.district import createDistrictFromRedistrictingGroups, WeightingMethod, BreakingMethod
 
 
 class TestDistrict(TestCase):
@@ -27,7 +27,7 @@ class TestDistrict(TestCase):
         splits = testDistrictCandidate.splitDistrict(numberOfDistricts=2,
                                                      populationDeviation=1,
                                                      weightingMethod=WeightingMethod.distance,
-                                                     splitBestCandidateGroup=False,
+                                                     breakingMethod=BreakingMethod.splitGroupsOnEdge,
                                                      shouldMergeIntoFormerRedistrictingGroups=True,
                                                      fastCalculations=False,
                                                      showDetailedProgress=False)

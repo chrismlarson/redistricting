@@ -43,9 +43,9 @@ class District(BlockBorderGraph):
                                        (easternStartingCandidate, CardinalDirection.east))
         else:
             startingGroupCandidates = ((westernStartingCandidate, CardinalDirection.west),
-                                      (easternStartingCandidate, CardinalDirection.east),
-                                      (northernStartingCandidate, CardinalDirection.north),
-                                      (southernStartingCandidate, CardinalDirection.south))
+                                       (easternStartingCandidate, CardinalDirection.east),
+                                       (northernStartingCandidate, CardinalDirection.north),
+                                       (southernStartingCandidate, CardinalDirection.south))
 
         return startingGroupCandidates
 
@@ -53,6 +53,7 @@ class District(BlockBorderGraph):
                       numberOfDistricts,
                       populationDeviation,
                       weightingMethod,
+                      breakingMethod,
                       count=None,
                       shouldMergeIntoFormerRedistrictingGroups=False,
                       shouldRefillEachPass=False,
@@ -77,11 +78,11 @@ class District(BlockBorderGraph):
         cutDistrict = self.cutDistrictIntoExactRatio(ratio=ratio,
                                                      populationDeviation=populationDeviation,
                                                      weightingMethod=weightingMethod,
+                                                     breakingMethod=breakingMethod,
                                                      shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                      shouldDrawEachStep=shouldDrawEachStep,
                                                      shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                      shouldRefillEachPass=shouldRefillEachPass,
-                                                     splitBestCandidateGroup=splitBestCandidateGroup,
                                                      fastCalculations=fastCalculations,
                                                      showDetailedProgress=showDetailedProgress)
         count += 1
@@ -91,6 +92,7 @@ class District(BlockBorderGraph):
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
                                                   weightingMethod=weightingMethod,
+                                                  breakingMethod=breakingMethod,
                                                   count=count,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
@@ -105,6 +107,7 @@ class District(BlockBorderGraph):
         bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
                                                   populationDeviation=populationDeviation,
                                                   weightingMethod=weightingMethod,
+                                                  breakingMethod=breakingMethod,
                                                   count=count,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
@@ -117,10 +120,10 @@ class District(BlockBorderGraph):
 
         return districts
 
-    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, weightingMethod, shouldDrawFillAttempts=False,
-                                  shouldDrawEachStep=False, shouldMergeIntoFormerRedistrictingGroups=False,
-                                  shouldRefillEachPass=False, splitBestCandidateGroup=False, fastCalculations=True,
-                                  showDetailedProgress=False):
+    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, weightingMethod, breakingMethod,
+                                  shouldDrawFillAttempts=False, shouldDrawEachStep=False,
+                                  shouldMergeIntoFormerRedistrictingGroups=False, shouldRefillEachPass=False,
+                                  fastCalculations=True, showDetailedProgress=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -143,12 +146,18 @@ class District(BlockBorderGraph):
                     districtAStartingGroup = None
                 else:
                     districtAStartingGroup = candidateDistrictA
+
+            if breakingMethod is BreakingMethod.splitBestCandidateGroup:
+                returnBestCandidateGroup = True
+            else:
+                returnBestCandidateGroup = False
+
             districtCandidateResult = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
                                                                      weightingMethod=weightingMethod,
                                                                      districtAStartingGroup=districtAStartingGroup,
                                                                      fillOriginDirection=fillOriginDirection,
                                                                      shouldDrawEachStep=shouldDrawEachStep,
-                                                                     returnBestCandidateGroup=splitBestCandidateGroup,
+                                                                     returnBestCandidateGroup=returnBestCandidateGroup,
                                                                      fastCalculations=fastCalculations)
             districtCandidates = districtCandidateResult[0]
             nextBestGroupForCandidateDistrictA = districtCandidateResult[1]
@@ -180,9 +189,9 @@ class District(BlockBorderGraph):
                     # likely because there was a single county
                     groupsToBreakUp = [self.children[0]]
                 else:
-                    if splitBestCandidateGroup:
+                    if breakingMethod is BreakingMethod.splitBestCandidateGroup:
                         groupsToBreakUp = nextBestGroupForCandidateDistrictA
-                    else:
+                    elif breakingMethod is BreakingMethod.splitGroupsOnEdge:
                         groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
                                                                                           candidateDistrictB)
                         # if we are refilling each time and merging after a split,
@@ -192,6 +201,10 @@ class District(BlockBorderGraph):
                         else:
                             groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
                                                if groupToBreakUp not in candidateDistrictA]
+                    elif breakingMethod is BreakingMethod.splitLowestEnergySeam:
+                        raise NotImplementedError('splitLowestEnergySeam not yet Implemented')
+                    else:
+                        raise RuntimeError('{0} is not supported'.format(breakingMethod))
 
                 groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
                                            if len(groupToBreakUp.children) > 1]
@@ -435,3 +448,9 @@ class WeightingMethod(Enum):
     distance = 0
     polsbyPopper = 1
     cardinalDistance = 2
+
+
+class BreakingMethod(Enum):
+    splitBestCandidateGroup = 0
+    splitGroupsOnEdge = 1
+    splitLowestEnergySeam = 2
