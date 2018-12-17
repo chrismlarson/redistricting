@@ -232,14 +232,22 @@ def topAngleFromCenterOfRectangle(width, height):
 
 
 def mostCardinalOfGeometries(geometryList, direction):
+    boundsIndex = boundsIndexFromDirection(direction)
+    if direction is CardinalDirection.north or direction is CardinalDirection.east:
+        return max(geometryList, key=lambda geometry: geometry.geometry.bounds[boundsIndex])
+    else:
+        return min(geometryList, key=lambda geometry: geometry.geometry.bounds[boundsIndex])
+
+
+def boundsIndexFromDirection(direction):
     if direction is CardinalDirection.north:
-        return max(geometryList, key=lambda geometry: geometry.geometry.bounds[3])
+        return 3
     elif direction is CardinalDirection.east:
-        return max(geometryList, key=lambda geometry: geometry.geometry.bounds[2])
+        return 2
     elif direction is CardinalDirection.south:
-        return min(geometryList, key=lambda geometry: geometry.geometry.bounds[1])
+        return 1
     elif direction is CardinalDirection.west:
-        return min(geometryList, key=lambda geometry: geometry.geometry.bounds[0])
+        return 0
 
 
 def getLineListFromBoundary(boundary):

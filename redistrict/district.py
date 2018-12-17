@@ -1,5 +1,6 @@
 import math
 from tqdm import tqdm
+from enum import Enum
 from exportData.displayShapes import plotGraphObjectGroups
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.atomicBlock import assignNeighborBlocksFromCandidateBlocks
@@ -8,7 +9,7 @@ from formatData.redistrictingGroup import validateContiguousRedistrictingGroups,
     assignNeighboringRedistrictingGroupsToRedistrictingGroups, validateRedistrictingGroups
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, polygonFromMultipleGeometries, \
-    intersectingGeometries, polygonFromMultiplePolygons, findContiguousGroupsOfGraphObjects
+    intersectingGeometries, polygonFromMultiplePolygons, findContiguousGroupsOfGraphObjects, boundsIndexFromDirection
 
 
 class District(BlockBorderGraph):
@@ -36,21 +37,22 @@ class District(BlockBorderGraph):
         southernStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
                                                              direction=CardinalDirection.south)
         if longestDirection == Alignment.northSouth:
-            startingGroupCandidates = (northernStartingCandidate,
-                                                     southernStartingCandidate,
-                                                     westernStartingCandidate,
-                                                     easternStartingCandidate)
+            startingGroupCandidates = ((northernStartingCandidate, CardinalDirection.north),
+                                       (southernStartingCandidate, CardinalDirection.south),
+                                       (westernStartingCandidate, CardinalDirection.west),
+                                       (easternStartingCandidate, CardinalDirection.east))
         else:
-            startingGroupCandidates = (westernStartingCandidate,
-                                                     easternStartingCandidate,
-                                                     northernStartingCandidate,
-                                                     southernStartingCandidate)
+            startingGroupCandidates = ((westernStartingCandidate, CardinalDirection.west),
+                                      (easternStartingCandidate, CardinalDirection.east),
+                                      (northernStartingCandidate, CardinalDirection.north),
+                                      (southernStartingCandidate, CardinalDirection.south))
 
         return startingGroupCandidates
 
     def splitDistrict(self,
                       numberOfDistricts,
                       populationDeviation,
+                      weightingMethod,
                       count=None,
                       shouldMergeIntoFormerRedistrictingGroups=False,
                       shouldRefillEachPass=False,
@@ -58,8 +60,7 @@ class District(BlockBorderGraph):
                       shouldDrawEachStep=False,
                       splitBestCandidateGroup=False,
                       fastCalculations=True,
-                      showDetailedProgress=False,
-                      useDistanceScoring=False):
+                      showDetailedProgress=False):
         if count is None:
             tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
             count = 0
@@ -75,20 +76,21 @@ class District(BlockBorderGraph):
 
         cutDistrict = self.cutDistrictIntoExactRatio(ratio=ratio,
                                                      populationDeviation=populationDeviation,
+                                                     weightingMethod=weightingMethod,
                                                      shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                      shouldDrawEachStep=shouldDrawEachStep,
                                                      shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                      shouldRefillEachPass=shouldRefillEachPass,
                                                      splitBestCandidateGroup=splitBestCandidateGroup,
                                                      fastCalculations=fastCalculations,
-                                                     showDetailedProgress=showDetailedProgress,
-                                                     useDistanceScoring=useDistanceScoring)
+                                                     showDetailedProgress=showDetailedProgress)
         count += 1
         tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
 
         aDistrict = District(childrenGroups=cutDistrict[0])
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
+                                                  weightingMethod=weightingMethod,
                                                   count=count,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
@@ -96,13 +98,13 @@ class District(BlockBorderGraph):
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
                                                   fastCalculations=fastCalculations,
-                                                  showDetailedProgress=showDetailedProgress,
-                                                  useDistanceScoring=useDistanceScoring)
+                                                  showDetailedProgress=showDetailedProgress)
         districts.extend(aDistrictSplits)
 
         bDistrict = District(childrenGroups=cutDistrict[1])
         bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
                                                   populationDeviation=populationDeviation,
+                                                  weightingMethod=weightingMethod,
                                                   count=count,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
@@ -110,22 +112,22 @@ class District(BlockBorderGraph):
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
                                                   fastCalculations=fastCalculations,
-                                                  showDetailedProgress=showDetailedProgress,
-                                                  useDistanceScoring=useDistanceScoring)
+                                                  showDetailedProgress=showDetailedProgress)
         districts.extend(bDistrictSplits)
 
         return districts
 
-    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, shouldDrawFillAttempts=False,
+    def cutDistrictIntoExactRatio(self, ratio, populationDeviation, weightingMethod, shouldDrawFillAttempts=False,
                                   shouldDrawEachStep=False, shouldMergeIntoFormerRedistrictingGroups=False,
                                   shouldRefillEachPass=False, splitBestCandidateGroup=False, fastCalculations=True,
-                                  showDetailedProgress=False, useDistanceScoring=False):
+                                  showDetailedProgress=False):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
         idealDistrictBSize = int(self.population / (ratioTotal / ratio[1]))
         candidateDistrictA = []
         candidateDistrictB = []
+        fillOriginDirection = None
         districtStillNotExactlyCut = True
         tqdm.write(
             '   *** Attempting forest fire fill for a {0} to {1} ratio on: ***'.format(ratio[0], ratio[1], id(self)))
@@ -142,13 +144,15 @@ class District(BlockBorderGraph):
                 else:
                     districtAStartingGroup = candidateDistrictA
             districtCandidateResult = self.cutDistrictIntoRoughRatio(idealDistrictASize=idealDistrictASize,
+                                                                     weightingMethod=weightingMethod,
                                                                      districtAStartingGroup=districtAStartingGroup,
+                                                                     fillOriginDirection=fillOriginDirection,
                                                                      shouldDrawEachStep=shouldDrawEachStep,
                                                                      returnBestCandidateGroup=splitBestCandidateGroup,
-                                                                     fastCalculations=fastCalculations,
-                                                                     useDistanceScoring=useDistanceScoring)
+                                                                     fastCalculations=fastCalculations)
             districtCandidates = districtCandidateResult[0]
             nextBestGroupForCandidateDistrictA = districtCandidateResult[1]
+            fillOriginDirection = districtCandidateResult[2]
 
             candidateDistrictA = districtCandidates[0]
             candidateDistrictB = districtCandidates[1]
@@ -271,19 +275,21 @@ class District(BlockBorderGraph):
             '   *** Successful fill attempt!!! *** <------------------------------------------------------------')
         return candidateDistrictA, candidateDistrictB
 
-    def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False,
-                                  returnBestCandidateGroup=False, fastCalculations=True, useDistanceScoring=False):
+    def cutDistrictIntoRoughRatio(self, idealDistrictASize, weightingMethod, districtAStartingGroup=None,
+                                  fillOriginDirection=None, shouldDrawEachStep=False, returnBestCandidateGroup=False,
+                                  fastCalculations=True):
         if districtAStartingGroup:
-            startingGroupCandidates = [districtAStartingGroup.copy()]
+            startingGroupCandidates = [(districtAStartingGroup.copy(), fillOriginDirection)]
         else:
-            startingGroupCandidates = [[startingGroupCandidate]
-                                       for startingGroupCandidate in self.getCutStartingCandidates()]
+            startingGroupCandidates = [([startingGroupCandidate], direction)
+                                       for startingGroupCandidate, direction in self.getCutStartingCandidates()]
 
         i = 0
         candidateDistrictA = []
         nextBestGroupFromCandidateDistrictA = None
         while not candidateDistrictA and i < len(startingGroupCandidates):
-            startingObjects = startingGroupCandidates[i]
+            startingObjects = startingGroupCandidates[i][0]
+            fillOriginDirection = startingGroupCandidates[i][1]
 
             def withinIdealDistrictSize(currentGroups, candidateGroups):
                 currentPop = sum(group.population for group in currentGroups)
@@ -316,10 +322,27 @@ class District(BlockBorderGraph):
 
                 return score
 
-            if useDistanceScoring:
+            def cardinalDirectionScoreOfCandidateGroups(currentGroupPolygon, remainingGroups, candidateGroups,
+                                                        fastCalculations=True):
+                boundsIndex = boundsIndexFromDirection(fillOriginDirection)
+                directionReferenceValue = self.geometry.bounds[boundsIndex]
+                candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
+                                                                       useEnvelope=fastCalculations)
+                candidateGroupsValue = candidateGroupsPolygon.bounds[boundsIndex]
+                difference = directionReferenceValue - candidateGroupsValue
+                difference = math.fabs(difference)
+                score = 1 / difference
+
+                return score
+
+            if weightingMethod is WeightingMethod.distance:
                 chosenWeightingAlgorithm = distanceScoreOfCombinedGeometry
-            else:
+            elif weightingMethod is WeightingMethod.polsbyPopper:
                 chosenWeightingAlgorithm = polsbyPopperScoreOfCombinedGeometry
+            elif weightingMethod is WeightingMethod.cardinalDistance:
+                chosenWeightingAlgorithm = cardinalDirectionScoreOfCandidateGroups
+            else:
+                raise RuntimeError('Must choose a weighting method. {0} is not supported'.format(weightingMethod))
 
             candidateDistrictAResult = weightedForestFireFillGraphObject(candidateObjects=self.children,
                                                                          startingObjects=startingObjects,
@@ -333,7 +356,7 @@ class District(BlockBorderGraph):
             i += 1
 
         candidateDistrictB = [group for group in self.children if group not in candidateDistrictA]
-        return (candidateDistrictA, candidateDistrictB), nextBestGroupFromCandidateDistrictA
+        return (candidateDistrictA, candidateDistrictB), nextBestGroupFromCandidateDistrictA, fillOriginDirection
 
 
 def createDistrictFromRedistrictingGroups(redistrictingGroups):
@@ -406,3 +429,9 @@ def mergeCandidatesIntoPreviousGroups(candidates):
         mergedCandidates.append(mergedRedistrictingGroups)
 
     return mergedCandidates
+
+
+class WeightingMethod(Enum):
+    distance = 0
+    polsbyPopper = 1
+    cardinalDistance = 2
