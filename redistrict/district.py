@@ -24,7 +24,7 @@ class District(BlockBorderGraph):
         super(District, self).updateBlockContainerData()
         validateContiguousRedistrictingGroups(self.children)
 
-    def getCutStartingCandidateAndComparisons(self):
+    def getCutStartingCandidates(self):
         longestDirection = alignmentOfPolygon(self.geometry)
 
         northernStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
@@ -36,17 +36,17 @@ class District(BlockBorderGraph):
         southernStartingCandidate = mostCardinalOfGeometries(geometryList=self.borderChildren,
                                                              direction=CardinalDirection.south)
         if longestDirection == Alignment.northSouth:
-            startingGroupCandidatesAndComparisons = ((northernStartingCandidate, self.northernChildBlocks),
-                                                     (southernStartingCandidate, self.southernChildBlocks),
-                                                     (westernStartingCandidate, self.westernChildBlocks),
-                                                     (easternStartingCandidate, self.easternChildBlocks))
+            startingGroupCandidates = (northernStartingCandidate,
+                                                     southernStartingCandidate,
+                                                     westernStartingCandidate,
+                                                     easternStartingCandidate)
         else:
-            startingGroupCandidatesAndComparisons = ((westernStartingCandidate, self.westernChildBlocks),
-                                                     (easternStartingCandidate, self.easternChildBlocks),
-                                                     (northernStartingCandidate, self.northernChildBlocks),
-                                                     (southernStartingCandidate, self.southernChildBlocks))
+            startingGroupCandidates = (westernStartingCandidate,
+                                                     easternStartingCandidate,
+                                                     northernStartingCandidate,
+                                                     southernStartingCandidate)
 
-        return startingGroupCandidatesAndComparisons
+        return startingGroupCandidates
 
     def splitDistrict(self,
                       numberOfDistricts,
@@ -273,29 +273,17 @@ class District(BlockBorderGraph):
 
     def cutDistrictIntoRoughRatio(self, idealDistrictASize, districtAStartingGroup=None, shouldDrawEachStep=False,
                                   returnBestCandidateGroup=False, fastCalculations=True, useDistanceScoring=False):
-        cutCandidateCombos = []
-
         if districtAStartingGroup:
-            startingObjectCandidateGroups = districtAStartingGroup.copy()
-            comparisonGroupCandidates = districtAStartingGroup.copy()
-            cutCandidateCombos.append((startingObjectCandidateGroups, comparisonGroupCandidates))
+            startingGroupCandidates = [districtAStartingGroup.copy()]
         else:
-            startingGroupCandidateAndComparisons = self.getCutStartingCandidateAndComparisons()
-
-            for startingGroupCandidateAndComparison in startingGroupCandidateAndComparisons:
-                startingObjectCandidateGroups = [startingGroupCandidateAndComparison[0]]
-                comparisonGroupCandidates = [comparisonGroupCandidate
-                                             for comparisonGroupCandidate in startingGroupCandidateAndComparison[1]
-                                             if comparisonGroupCandidate not in startingObjectCandidateGroups]
-                cutCandidateCombos.append((startingObjectCandidateGroups, comparisonGroupCandidates))
+            startingGroupCandidates = [[startingGroupCandidate]
+                                       for startingGroupCandidate in self.getCutStartingCandidates()]
 
         i = 0
         candidateDistrictA = []
         nextBestGroupFromCandidateDistrictA = None
-        while not candidateDistrictA and i < len(cutCandidateCombos):
-            cutCandidateCombo = cutCandidateCombos[i]
-            startingObjects = cutCandidateCombo[0]
-            comparisonGroupCandidates = cutCandidateCombo[1]
+        while not candidateDistrictA and i < len(startingGroupCandidates):
+            startingObjects = startingGroupCandidates[i]
 
             def withinIdealDistrictSize(currentGroups, candidateGroups):
                 currentPop = sum(group.population for group in currentGroups)
