@@ -376,7 +376,7 @@ class District(BlockBorderGraph):
                                                 fastCalculations=True):
                 candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
                                                                        useEnvelope=fastCalculations)
-                distance = currentGroupPolygon.centroid.distance(candidateGroupsPolygon)
+                distance = currentGroupPolygon.centroid.distance(candidateGroupsPolygon.centroid)
                 score = 1 / distance
 
                 return score
