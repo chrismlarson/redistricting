@@ -232,7 +232,12 @@ class District(BlockBorderGraph):
                             groupToEvaluate.clearPopulationEnergyGraph()
                             polygonSplitResultType = splitResult[0]
                             if polygonSplitResultType is not SplitType.NoSplit:
-                                seamEnergy = splitResult[3]
+                                if polygonSplitResultType is SplitType.ForceSplitAllBlocks:
+                                    # will need to remove any other seams in list if we ever take
+                                    # more than the first seam in the sorted list below
+                                    seamEnergy = groupToEvaluate.population
+                                else:
+                                    seamEnergy = splitResult[3]
                                 energyScores.append((groupToEvaluate, alignmentForEvaluation,
                                                      seamEnergy, polygonSplitResultType))
                             if pbar is not None:
