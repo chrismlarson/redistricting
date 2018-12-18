@@ -145,6 +145,7 @@ class CardinalDirection(Enum):
 class Alignment(Enum):
     northSouth = 1
     westEast = 2
+    all = 3
 
 
 def findCommonEdges(a, b):

@@ -6,7 +6,7 @@ from exportData.exportData import saveDataToFileWithDescription
 from formatData.atomicBlock import assignNeighborBlocksFromCandidateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.redistrictingGroup import validateContiguousRedistrictingGroups, RedistrictingGroup, \
-    assignNeighboringRedistrictingGroupsToRedistrictingGroups, validateRedistrictingGroups
+    assignNeighboringRedistrictingGroupsToRedistrictingGroups, validateRedistrictingGroups, SplitType
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, polygonFromMultipleGeometries, \
     intersectingGeometries, polygonFromMultiplePolygons, findContiguousGroupsOfGraphObjects, boundsIndexFromDirection
@@ -59,7 +59,6 @@ class District(BlockBorderGraph):
                       shouldRefillEachPass=False,
                       shouldDrawFillAttempts=False,
                       shouldDrawEachStep=False,
-                      splitBestCandidateGroup=False,
                       fastCalculations=True,
                       showDetailedProgress=False):
         if count is None:
@@ -96,7 +95,6 @@ class District(BlockBorderGraph):
                                                   count=count,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
-                                                  splitBestCandidateGroup=splitBestCandidateGroup,
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
                                                   fastCalculations=fastCalculations,
@@ -111,7 +109,6 @@ class District(BlockBorderGraph):
                                                   count=count,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
-                                                  splitBestCandidateGroup=splitBestCandidateGroup,
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
                                                   fastCalculations=fastCalculations,
@@ -187,10 +184,10 @@ class District(BlockBorderGraph):
                 if len(self.children) == 1:
                     # this means that the candidate couldn't fill because there a single redistricting group
                     # likely because there was a single county
-                    groupsToBreakUp = [self.children[0]]
+                    groupsToBreakUp = [(self.children[0], Alignment.all)]
                 else:
                     if breakingMethod is BreakingMethod.splitBestCandidateGroup:
-                        groupsToBreakUp = nextBestGroupForCandidateDistrictA
+                        groupsToBreakUp = [(nextBest, Alignment.all) for nextBest in nextBestGroupForCandidateDistrictA]
                     elif breakingMethod is BreakingMethod.splitGroupsOnEdge:
                         groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
                                                                                           candidateDistrictB)
@@ -201,13 +198,59 @@ class District(BlockBorderGraph):
                         else:
                             groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
                                                if groupToBreakUp not in candidateDistrictA]
+                        groupsToBreakUp = [(groupToBreakUp, Alignment.all) for groupToBreakUp in groupsToBreakUp]
                     elif breakingMethod is BreakingMethod.splitLowestEnergySeam:
-                        raise NotImplementedError('splitLowestEnergySeam not yet Implemented')
+                        groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
+                                                                                          candidateDistrictB)
+                        groupBreakUpCandidates = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
+                                                  if groupToBreakUp not in candidateDistrictA]
+
+                        seamsToEvaluate = []
+                        for groupBreakUpCandidate in groupBreakUpCandidates:
+                            westernAndEasternNeighbors = groupBreakUpCandidate.westernNeighbors + groupBreakUpCandidate.easternNeighbors
+                            if any([neighbor for neighbor in westernAndEasternNeighbors
+                                    if neighbor in candidateDistrictA]):
+                                seamsToEvaluate.append((groupBreakUpCandidate, Alignment.westEast))
+
+                            northernAndSouthernNeighbors = groupBreakUpCandidate.northernNeighbors + groupBreakUpCandidate.southernNeighbors
+                            if any([neighbor for neighbor in northernAndSouthernNeighbors
+                                    if neighbor in candidateDistrictA]):
+                                seamsToEvaluate.append((groupBreakUpCandidate, Alignment.northSouth))
+
+                        tqdm.write(
+                            '      *** Finding lowest energy seam out of {0} seams ***'.format(len(seamsToEvaluate)))
+                        if showDetailedProgress:
+                            pbar = None
+                        else:
+                            pbar = tqdm(total=len(seamsToEvaluate))
+                        energyScores = []
+                        for seamToEvaluate in seamsToEvaluate:
+                            groupToEvaluate = seamToEvaluate[0]
+                            alignmentForEvaluation = seamToEvaluate[1]
+                            groupToEvaluate.fillPopulationEnergyGraph(alignmentForEvaluation)
+                            splitResult = groupToEvaluate.getPopulationEnergyPolygonSplit(alignmentForEvaluation)
+                            groupToEvaluate.clearPopulationEnergyGraph()
+                            polygonSplitResultType = splitResult[0]
+                            if polygonSplitResultType is not SplitType.NoSplit:
+                                seamEnergy = splitResult[3]
+                                energyScores.append((groupToEvaluate, alignmentForEvaluation,
+                                                     seamEnergy, polygonSplitResultType))
+                            if pbar is not None:
+                                pbar.update(1)
+                        if pbar is not None:
+                            pbar.close()
+                        if len(energyScores) == 0:
+                            raise RuntimeError("Did not find any energy scores in this list: {0}"
+                                               .format([group.graphId for group in groupBreakUpCandidates]))
+                        energyScores.sort(key=lambda x: x[2])
+                        minimumEnergySeam = energyScores[0]
+
+                        groupsToBreakUp = [(minimumEnergySeam[0], minimumEnergySeam[1])]
                     else:
                         raise RuntimeError('{0} is not supported'.format(breakingMethod))
 
                 groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
-                                           if len(groupToBreakUp.children) > 1]
+                                           if len(groupToBreakUp[0].children) > 1]
                 if len(groupsCapableOfBreaking) == 0:
                     saveDataToFileWithDescription(data=[self, districtAStartingGroup,
                                                         candidateDistrictA, candidateDistrictB,
@@ -217,7 +260,7 @@ class District(BlockBorderGraph):
                                                   descriptionOfInfo='ErrorCase-NoGroupsCapableOfBreaking')
                     plotGraphObjectGroups([self.children, districtAStartingGroup])
                     raise RuntimeError("Groups to break up don't meet criteria. Groups: {0}".format(
-                        [groupToBreakUp.graphId for groupToBreakUp in groupsToBreakUp]
+                        [groupToBreakUp[0].graphId for groupToBreakUp in groupsToBreakUp]
                     ))
 
                 tqdm.write(
@@ -228,12 +271,15 @@ class District(BlockBorderGraph):
                     pbar = None
                 else:
                     pbar = tqdm(total=len(groupsCapableOfBreaking))
-                for groupToBreakUp in groupsCapableOfBreaking:
+                for groupToBreakUpItem in groupsCapableOfBreaking:
                     if showDetailedProgress:
-                        countForProgress = groupsCapableOfBreaking.index(groupToBreakUp) + 1
+                        countForProgress = groupsCapableOfBreaking.index(groupToBreakUpItem) + 1
                     else:
                         countForProgress = None
+                    groupToBreakUp = groupToBreakUpItem[0]
+                    alignmentForSplits = groupToBreakUpItem[1]
                     smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep,
+                                                                               alignment=alignmentForSplits,
                                                                                countForProgress=countForProgress)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)

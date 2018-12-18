@@ -63,7 +63,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             childGroups.append(RedistrictingGroup(childrenBlocks=[redistrictingGroupChild]))
         return childGroups
 
-    def getGraphSplits(self, shouldDrawGraph=False, countForProgress=None):
+    def getGraphSplits(self, alignment=Alignment.all, shouldDrawGraph=False, countForProgress=None):
         if len(self.children) == 1:
             raise RuntimeError("Can't split RedistrictingGroup with a single child. GraphId: {0}".format(self.graphId))
 
@@ -72,37 +72,46 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         else:
             tqdm.write('         *** Finding seams for graph split {0} - GraphId: {1} - Block count: {2} ***'
                        .format(countForProgress, self.graphId, len(self.children)))
-            pbar = tqdm(total=4)
+            if alignment is Alignment.all:
+                progressTotal = 4
+            else:
+                progressTotal = 2
+            pbar = tqdm(total=progressTotal)
 
-        self.fillPopulationEnergyGraph(Alignment.northSouth)
-        if pbar is not None:
-            pbar.update(1)
-        northSouthSplitResult = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
-        northSouthSplitResultType = northSouthSplitResult[0]
-        if northSouthSplitResultType is SplitType.NoSplit:
-            northSouthSplit = None
-        elif northSouthSplitResultType is SplitType.ForceSplitAllBlocks:
-            return self.createRedistrictingGroupForEachChild()
-        else:
-            northSouthSplit = northSouthSplitResult[1]
-        if pbar is not None:
-            pbar.update(1)
-        self.clearPopulationEnergyGraph()
+        northSouthSplit = None
+        westEastSplit = None
 
-        self.fillPopulationEnergyGraph(Alignment.westEast)
-        if pbar is not None:
-            pbar.update(1)
-        westEastSplitResult = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
-        westEastSplitResultType = westEastSplitResult[0]
-        if westEastSplitResultType is SplitType.NoSplit:
-            westEastSplit = None
-        elif westEastSplitResultType is SplitType.ForceSplitAllBlocks:
-            return self.createRedistrictingGroupForEachChild()
-        else:
-            westEastSplit = westEastSplitResult[1]
-        if pbar is not None:
-            pbar.update(1)
-        self.clearPopulationEnergyGraph()
+        if alignment is Alignment.all or alignment is Alignment.northSouth:
+            self.fillPopulationEnergyGraph(Alignment.northSouth)
+            if pbar is not None:
+                pbar.update(1)
+            northSouthSplitResult = self.getPopulationEnergySplit(Alignment.northSouth, shouldDrawGraph=shouldDrawGraph)
+            northSouthSplitResultType = northSouthSplitResult[0]
+            if northSouthSplitResultType is SplitType.NoSplit:
+                northSouthSplit = None
+            elif northSouthSplitResultType is SplitType.ForceSplitAllBlocks:
+                return self.createRedistrictingGroupForEachChild()
+            else:
+                northSouthSplit = northSouthSplitResult[1]
+            if pbar is not None:
+                pbar.update(1)
+            self.clearPopulationEnergyGraph()
+
+        if alignment is Alignment.all or alignment is Alignment.westEast:
+            self.fillPopulationEnergyGraph(Alignment.westEast)
+            if pbar is not None:
+                pbar.update(1)
+            westEastSplitResult = self.getPopulationEnergySplit(Alignment.westEast, shouldDrawGraph=shouldDrawGraph)
+            westEastSplitResultType = westEastSplitResult[0]
+            if westEastSplitResultType is SplitType.NoSplit:
+                westEastSplit = None
+            elif westEastSplitResultType is SplitType.ForceSplitAllBlocks:
+                return self.createRedistrictingGroupForEachChild()
+            else:
+                westEastSplit = westEastSplitResult[1]
+            if pbar is not None:
+                pbar.update(1)
+            self.clearPopulationEnergyGraph()
 
         if pbar is not None:
             pbar.close()
@@ -273,6 +282,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 return SplitType.NoSplit, None
             lowestEnergySeam = lowestEnergySeamResult[0]
             energySeamFinishingBlock = lowestEnergySeamResult[1]
+            energySeamStartingEnergy = lowestEnergySeamResult[2]
 
             seamSplitPolygon = polygonFromMultipleGeometries(geometryList=lowestEnergySeam)
             polygonWithoutSeam = self.geometry.difference(seamSplitPolygon)
@@ -348,10 +358,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 plotPolygons(polygonSplits)
 
             if seamOnEdge:
-                return SplitType.SplitIncludedInSeam, polygonSplits, None
+                return SplitType.SplitIncludedInSeam, polygonSplits, None, energySeamStartingEnergy
             else:
                 seamSplitPolygon = polygonFromMultiplePolygons(polygonList=[seamSplitPolygon] + leftOverPolygons)
-                return SplitType.NormalSplit, polygonSplits, seamSplitPolygon
+                return SplitType.NormalSplit, polygonSplits, seamSplitPolygon, energySeamStartingEnergy
 
     def getLowestPopulationEnergySeam(self, alignment, shouldDrawGraph=False, finishingBlocksToAvoid=None):
         if alignment is Alignment.northSouth:
@@ -372,6 +382,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             return None
 
         startingBlock = min(startingCandidates, key=lambda block: block.populationEnergy)
+        startingBlockEnergy = startingBlock.populationEnergy
         blockToActOn = startingBlock
 
         lowestPopulationEnergySeam = [blockToActOn]
@@ -448,7 +459,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 finishingBlock = blockToActOn
 
             count += 1
-        return lowestPopulationEnergySeam, finishingBlock
+        return lowestPopulationEnergySeam, finishingBlock, startingBlockEnergy
 
     def validateBlockNeighbors(self):
         contiguousRegions = findContiguousGroupsOfGraphObjects(self.children)

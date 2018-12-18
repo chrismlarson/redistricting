@@ -14,17 +14,15 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                           descriptionToWorkWith))
 
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
-# simplifiedState = initialDistrict.geometry.simplify(tolerance=0.05)
 
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           populationDeviation=1,
-                                          weightingMethod=WeightingMethod.cardinalDistance,
-                                          breakingMethod=BreakingMethod.splitGroupsOnEdge,
-                                          splitBestCandidateGroup=False,
+                                          weightingMethod=WeightingMethod.polsbyPopper,
+                                          breakingMethod=BreakingMethod.splitLowestEnergySeam,
                                           shouldMergeIntoFormerRedistrictingGroups=True,
                                           shouldDrawEachStep=False,
                                           shouldRefillEachPass=False,
-                                          fastCalculations=False,
+                                          fastCalculations=True,
                                           showDetailedProgress=False)
 saveDataToFileWithDescription(data=districts,
                               censusYear=censusYear,
