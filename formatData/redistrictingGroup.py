@@ -377,8 +377,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             finishCandidates = [candidate for candidate in finishCandidates if candidate not in finishingBlocksToAvoid]
 
         if len(startingCandidates) == 0 or len(finishCandidates) == 0:
-            tqdm.write("      *** Couldn't find a split for {0} - {1} total blocks ***".format(self.graphId,
-                                                                                               len(self.children)))
+            tqdm.write("      *** Couldn't find a split for {0} - {1} total blocks - {2} population***".format(
+                self.graphId, len(self.children), self.population))
             return None
 
         startingBlock = min(startingCandidates, key=lambda block: block.populationEnergy)

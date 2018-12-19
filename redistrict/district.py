@@ -205,6 +205,10 @@ class District(BlockBorderGraph):
                         groupBreakUpCandidates = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
                                                   if groupToBreakUp not in candidateDistrictA]
 
+                        groupBreakUpCandidates = [groupBreakUpCandidate
+                                                  for groupBreakUpCandidate in groupBreakUpCandidates
+                                                  if len(groupBreakUpCandidate.children) > 1]
+
                         seamsToEvaluate = []
                         for groupBreakUpCandidate in groupBreakUpCandidates:
                             westernAndEasternNeighbors = groupBreakUpCandidate.westernNeighbors + groupBreakUpCandidate.easternNeighbors
@@ -236,6 +240,7 @@ class District(BlockBorderGraph):
                                     # will need to remove any other seams in list if we ever take
                                     # more than the first seam in the sorted list below
                                     seamEnergy = groupToEvaluate.population
+                                    alignmentForEvaluation = Alignment.all
                                 else:
                                     seamEnergy = splitResult[3]
                                 energyScores.append((groupToEvaluate, alignmentForEvaluation,
@@ -249,8 +254,10 @@ class District(BlockBorderGraph):
                                                .format([group.graphId for group in groupBreakUpCandidates]))
                         energyScores.sort(key=lambda x: x[2])
                         minimumEnergySeam = energyScores[0]
+                        groupToBreakUp = minimumEnergySeam[0]
+                        groupToBreakUpSeamAlignment = minimumEnergySeam[1]
 
-                        groupsToBreakUp = [(minimumEnergySeam[0], minimumEnergySeam[1])]
+                        groupsToBreakUp = [(groupToBreakUp, groupToBreakUpSeamAlignment)]
                     else:
                         raise RuntimeError('{0} is not supported'.format(breakingMethod))
 
