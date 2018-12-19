@@ -283,6 +283,11 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                     # if we can't find a split but there are 10 or fewer blocks, we can split it up completely
                     tqdm.write("      *** Couldn't find a split for {0}. Candidate for Force Splitting. {1} blocks. {2} total pop.".format(
                         self.graphId, len(self.children), self.population))
+                    saveDataToFileWithDescription(data=self,
+                                                  censusYear='',
+                                                  stateName='',
+                                                  descriptionOfInfo='WarningCase-ForceSplittingWithOver10Children-{0}'
+                                                  .format(id(self)))
                 return SplitType.ForceSplitAllBlocks, None
             lowestEnergySeam = lowestEnergySeamResult[0]
             energySeamFinishingBlock = lowestEnergySeamResult[1]
