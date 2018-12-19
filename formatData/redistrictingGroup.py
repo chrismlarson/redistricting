@@ -279,7 +279,11 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             lowestEnergySeamResult = self.getLowestPopulationEnergySeam(alignment=alignment,
                                                                         finishingBlocksToAvoid=finishingBlocksToAvoid)
             if lowestEnergySeamResult is None:
-                return SplitType.NoSplit, None
+                if len(self.children) >= 10:
+                    # if we can't find a split but there are 10 or fewer blocks, we can split it up completely
+                    tqdm.write("      *** Couldn't find a split for {0}. Candidate for Force Splitting. {1} blocks. {2} total pop.".format(
+                        self.graphId, len(self.children), self.population))
+                return SplitType.ForceSplitAllBlocks, None
             lowestEnergySeam = lowestEnergySeamResult[0]
             energySeamFinishingBlock = lowestEnergySeamResult[1]
             energySeamStartingEnergy = lowestEnergySeamResult[2]
@@ -377,8 +381,6 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             finishCandidates = [candidate for candidate in finishCandidates if candidate not in finishingBlocksToAvoid]
 
         if len(startingCandidates) == 0 or len(finishCandidates) == 0:
-            tqdm.write("      *** Couldn't find a split for {0} - {1} total blocks - {2} population***".format(
-                self.graphId, len(self.children), self.population))
             return None
 
         startingBlock = min(startingCandidates, key=lambda block: block.populationEnergy)
