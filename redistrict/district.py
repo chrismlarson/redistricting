@@ -320,10 +320,16 @@ class District(BlockBorderGraph):
                 tqdm.write('      *** Updating District Candidate Data ***')
                 self.children = updatedChildren
 
-            saveDataToFileWithDescription(data=(self, candidateDistrictA, ratio),
-                                          censusYear='',
-                                          stateName='',
-                                          descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
+            shouldSaveThisPass = True
+            if breakingMethod is BreakingMethod.splitLowestEnergySeam:
+                if count % 10 != 0:
+                    shouldSaveThisPass = False
+            
+            if shouldSaveThisPass:
+                saveDataToFileWithDescription(data=(self, candidateDistrictA, ratio),
+                                              censusYear='',
+                                              stateName='',
+                                              descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
             count += 1
 
         if shouldMergeIntoFormerRedistrictingGroups:
