@@ -235,7 +235,35 @@ class District(BlockBorderGraph):
                             splitResult = groupToEvaluate.getPopulationEnergyPolygonSplit(alignmentForEvaluation)
                             groupToEvaluate.clearPopulationEnergyGraph()
                             polygonSplitResultType = splitResult[0]
-                            if polygonSplitResultType is not SplitType.NoSplit:
+
+                            if polygonSplitResultType is SplitType.NoSplit:
+                                # if we can't split in this direction, we need to check the other direction
+                                # and if that direction can't be split, we'll call for a force split
+                                if alignmentForEvaluation is Alignment.northSouth:
+                                    oppositeAlignment = Alignment.westEast
+                                else:
+                                    oppositeAlignment = Alignment.northSouth
+
+                                groupToEvaluate.fillPopulationEnergyGraph(oppositeAlignment)
+                                oppositeSplitResult = groupToEvaluate.getPopulationEnergyPolygonSplit(oppositeAlignment)
+                                groupToEvaluate.clearPopulationEnergyGraph()
+                                oppositePolygonSplitResultType = oppositeSplitResult[0]
+                                if oppositePolygonSplitResultType is SplitType.NoSplit:
+                                    seamEnergy = groupToEvaluate.population
+                                    alignmentForEvaluation = Alignment.all
+                                    energyScores.append((groupToEvaluate, alignmentForEvaluation,
+                                                         seamEnergy, polygonSplitResultType))
+                                    
+                                    if len(groupToEvaluate.children) >= 10:
+                                        tqdm.write(
+                                            "      *** Warning: Couldn't find a split for {0}. Candidate for Force Splitting. {1} blocks. {2} total pop.".format(
+                                                groupToEvaluate.graphId, len(groupToEvaluate.children), groupToEvaluate.population))
+                                        saveDataToFileWithDescription(data=groupToEvaluate,
+                                                                      censusYear='',
+                                                                      stateName='',
+                                                                      descriptionOfInfo='WarningCase-ForceSplittingWithOver10Children-{0}'
+                                                                      .format(id(groupToEvaluate)))
+                            else:
                                 if polygonSplitResultType is SplitType.ForceSplitAllBlocks:
                                     # will need to remove any other seams in list if we ever take
                                     # more than the first seam in the sorted list below
