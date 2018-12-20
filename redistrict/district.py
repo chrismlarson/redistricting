@@ -228,6 +228,7 @@ class District(BlockBorderGraph):
                         else:
                             pbar = tqdm(total=len(seamsToEvaluate))
                         energyScores = []
+                        backupEnergyScores = []
                         for seamToEvaluate in seamsToEvaluate:
                             groupToEvaluate = seamToEvaluate[0]
                             alignmentForEvaluation = seamToEvaluate[1]
@@ -263,6 +264,10 @@ class District(BlockBorderGraph):
                                                                       stateName='',
                                                                       descriptionOfInfo='WarningCase-ForceSplittingWithOver10Children-{0}'
                                                                       .format(id(groupToEvaluate)))
+                                else:
+                                    seamEnergy = oppositeSplitResult[3]
+                                    backupEnergyScores.append((groupToEvaluate, oppositeAlignment,
+                                                               seamEnergy, oppositePolygonSplitResultType))
                             else:
                                 if polygonSplitResultType is SplitType.ForceSplitAllBlocks:
                                     # will need to remove any other seams in list if we ever take
@@ -278,8 +283,10 @@ class District(BlockBorderGraph):
                         if pbar is not None:
                             pbar.close()
                         if len(energyScores) == 0:
-                            raise RuntimeError("Did not find any energy scores in this list: {0}"
-                                               .format([group.graphId for group in groupBreakUpCandidates]))
+                            tqdm.write("      *** Warning: Did not find any energy scores in this list: {0}".format(
+                                [group.graphId for group in groupBreakUpCandidates]))
+                            tqdm.write("          Switching to backup scores: {0} ***".format(backupEnergyScores))
+                            energyScores = backupEnergyScores
                         energyScores.sort(key=lambda x: x[2])
                         minimumEnergySeam = energyScores[0]
                         groupToBreakUp = minimumEnergySeam[0]
