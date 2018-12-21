@@ -265,8 +265,15 @@ class District(BlockBorderGraph):
                                                                       descriptionOfInfo='WarningCase-ForceSplittingWithOver10Children-{0}'
                                                                       .format(id(groupToEvaluate)))
                                 else:
-                                    seamEnergy = oppositeSplitResult[3]
-                                    backupEnergyScores.append((groupToEvaluate, oppositeAlignment,
+                                    if polygonSplitResultType is SplitType.ForceSplitAllBlocks:
+                                        # will need to remove any other seams in list if we ever take
+                                        # more than the first seam in the sorted list below
+                                        seamEnergy = groupToEvaluate.population
+                                        alignmentForEvaluation = Alignment.all
+                                    else:
+                                        seamEnergy = oppositeSplitResult[3]
+                                        alignmentForEvaluation = oppositeAlignment
+                                    backupEnergyScores.append((groupToEvaluate, alignmentForEvaluation,
                                                                seamEnergy, oppositePolygonSplitResultType))
                             else:
                                 if polygonSplitResultType is SplitType.ForceSplitAllBlocks:
