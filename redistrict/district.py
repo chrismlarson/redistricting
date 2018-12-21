@@ -265,7 +265,7 @@ class District(BlockBorderGraph):
                                                                       descriptionOfInfo='WarningCase-ForceSplittingWithOver10Children-{0}'
                                                                       .format(id(groupToEvaluate)))
                                 else:
-                                    if polygonSplitResultType is SplitType.ForceSplitAllBlocks:
+                                    if oppositePolygonSplitResultType is SplitType.ForceSplitAllBlocks:
                                         # will need to remove any other seams in list if we ever take
                                         # more than the first seam in the sorted list below
                                         seamEnergy = groupToEvaluate.population
@@ -368,7 +368,7 @@ class District(BlockBorderGraph):
                     shouldSaveThisPass = False
             
             if shouldSaveThisPass:
-                saveDataToFileWithDescription(data=(self, candidateDistrictA, ratio),
+                saveDataToFileWithDescription(data=(self, candidateDistrictA, ratio, fillOriginDirection),
                                               censusYear='',
                                               stateName='',
                                               descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
