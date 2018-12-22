@@ -1,6 +1,7 @@
 from shapely.geometry import shape, mapping, Point, Polygon, MultiPolygon, LineString, MultiLineString
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import shared_paths, nearest_points, cascaded_union
+from geopy.distance import distance as distanceOnEarth
 from enum import Enum
 from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
 from json import dumps
@@ -546,29 +547,18 @@ def dimensionsOfPolygon(polygon):
 
 
 def getWidthAndHeightOfBoxOnEarth(minLat, minLon, maxLat, maxLon):
-    aWidth = getDistanceBetweenLatLong(lat1=minLon, lon1=maxLat, lat2=maxLon, lon2=maxLat)
-    bWidth = getDistanceBetweenLatLong(lat1=minLon, lon1=minLat, lat2=maxLon, lon2=minLat)
+    aWidth = getDistanceBetweenLatLong(lat1=minLat, lon1=minLon, lat2=minLat, lon2=maxLon)
+    bWidth = getDistanceBetweenLatLong(lat1=maxLat, lon1=minLon, lat2=maxLat, lon2=maxLon)
     maxWidth = max(aWidth, bWidth)
     aHeight = getDistanceBetweenLatLong(lat1=minLat, lon1=maxLon, lat2=maxLat, lon2=maxLon)
     bHeight = getDistanceBetweenLatLong(lat1=minLat, lon1=minLon, lat2=maxLat, lon2=minLon)
     maxHeight = max(aHeight, bHeight)
-    return (maxWidth, maxHeight)
+    return maxWidth, maxHeight
 
 
 def getDistanceBetweenLatLong(lat1, lon1, lat2, lon2):
-    """
-    Calculate the great circle distance between two points
-    on the earth (specified in decimal degrees)
-    """
-    # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-    # haversine formula
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    c = 2 * asin(sqrt(a))
-    km = 6371 * c
-    return km
+    distance = distanceOnEarth((lat1, lon1), (lat2, lon2))
+    return distance.km
 
 
 def polsbyPopperScoreOfPolygon(polygon):
