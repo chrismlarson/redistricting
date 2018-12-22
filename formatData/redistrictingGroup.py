@@ -162,7 +162,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         for splitGroup in splitGroups:
             if shouldDrawGraph:
                 plotBlocksForRedistrictingGroup(splitGroup)
-            splitGroup.removeOutdatedNeighborConnections(borderBlocksOnly=True)
+            splitGroup.removeOutdatedNeighborConnections()
             splitGroup.validateBlockNeighbors()
 
         if shouldDrawGraph:
