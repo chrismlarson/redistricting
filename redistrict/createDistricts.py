@@ -17,11 +17,11 @@ initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redi
 
 districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           populationDeviation=1,
-                                          weightingMethod=WeightingMethod.distance,
-                                          breakingMethod=BreakingMethod.splitLowestEnergySeam,
+                                          weightingMethod=WeightingMethod.cardinalDistance,
+                                          breakingMethod=BreakingMethod.splitGroupsOnEdge,
                                           shouldMergeIntoFormerRedistrictingGroups=True,
                                           shouldDrawEachStep=False,
-                                          shouldRefillEachPass=False,
+                                          shouldRefillEachPass=True,
                                           fastCalculations=True,
                                           showDetailedProgress=False)
 saveDataToFileWithDescription(data=districts,
