@@ -60,7 +60,8 @@ class District(BlockBorderGraph):
                       shouldDrawFillAttempts=False,
                       shouldDrawEachStep=False,
                       fastCalculations=True,
-                      showDetailedProgress=False):
+                      showDetailedProgress=False,
+                      shouldSaveProgress=True):
         if count is None:
             tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
             count = 0
@@ -83,7 +84,8 @@ class District(BlockBorderGraph):
                                                      shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                      shouldRefillEachPass=shouldRefillEachPass,
                                                      fastCalculations=fastCalculations,
-                                                     showDetailedProgress=showDetailedProgress)
+                                                     showDetailedProgress=showDetailedProgress,
+                                                     shouldSaveProgress=shouldSaveProgress)
         count += 1
         tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
 
@@ -98,7 +100,8 @@ class District(BlockBorderGraph):
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
                                                   fastCalculations=fastCalculations,
-                                                  showDetailedProgress=showDetailedProgress)
+                                                  showDetailedProgress=showDetailedProgress,
+                                                  shouldSaveProgress=shouldSaveProgress)
         districts.extend(aDistrictSplits)
 
         bDistrict = District(childrenGroups=cutDistrict[1])
@@ -112,7 +115,8 @@ class District(BlockBorderGraph):
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
                                                   shouldDrawEachStep=shouldDrawEachStep,
                                                   fastCalculations=fastCalculations,
-                                                  showDetailedProgress=showDetailedProgress)
+                                                  showDetailedProgress=showDetailedProgress,
+                                                  shouldSaveProgress=shouldSaveProgress)
         districts.extend(bDistrictSplits)
 
         return districts
@@ -120,7 +124,7 @@ class District(BlockBorderGraph):
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, weightingMethod, breakingMethod,
                                   shouldDrawFillAttempts=False, shouldDrawEachStep=False,
                                   shouldMergeIntoFormerRedistrictingGroups=False, shouldRefillEachPass=False,
-                                  fastCalculations=True, showDetailedProgress=False):
+                                  fastCalculations=True, showDetailedProgress=False, shouldSaveProgress=True):
 
         ratioTotal = ratio[0] + ratio[1]
         idealDistrictASize = int(self.population / (ratioTotal / ratio[0]))
@@ -254,11 +258,12 @@ class District(BlockBorderGraph):
                                     alignmentForEvaluation = Alignment.all
                                     energyScores.append((groupToEvaluate, alignmentForEvaluation,
                                                          seamEnergy, polygonSplitResultType))
-                                    
+
                                     if len(groupToEvaluate.children) >= 10:
                                         tqdm.write(
                                             "      *** Warning: Couldn't find a split for {0}. Candidate for Force Splitting. {1} blocks. {2} total pop.".format(
-                                                groupToEvaluate.graphId, len(groupToEvaluate.children), groupToEvaluate.population))
+                                                groupToEvaluate.graphId, len(groupToEvaluate.children),
+                                                groupToEvaluate.population))
                                         saveDataToFileWithDescription(data=groupToEvaluate,
                                                                       censusYear='',
                                                                       stateName='',
@@ -366,12 +371,13 @@ class District(BlockBorderGraph):
             if breakingMethod is BreakingMethod.splitLowestEnergySeam:
                 if count % 10 != 0:
                     shouldSaveThisPass = False
-            
-            if shouldSaveThisPass:
-                saveDataToFileWithDescription(data=(self, candidateDistrictA, ratio, fillOriginDirection),
-                                              censusYear='',
-                                              stateName='',
-                                              descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
+
+            if shouldSaveProgress:
+                if shouldSaveThisPass:
+                    saveDataToFileWithDescription(data=(self, candidateDistrictA, ratio, fillOriginDirection),
+                                                  censusYear='',
+                                                  stateName='',
+                                                  descriptionOfInfo='DistrictSplitLastIteration-{0}'.format(id(self)))
             count += 1
 
         if shouldMergeIntoFormerRedistrictingGroups:
