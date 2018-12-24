@@ -27,7 +27,7 @@ districts = initialDistrict.splitDistrict(numberOfDistricts=14,
 saveDataToFileWithDescription(data=districts,
                               censusYear=censusYear,
                               stateName=stateInfo,
-                              descriptionOfInfo='{0}-InitialDistrictSplitExactly'.format(descriptionToWorkWith))
+                              descriptionOfInfo='{0}-FederalDistricts'.format(descriptionToWorkWith))
 plotDistricts(districts=districts,
               showPopulationCounts=False,
               showDistrictNeighborConnections=False)
