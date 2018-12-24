@@ -3,8 +3,8 @@ from censusData.censusGeography import CensusGeography
 
 
 class CensusBlock(CensusGeography):
-    def __init__(self, countyFIPS, tractFIPS, blockFIPS, population, isWater, geoJSONGeometry):
-        CensusGeography.__init__(self, FIPS=blockFIPS, geoJSONGeometry=geoJSONGeometry)
+    def __init__(self, countyFIPS, tractFIPS, blockFIPS, population, isWater, geoJSONGeometry=None, geometry=None):
+        CensusGeography.__init__(self, FIPS=blockFIPS, geoJSONGeometry=geoJSONGeometry, geometry=geometry)
         self.id = uniqueBlockIdentifierFromFIPS(countyFIPS, tractFIPS, self.FIPS)
         self.countyFIPS = countyFIPS
         self.tractFIPS = tractFIPS
