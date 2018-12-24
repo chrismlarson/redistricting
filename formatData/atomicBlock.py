@@ -1,7 +1,10 @@
+from shapely.geometry import MultiPolygon
+from censusData.censusBlock import CensusBlock
+from exportData.displayShapes import plotPolygons
+from exportData.exportData import saveDataToFileWithDescription
 from formatData.graphObject import GraphObject
 from formatData.censusContainer import CensusContainer
-from geographyHelper import doesGeographyContainTheOther, intersectingGeometries, distanceBetweenGeometries, \
-    findContiguousGroupsOfGraphObjects, polygonFromMultipleGeometries, intersectingPolygons
+from geographyHelper import doesGeographyContainTheOther, intersectingGeometries
 from tqdm import tqdm
 
 
@@ -55,18 +58,48 @@ def atomicBlockWithBlock(block, atomicBlockList):
 
 
 def createAtomicBlocksFromBlockList(blockList):
-    atomicBlockList = []
+    # some blocks aren't contiguous (typically uninhabited islands), so we break them up into separate blocks
+    tqdm.write('       *** Separating Blocks if necessary ***')
+    updatedBlocks = []
     with tqdm(total=len(blockList)) as pbar:
-        for i in reversed(range(len(blockList))):
-            block = blockList[i]
+        for block in blockList:
+            if type(block.geometry) is MultiPolygon:
+                if block.population > 0:
+                    saveDataToFileWithDescription(data=[block],
+                                                  censusYear='',
+                                                  stateName='',
+                                                  descriptionOfInfo='ErrorCase-BlockSplitWithPopulationGreaterThanZero')
+                    raise RuntimeError("Can't split a block with a population greater than 0. population: {0}"
+                                       .format(block.population))
+                blockPolygons = list(block.geometry)
+                i = 1
+                for blockPolygon in blockPolygons:
+                    newFIPS = block.FIPS + str(i)
+                    splitBlock = CensusBlock(countyFIPS=block.countyFIPS,
+                                             tractFIPS=block.tractFIPS,
+                                             blockFIPS=newFIPS,
+                                             population=int(0),
+                                             isWater=block.isWater,
+                                             geometry=blockPolygon)
+                    updatedBlocks.append(splitBlock)
+                    i += 1
+            else:
+                updatedBlocks.append(block)
+            pbar.update(1)
+
+    tqdm.write('       *** Creating Atomic Blocks ***')
+    atomicBlockList = []
+    with tqdm(total=len(updatedBlocks)) as pbar:
+        for i in reversed(range(len(updatedBlocks))):
+            block = updatedBlocks[i]
             convertedAtomicBlock = createAtomicBlockFromCensusBlock(block)
             atomicBlockList.append(convertedAtomicBlock)
-            for j in reversed(range(len(blockList))):
-                otherBlock = blockList[j]
+            for j in reversed(range(len(updatedBlocks))):
+                otherBlock = updatedBlocks[j]
                 if block != otherBlock:
                     if doesGeographyContainTheOther(container=block, target=otherBlock):
                         convertedAtomicBlock.importCensusBlock(otherBlock)
-                        del blockList[blockList.index(otherBlock)]
+                        del updatedBlocks[updatedBlocks.index(otherBlock)]
 
                         atomicBlockThatAlreadyExists = atomicBlockWithBlock(block=otherBlock,
                                                                             atomicBlockList=atomicBlockList)
