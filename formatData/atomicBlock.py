@@ -6,6 +6,7 @@ from formatData.graphObject import GraphObject
 from formatData.censusContainer import CensusContainer
 from geographyHelper import doesGeographyContainTheOther, intersectingGeometries
 from tqdm import tqdm
+import math
 
 
 class AtomicBlock(CensusContainer, GraphObject):
@@ -64,21 +65,21 @@ def createAtomicBlocksFromBlockList(blockList):
     with tqdm(total=len(blockList)) as pbar:
         for block in blockList:
             if type(block.geometry) is MultiPolygon:
-                if block.population > 0:
-                    saveDataToFileWithDescription(data=[block],
-                                                  censusYear='',
-                                                  stateName='',
-                                                  descriptionOfInfo='ErrorCase-BlockSplitWithPopulationGreaterThanZero')
-                    raise RuntimeError("Can't split a block with a population greater than 0. population: {0}"
-                                       .format(block.population))
                 blockPolygons = list(block.geometry)
+                popSplit = math.floor(block.population / len(blockPolygons))
+
+                popTotalSoFar = 0
                 i = 1
                 for blockPolygon in blockPolygons:
+                    popTotalSoFar += popSplit
+                    if blockPolygons.index(blockPolygon) == len(blockPolygons) - 1:
+                        diffInPop = block.population - popTotalSoFar
+                        popSplit += diffInPop
                     newFIPS = block.FIPS + str(i)
                     splitBlock = CensusBlock(countyFIPS=block.countyFIPS,
                                              tractFIPS=block.tractFIPS,
                                              blockFIPS=newFIPS,
-                                             population=int(0),
+                                             population=int(popSplit),
                                              isWater=block.isWater,
                                              geometry=blockPolygon)
                     updatedBlocks.append(splitBlock)
