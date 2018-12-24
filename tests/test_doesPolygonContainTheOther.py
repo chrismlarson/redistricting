@@ -1,7 +1,5 @@
 from unittest import TestCase
 import shapely.wkt
-
-from exportData.displayShapes import plotPolygons
 from geographyHelper import shapelyGeometryToGeoJSON, doesPolygonContainTheOther
 
 
@@ -17,5 +15,4 @@ class TestDoesPolygonContainTheOther(TestCase):
         b = shapelyGeometryToGeoJSON(bShape)
 
         result = doesPolygonContainTheOther(aShape, bShape)
-        plotPolygons([aShape, bShape])
         self.assertFalse(result)

@@ -30,5 +30,6 @@ class TestDistrict(TestCase):
                                                      breakingMethod=BreakingMethod.splitGroupsOnEdge,
                                                      shouldMergeIntoFormerRedistrictingGroups=True,
                                                      fastCalculations=False,
-                                                     showDetailedProgress=False)
+                                                     showDetailedProgress=False,
+                                                     shouldSaveProgress=False)
         self.assertEqual(len(splits), 2)

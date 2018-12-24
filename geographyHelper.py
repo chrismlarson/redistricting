@@ -3,7 +3,7 @@ from shapely.geometry.base import BaseGeometry
 from shapely.ops import shared_paths, nearest_points, cascaded_union
 from geopy.distance import distance as distanceOnEarth
 from enum import Enum
-from math import atan2, degrees, pi, cos, sin, asin, sqrt, radians, pow
+from math import atan2, degrees, pi, pow
 from json import dumps
 from itertools import groupby
 from tqdm import tqdm
@@ -84,26 +84,26 @@ def doesPolygonContainTheOther(container, target, ignoreInteriors=True, useTarge
         containerPolygons = list(container)
     else:
         containerPolygons = [container]
+    if type(target) is MultiPolygon:
+        targetPolygons = list(target)
+    else:
+        targetPolygons = [target]
     containsTarget = False
     for containerPolygon in containerPolygons:
-        if containerPolygon.interiors and ignoreInteriors:
-            # MultiLineStrings don't work well with the "contains" method
-            containerPolygonBoundary = containerPolygon.boundary
-            if type(containerPolygonBoundary) is MultiLineString:
-                containerPolygonBoundary = containerPolygonBoundary.convex_hull
-            targetBoundary = target.boundary
-            if type(targetBoundary) is MultiLineString:
-                targetBoundary = targetBoundary.convex_hull
+        for targetPolygon in targetPolygons:
+            if containerPolygon.interiors and ignoreInteriors:
+                containerPolygonExterior = Polygon(containerPolygon.exterior)
+                targetPolygonExterior = Polygon(targetPolygon.exterior)
 
-            if useTargetRepresentativePoint:
-                containsTarget = containsTarget or containerPolygonBoundary.contains(target.representative_point())
+                if useTargetRepresentativePoint:
+                    containsTarget = containsTarget or containerPolygonExterior.contains(targetPolygon.representative_point())
+                else:
+                    containsTarget = containsTarget or containerPolygonExterior.contains(targetPolygonExterior)
             else:
-                containsTarget = containsTarget or containerPolygonBoundary.contains(targetBoundary)
-        else:
-            if useTargetRepresentativePoint:
-                containsTarget = containsTarget or containerPolygon.contains(target.representative_point())
-            else:
-                containsTarget = containsTarget or containerPolygon.contains(target)
+                if useTargetRepresentativePoint:
+                    containsTarget = containsTarget or containerPolygon.contains(targetPolygon.representative_point())
+                else:
+                    containsTarget = containsTarget or containerPolygon.contains(targetPolygon)
     return containsTarget
 
 
