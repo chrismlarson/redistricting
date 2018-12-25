@@ -499,7 +499,7 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
                 neighborCombinations = combinationsFromGroup(
                     candidateGroups=[candidateGroup for candidateGroup in candidateGroups if
                                      candidateGroup not in startingGroup and candidateGroup is not neighbor],
-                    mustTouchGroup=mustTouchGroup,
+                    mustTouchGroup=mustTouchGroup + startingGroup,
                     startingGroup=[neighbor])
                 for neighborCombination in neighborCombinations:
                     # add the combination with the group and without
