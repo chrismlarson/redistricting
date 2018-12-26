@@ -189,6 +189,23 @@ class District(BlockBorderGraph):
                     # this means that the candidate couldn't fill because there a single redistricting group
                     # likely because there was a single county
                     groupsToBreakUp = [(self.children[0], Alignment.all)]
+                elif len(candidateDistrictA) == 0:
+                    # we didn't get anything in candidateA, which means none of the children met the conditions
+                    # so, we won't get anything to break up, let's break the first starting candidate with instead
+                    breakupCandidates = [startingCandidateTuple[0]
+                                         for startingCandidateTuple in self.getCutStartingCandidates()]
+                    breakupCandidates = [breakupCandidate for breakupCandidate in breakupCandidates
+                                         if len(breakupCandidate.children) > 1]
+                    if len(breakupCandidates) == 0:
+                        saveDataToFileWithDescription(data=[self, districtAStartingGroup, ratio,
+                                                            candidateDistrictA, candidateDistrictB,
+                                                            nextBestGroupForCandidateDistrictA, breakupCandidates],
+                                                      censusYear='',
+                                                      stateName='',
+                                                      descriptionOfInfo='ErrorCase-NoGroupsCandidatesCapableOfBreaking')
+                        plotGraphObjectGroups([self.children, districtAStartingGroup])
+                        raise RuntimeError("Couldn't fill and all breakup candidates have too few children")
+                    groupsToBreakUp = [(breakupCandidates[0], Alignment.all)]
                 else:
                     if breakingMethod is BreakingMethod.splitBestCandidateGroup:
                         groupsToBreakUp = [(nextBest, Alignment.all) for nextBest in nextBestGroupForCandidateDistrictA]
@@ -308,10 +325,12 @@ class District(BlockBorderGraph):
                     else:
                         raise RuntimeError('{0} is not supported'.format(breakingMethod))
 
+
+
                 groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
                                            if len(groupToBreakUp[0].children) > 1]
                 if len(groupsCapableOfBreaking) == 0:
-                    saveDataToFileWithDescription(data=[self, districtAStartingGroup,
+                    saveDataToFileWithDescription(data=[self, districtAStartingGroup, ratio,
                                                         candidateDistrictA, candidateDistrictB,
                                                         nextBestGroupForCandidateDistrictA],
                                                   censusYear='',
