@@ -669,6 +669,7 @@ def validateRedistrictingGroups(groupList):
 
     for redistrictingGroup in groupList:
         redistrictingGroup.validateNeighborLists()
+        redistrictingGroup.validateBlockNeighbors()
 
 
 def validateContiguousRedistrictingGroups(groupList):
@@ -712,13 +713,17 @@ def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
     return RedistrictingGroup.redistrictingGroupList
 
 
-def prepareGraphsForAllRedistrictingGroups():
+def prepareBlockGraphsForAllRedistrictingGroups():
     # remove water blocks
     removeWaterBlocksFromAllRedistrictingGroups()
 
     # assign neighboring blocks to atomic blocks
     assignNeighboringBlocksToBlocksForAllRedistrictingGroups()
 
+    return RedistrictingGroup.redistrictingGroupList
+
+
+def prepareGraphsForAllRedistrictingGroups():
     # split non-contiguous redistricting groups
     splitNonContiguousRedistrictingGroups()
 
