@@ -413,7 +413,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                                 for graphObjectCandidate in graphObjectCandidateGroup]):
                             bestGraphObjectCandidateGroupThisPass = graphObjectCandidateGroup
 
-                    remainingObjects.extend(graphObjectCandidateGroup)
+                    remainingObjects.extend(graphObjectCandidateGroup)  # add candidate back to the queue
                     candidateGroupsThatDidNotMeetConditionThisPass.append(graphObjectCandidateGroup)
             else:
                 # find the contiguous group with largest population and remove.
@@ -434,25 +434,10 @@ def weightedForestFireFillGraphObject(candidateObjects,
                                                                                                count))
                         count += 1
 
-                    # add the potentially isolated groups and the candidate group back to the queue
-                    combinationsOfPotentiallyIsolatedObjects = combinationsFromGroup(
-                        candidateGroups=potentiallyIsolatedObjects,
-                        mustTouchGroup=fireFilledObjects,
-                        startingGroup=graphObjectCandidateGroup)
+                    groupAndIsolatedObjects = potentiallyIsolatedObjects + graphObjectCandidateGroup
 
-                    # make sure the combinations have at least one neighbor to the current fireFilledObjects
-                    verifiedCombinations = []
-                    for combinationOfPotentiallyIsolatedObjects in combinationsOfPotentiallyIsolatedObjects:
-                        if any(comboGroupNeighbor in fireFilledObjects
-                               for comboGroup in combinationOfPotentiallyIsolatedObjects
-                               for comboGroupNeighbor in comboGroup.allNeighbors):
-                            verifiedCombinations.append(combinationOfPotentiallyIsolatedObjects)
-
-                    # make sure we don't add anything to the queue that's already been ruled out this pass
-                    verifiedCombinations = [combination for combination in verifiedCombinations
-                                            if combination not in candidateGroupsThatDidNotMeetConditionThisPass]
-
-                    fireQueue.extend(verifiedCombinations)
+                    if groupAndIsolatedObjects not in candidateGroupsThatDidNotMeetConditionThisPass:
+                        fireQueue.append(groupAndIsolatedObjects)
                 else:
                     candidateGroupsThatDidNotMeetConditionThisPass.append(graphObjectCandidateGroup)
 
