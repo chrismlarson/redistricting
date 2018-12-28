@@ -136,6 +136,7 @@ def plotBlocksWithEdgesRedistrictingGroups(redistrictingGroup, edges):
 
 def plotRedistrictingGroups(redistrictingGroups,
                             showPopulationCounts=False,
+                            showGraphIds=False,
                             showDistrictNeighborConnections=False):
     fig = pyplot.figure()
     ax = fig.gca()
@@ -156,6 +157,10 @@ def plotRedistrictingGroups(redistrictingGroups,
         if showPopulationCounts:
             centerOfGroup = redistrictingGroup.geometry.centroid
             ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=redistrictingGroup.population, fontdict=font)
+
+        if showGraphIds:
+            centerOfGroup = redistrictingGroup.geometry.centroid
+            ax.text(x=centerOfGroup.x, y=centerOfGroup.y, s=redistrictingGroup.graphId, fontdict=font)
         colorIndex += 1
 
     ax.axis('scaled')
