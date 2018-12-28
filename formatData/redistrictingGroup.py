@@ -569,13 +569,21 @@ def removeWaterBlocksFromAllRedistrictingGroups():
 
 
 def splitNonContiguousRedistrictingGroups():
-    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
-        contiguousGroups = findContiguousGroupsOfGraphObjects(redistrictingGroup.children)
+    tqdm.write('\n')
+    tqdm.write('*** Splitting Non-contiguous Redistricting Groups ***')
+    groupsToRemove = []
+    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
+        for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+            contiguousGroups = findContiguousGroupsOfGraphObjects(redistrictingGroup.children)
 
-        if len(contiguousGroups) > 1:
-            RedistrictingGroup.redistrictingGroupList.remove(redistrictingGroup)
-            for contiguousGroup in contiguousGroups:
-                RedistrictingGroup(childrenBlocks=contiguousGroup)
+            if len(contiguousGroups) > 1:
+                groupsToRemove.append(redistrictingGroup)
+                for contiguousGroup in contiguousGroups:
+                    RedistrictingGroup(childrenBlocks=contiguousGroup)
+            pbar.update(1)
+
+    for groupToRemove in groupsToRemove:
+        RedistrictingGroup.redistrictingGroupList.remove(groupToRemove)
 
 
 def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
@@ -595,23 +603,27 @@ def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
 
 
 def attachOrphanRedistrictingGroupsToClosestNeighbor(neighborsToAttach):
+    tqdm.write('\n')
+    tqdm.write('*** Attaching Orphan Redistricting Groups To Closest Neighbor ***')
+
     contiguousRegions = findContiguousGroupsOfGraphObjects(neighborsToAttach)
     while len(contiguousRegions) > 1:
-        for isolatedRegion in contiguousRegions:
-            closestRegion = findClosestGeometry(originGeometry=isolatedRegion,
-                                                otherGeometries=[region for region in contiguousRegions if
-                                                                 region is not isolatedRegion])
+        tqdm.write('   *** Found {0} Isolated Regions ***'.format(len(contiguousRegions)))
+        isolatedRegion = contiguousRegions[0]
+        closestRegion = findClosestGeometry(originGeometry=isolatedRegion,
+                                            otherGeometries=[region for region in contiguousRegions if
+                                                             region is not isolatedRegion])
 
-            closestGroupInIsolatedRegion = findClosestGeometry(originGeometry=closestRegion,
-                                                               otherGeometries=isolatedRegion)
-            closestGroupInClosestRegion = findClosestGeometry(originGeometry=isolatedRegion,
-                                                              otherGeometries=closestRegion)
+        closestGroupInIsolatedRegion = findClosestGeometry(originGeometry=closestRegion,
+                                                           otherGeometries=isolatedRegion)
+        closestGroupInClosestRegion = findClosestGeometry(originGeometry=isolatedRegion,
+                                                          otherGeometries=closestRegion)
 
-            # these two may already be neighbors from a previous iteration of this loop, so we check
-            if not closestGroupInIsolatedRegion.isNeighbor(closestGroupInClosestRegion):
-                closestGroupInIsolatedRegion.addNeighbors(neighbors=[closestGroupInClosestRegion])
-                closestGroupInClosestRegion.addNeighbors(neighbors=[closestGroupInIsolatedRegion])
+        closestGroupInIsolatedRegion.addNeighbors(neighbors=[closestGroupInClosestRegion])
+        closestGroupInClosestRegion.addNeighbors(neighbors=[closestGroupInIsolatedRegion])
+
         contiguousRegions = findContiguousGroupsOfGraphObjects(neighborsToAttach)
+    tqdm.write('   *** No More Orphaned Redistricting Groups ***')
 
 
 def assignNeighboringRedistrictingGroupsForAllRedistrictingGroups():
@@ -621,23 +633,31 @@ def assignNeighboringRedistrictingGroupsForAllRedistrictingGroups():
 
 
 def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistrictingGroups, allNeighborCandidates):
-    # remove outdated neighbor connections
-    for redistrictingGroup in allNeighborCandidates:
-        outdatedNeighborConnections = [neighbor for neighbor in redistrictingGroup.allNeighbors
-                                       if neighbor not in allNeighborCandidates]
-        if outdatedNeighborConnections:
-            redistrictingGroup.removeNeighbors(outdatedNeighborConnections)
+    tqdm.write('\n')
+    tqdm.write('*** Removing Outdated Neighbor Connections ***')
+    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
+        # remove outdated neighbor connections
+        for redistrictingGroup in allNeighborCandidates:
+            outdatedNeighborConnections = [neighbor for neighbor in redistrictingGroup.allNeighbors
+                                           if neighbor not in allNeighborCandidates]
+            if outdatedNeighborConnections:
+                redistrictingGroup.removeNeighbors(outdatedNeighborConnections)
+            pbar.update(1)
 
-    # assign neighbors to changed groups and those that they touch
-    for changedRedistrictingGroup in changedRedistrictingGroups:
-        changedRedistrictingGroup.clearNeighborGraphObjects()
-        for redistrictingGroupToCheckAgainst in [aGroup for aGroup in allNeighborCandidates
-                                                 if aGroup is not changedRedistrictingGroup]:
-            if intersectingGeometries(changedRedistrictingGroup, redistrictingGroupToCheckAgainst):
-                changedRedistrictingGroup.addNeighbors([redistrictingGroupToCheckAgainst])
-                redistrictingGroupToCheckAgainst.addNeighbors([changedRedistrictingGroup])
+    tqdm.write('\n')
+    tqdm.write('*** Assign Neighbors to Changed Redistricting Groups ***')
+    with tqdm(total=len(changedRedistrictingGroups)) as pbar:
+        # assign neighbors to changed groups and those that they touch
+        for changedRedistrictingGroup in changedRedistrictingGroups:
+            changedRedistrictingGroup.clearNeighborGraphObjects()
+            for redistrictingGroupToCheckAgainst in [aGroup for aGroup in allNeighborCandidates
+                                                     if aGroup is not changedRedistrictingGroup]:
+                if intersectingGeometries(changedRedistrictingGroup, redistrictingGroupToCheckAgainst):
+                    changedRedistrictingGroup.addNeighbors([redistrictingGroupToCheckAgainst])
+                    redistrictingGroupToCheckAgainst.addNeighbors([changedRedistrictingGroup])
+            pbar.update(1)
 
-    unionOfRedistrictingGroups = list(set(changedRedistrictingGroups) | set(allNeighborCandidates))
+        unionOfRedistrictingGroups = list(set(changedRedistrictingGroups) | set(allNeighborCandidates))
 
     attachOrphanRedistrictingGroupsToClosestNeighbor(unionOfRedistrictingGroups)
 
@@ -665,11 +685,15 @@ def validateAllRedistrictingGroups():
 
 
 def validateRedistrictingGroups(groupList):
+    tqdm.write('\n')
+    tqdm.write('*** Validating Redistricting Groups ***')
     validateContiguousRedistrictingGroups(groupList)
 
-    for redistrictingGroup in groupList:
-        redistrictingGroup.validateNeighborLists()
-        redistrictingGroup.validateBlockNeighbors()
+    with tqdm(total=len(groupList)) as pbar:
+        for redistrictingGroup in groupList:
+            redistrictingGroup.validateNeighborLists()
+            redistrictingGroup.validateBlockNeighbors()
+            pbar.update(1)
 
 
 def validateContiguousRedistrictingGroups(groupList):
