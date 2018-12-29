@@ -210,118 +210,14 @@ class District(BlockBorderGraph):
                     if breakingMethod is BreakingMethod.splitBestCandidateGroup:
                         groupsToBreakUp = [(nextBest, Alignment.all) for nextBest in nextBestGroupForCandidateDistrictA]
                     elif breakingMethod is BreakingMethod.splitGroupsOnEdge:
-                        groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
-                                                                                          candidateDistrictB)
-                        # if we are refilling each time and merging after a split,
-                        # we can break up groups on both sides of the boundary
-                        if shouldMergeIntoFormerRedistrictingGroups and shouldRefillEachPass:
-                            groupsToBreakUp = groupsBetweenCandidates
-                        else:
-                            groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
-                                               if groupToBreakUp not in candidateDistrictA]
-                        groupsToBreakUp = [(groupToBreakUp, Alignment.all) for groupToBreakUp in groupsToBreakUp]
+                        groupsToBreakUp = splitGroupsOnEdge(candidateDistrictA,
+                                                            candidateDistrictB,
+                                                            shouldMergeIntoFormerRedistrictingGroups,
+                                                            shouldRefillEachPass)
                     elif breakingMethod is BreakingMethod.splitLowestEnergySeam:
-                        groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
-                                                                                          candidateDistrictB)
-                        groupBreakUpCandidates = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
-                                                  if groupToBreakUp not in candidateDistrictA]
-
-                        groupBreakUpCandidates = [groupBreakUpCandidate
-                                                  for groupBreakUpCandidate in groupBreakUpCandidates
-                                                  if len(groupBreakUpCandidate.children) > 1]
-
-                        seamsToEvaluate = []
-                        for groupBreakUpCandidate in groupBreakUpCandidates:
-                            westernAndEasternNeighbors = groupBreakUpCandidate.westernNeighbors + groupBreakUpCandidate.easternNeighbors
-                            if any([neighbor for neighbor in westernAndEasternNeighbors
-                                    if neighbor in candidateDistrictA]):
-                                seamsToEvaluate.append((groupBreakUpCandidate, Alignment.westEast))
-
-                            northernAndSouthernNeighbors = groupBreakUpCandidate.northernNeighbors + groupBreakUpCandidate.southernNeighbors
-                            if any([neighbor for neighbor in northernAndSouthernNeighbors
-                                    if neighbor in candidateDistrictA]):
-                                seamsToEvaluate.append((groupBreakUpCandidate, Alignment.northSouth))
-
-                        tqdm.write(
-                            '      *** Finding lowest energy seam out of {0} seams ***'.format(len(seamsToEvaluate)))
-                        if showDetailedProgress:
-                            pbar = None
-                        else:
-                            pbar = tqdm(total=len(seamsToEvaluate))
-                        energyScores = []
-                        backupEnergyScores = []
-                        for seamToEvaluate in seamsToEvaluate:
-                            groupToEvaluate = seamToEvaluate[0]
-                            alignmentForEvaluation = seamToEvaluate[1]
-                            groupToEvaluate.fillPopulationEnergyGraph(alignmentForEvaluation)
-                            splitResult = groupToEvaluate.getPopulationEnergyPolygonSplit(alignmentForEvaluation)
-                            groupToEvaluate.clearPopulationEnergyGraph()
-                            polygonSplitResultType = splitResult[0]
-
-                            if polygonSplitResultType is SplitType.NoSplit:
-                                # if we can't split in this direction, we need to check the other direction
-                                # and if that direction can't be split, we'll call for a force split
-                                if alignmentForEvaluation is Alignment.northSouth:
-                                    oppositeAlignment = Alignment.westEast
-                                else:
-                                    oppositeAlignment = Alignment.northSouth
-
-                                groupToEvaluate.fillPopulationEnergyGraph(oppositeAlignment)
-                                oppositeSplitResult = groupToEvaluate.getPopulationEnergyPolygonSplit(oppositeAlignment)
-                                groupToEvaluate.clearPopulationEnergyGraph()
-                                oppositePolygonSplitResultType = oppositeSplitResult[0]
-                                if oppositePolygonSplitResultType is SplitType.NoSplit:
-                                    seamEnergy = groupToEvaluate.population
-                                    alignmentForEvaluation = Alignment.all
-                                    energyScores.append((groupToEvaluate, alignmentForEvaluation,
-                                                         seamEnergy, polygonSplitResultType))
-
-                                    if len(groupToEvaluate.children) >= 10:
-                                        tqdm.write(
-                                            "      *** Warning: Couldn't find a split for {0}. Candidate for Force Splitting. {1} blocks. {2} total pop.".format(
-                                                groupToEvaluate.graphId, len(groupToEvaluate.children),
-                                                groupToEvaluate.population))
-                                        saveDataToFileWithDescription(data=groupToEvaluate,
-                                                                      censusYear='',
-                                                                      stateName='',
-                                                                      descriptionOfInfo='WarningCase-ForceSplittingWithOver10Children-{0}'
-                                                                      .format(id(groupToEvaluate)))
-                                else:
-                                    if oppositePolygonSplitResultType is SplitType.ForceSplitAllBlocks:
-                                        # will need to remove any other seams in list if we ever take
-                                        # more than the first seam in the sorted list below
-                                        seamEnergy = groupToEvaluate.population
-                                        alignmentForEvaluation = Alignment.all
-                                    else:
-                                        seamEnergy = oppositeSplitResult[3]
-                                        alignmentForEvaluation = oppositeAlignment
-                                    backupEnergyScores.append((groupToEvaluate, alignmentForEvaluation,
-                                                               seamEnergy, oppositePolygonSplitResultType))
-                            else:
-                                if polygonSplitResultType is SplitType.ForceSplitAllBlocks:
-                                    # will need to remove any other seams in list if we ever take
-                                    # more than the first seam in the sorted list below
-                                    seamEnergy = groupToEvaluate.population
-                                    alignmentForEvaluation = Alignment.all
-                                else:
-                                    seamEnergy = splitResult[3]
-                                energyScores.append((groupToEvaluate, alignmentForEvaluation,
-                                                     seamEnergy, polygonSplitResultType))
-                            if pbar is not None:
-                                pbar.update(1)
-                        if pbar is not None:
-                            pbar.close()
-                        if len(energyScores) == 0:
-                            tqdm.write("      *** Warning: Did not find any energy scores in this list: {0}".format(
-                                [group.graphId for group in groupBreakUpCandidates]))
-                            tqdm.write("          Switching to backup scores: {0} ***".format(backupEnergyScores))
-                            energyScores = backupEnergyScores
-                        energyScores.sort(key=lambda x: x[2])
-                        minimumEnergySeam = energyScores[0]
-                        groupToBreakUp = minimumEnergySeam[0]
-                        groupToBreakUpSeamAlignment = minimumEnergySeam[1]
-
-                        groupsToBreakUp = [(groupToBreakUp, groupToBreakUpSeamAlignment)]
+                        groupsToBreakUp = splitLowestEnergySeam(candidateDistrictA,
+                                                                candidateDistrictB,
+                                                                showDetailedProgress)
                     else:
                         raise RuntimeError('{0} is not supported'.format(breakingMethod))
 
@@ -573,6 +469,124 @@ def mergeCandidatesIntoPreviousGroups(candidates):
         mergedCandidates.append(mergedRedistrictingGroups)
 
     return mergedCandidates
+
+
+def splitGroupsOnEdge(candidateDistrictA,
+                      candidateDistrictB,
+                      shouldMergeIntoFormerRedistrictingGroups,
+                      shouldRefillEachPass):
+    groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
+                                                                      candidateDistrictB)
+    # if we are refilling each time and merging after a split,
+    # we can break up groups on both sides of the boundary
+    if shouldMergeIntoFormerRedistrictingGroups and shouldRefillEachPass:
+        groupsToBreakUp = groupsBetweenCandidates
+    else:
+        groupsToBreakUp = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
+                           if groupToBreakUp not in candidateDistrictA]
+    groupsToBreakUp = [(groupToBreakUp, Alignment.all) for groupToBreakUp in groupsToBreakUp]
+    return groupsToBreakUp
+
+
+def splitLowestEnergySeam(candidateDistrictA, candidateDistrictB, showDetailedProgress):
+    groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
+                                                                      candidateDistrictB)
+    groupBreakUpCandidates = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
+                              if groupToBreakUp not in candidateDistrictA]
+    groupBreakUpCandidates = [groupBreakUpCandidate
+                              for groupBreakUpCandidate in groupBreakUpCandidates
+                              if len(groupBreakUpCandidate.children) > 1]
+    seamsToEvaluate = []
+    for groupBreakUpCandidate in groupBreakUpCandidates:
+        westernAndEasternNeighbors = groupBreakUpCandidate.westernNeighbors + groupBreakUpCandidate.easternNeighbors
+        if any([neighbor for neighbor in westernAndEasternNeighbors
+                if neighbor in candidateDistrictA]):
+            seamsToEvaluate.append((groupBreakUpCandidate, Alignment.westEast))
+
+        northernAndSouthernNeighbors = groupBreakUpCandidate.northernNeighbors + groupBreakUpCandidate.southernNeighbors
+        if any([neighbor for neighbor in northernAndSouthernNeighbors
+                if neighbor in candidateDistrictA]):
+            seamsToEvaluate.append((groupBreakUpCandidate, Alignment.northSouth))
+    tqdm.write(
+        '      *** Finding lowest energy seam out of {0} seams ***'.format(len(seamsToEvaluate)))
+    if showDetailedProgress:
+        pbar = None
+    else:
+        pbar = tqdm(total=len(seamsToEvaluate))
+    energyScores = []
+    backupEnergyScores = []
+    for seamToEvaluate in seamsToEvaluate:
+        groupToEvaluate = seamToEvaluate[0]
+        alignmentForEvaluation = seamToEvaluate[1]
+        groupToEvaluate.fillPopulationEnergyGraph(alignmentForEvaluation)
+        splitResult = groupToEvaluate.getPopulationEnergyPolygonSplit(alignmentForEvaluation)
+        groupToEvaluate.clearPopulationEnergyGraph()
+        polygonSplitResultType = splitResult[0]
+
+        if polygonSplitResultType is SplitType.NoSplit:
+            # if we can't split in this direction, we need to check the other direction
+            # and if that direction can't be split, we'll call for a force split
+            if alignmentForEvaluation is Alignment.northSouth:
+                oppositeAlignment = Alignment.westEast
+            else:
+                oppositeAlignment = Alignment.northSouth
+
+            groupToEvaluate.fillPopulationEnergyGraph(oppositeAlignment)
+            oppositeSplitResult = groupToEvaluate.getPopulationEnergyPolygonSplit(oppositeAlignment)
+            groupToEvaluate.clearPopulationEnergyGraph()
+            oppositePolygonSplitResultType = oppositeSplitResult[0]
+            if oppositePolygonSplitResultType is SplitType.NoSplit:
+                seamEnergy = groupToEvaluate.population
+                alignmentForEvaluation = Alignment.all
+                energyScores.append((groupToEvaluate, alignmentForEvaluation,
+                                     seamEnergy, polygonSplitResultType))
+
+                if len(groupToEvaluate.children) >= 10:
+                    tqdm.write(
+                        "      *** Warning: Couldn't find a split for {0}. Candidate for Force Splitting. {1} blocks. {2} total pop.".format(
+                            groupToEvaluate.graphId, len(groupToEvaluate.children),
+                            groupToEvaluate.population))
+                    saveDataToFileWithDescription(data=groupToEvaluate,
+                                                  censusYear='',
+                                                  stateName='',
+                                                  descriptionOfInfo='WarningCase-ForceSplittingWithOver10Children-{0}'
+                                                  .format(id(groupToEvaluate)))
+            else:
+                if oppositePolygonSplitResultType is SplitType.ForceSplitAllBlocks:
+                    # will need to remove any other seams in list if we ever take
+                    # more than the first seam in the sorted list below
+                    seamEnergy = groupToEvaluate.population
+                    alignmentForEvaluation = Alignment.all
+                else:
+                    seamEnergy = oppositeSplitResult[3]
+                    alignmentForEvaluation = oppositeAlignment
+                backupEnergyScores.append((groupToEvaluate, alignmentForEvaluation,
+                                           seamEnergy, oppositePolygonSplitResultType))
+        else:
+            if polygonSplitResultType is SplitType.ForceSplitAllBlocks:
+                # will need to remove any other seams in list if we ever take
+                # more than the first seam in the sorted list below
+                seamEnergy = groupToEvaluate.population
+                alignmentForEvaluation = Alignment.all
+            else:
+                seamEnergy = splitResult[3]
+            energyScores.append((groupToEvaluate, alignmentForEvaluation,
+                                 seamEnergy, polygonSplitResultType))
+        if pbar is not None:
+            pbar.update(1)
+    if pbar is not None:
+        pbar.close()
+    if len(energyScores) == 0:
+        tqdm.write("      *** Warning: Did not find any energy scores in this list: {0}".format(
+            [group.graphId for group in groupBreakUpCandidates]))
+        tqdm.write("          Switching to backup scores: {0} ***".format(backupEnergyScores))
+        energyScores = backupEnergyScores
+    energyScores.sort(key=lambda x: x[2])
+    minimumEnergySeam = energyScores[0]
+    groupToBreakUp = minimumEnergySeam[0]
+    groupToBreakUpSeamAlignment = minimumEnergySeam[1]
+    groupsToBreakUp = [(groupToBreakUp, groupToBreakUpSeamAlignment)]
+    return groupsToBreakUp
 
 
 class WeightingMethod(Enum):
