@@ -60,6 +60,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         tqdm.write('            *** Creating Redistricting Group for each child: {0} ***'.format(self.graphId))
         childGroups = []
         for redistrictingGroupChild in self.children:
+            redistrictingGroupChild.clearNeighborGraphObjects()
             childGroups.append(RedistrictingGroup(childrenBlocks=[redistrictingGroupChild]))
         return childGroups
 
@@ -462,20 +463,25 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def validateBlockNeighbors(self):
         contiguousRegions = findContiguousGroupsOfGraphObjects(self.children)
         if len(contiguousRegions) > 1:
-            smallestContiguousRegion = min(contiguousRegions, key=lambda contiguousRegion: len(contiguousRegion))
+            saveDataToFileWithDescription(data=[self, contiguousRegions],
+                                          censusYear='',
+                                          stateName='',
+                                          descriptionOfInfo='ErrorCase-BlocksNotContiguous')
             plotGraphObjectGroups(contiguousRegions, showDistrictNeighborConnections=True)
             plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showBlockGraphIds=True)
-            raise RuntimeError(
-                "Don't have a contiguous set of AtomicBlocks. There are {0} distinct groups. The smallest group count: {1}".format(
-                    len(contiguousRegions), len(smallestContiguousRegion)))
+            raise RuntimeError("Don't have a contiguous set of AtomicBlocks. There are {0} distinct groups.".format(
+                len(contiguousRegions)))
 
         for block in self.children:
             neighborBlocksNotInGroup = [neighborBlock for neighborBlock in block.allNeighbors
                                         if neighborBlock not in self.children]
             if len(neighborBlocksNotInGroup):
+                saveDataToFileWithDescription(data=[self, block],
+                                              censusYear='',
+                                              stateName='',
+                                              descriptionOfInfo='ErrorCase-BlockHasNeighborOutsideRedistrictingGroup')
                 plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showBlockGraphIds=True)
                 raise RuntimeError("Some blocks have neighbor connections with block outside the redistricting group")
-
 
     def assignNeighboringBlocksToBlocks(self):
         with tqdm(total=len(self.children)) as pbar:
