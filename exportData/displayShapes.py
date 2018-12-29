@@ -213,21 +213,24 @@ def plotGraphObjectGroups(graphObjectGroups,
     fig = pyplot.figure(figsize=(8, 8))
     ax = fig.gca()
 
-    count = 0
+    if showGraphHeatmapForFirstGroup:
+        count = -1
+    else:
+        count = 0
     for graphObjectGroup in graphObjectGroups:
         if len(graphObjectGroup) is not 0:
-            maxPopulationEnergy = max([block.populationEnergy for block in graphObjectGroup])
+            maxPopulation = max([block.population for block in graphObjectGroup])
             heatMap = cm.get_cmap('Reds')
-            heatmapNormalizer = colors.Normalize(vmin=0.0, vmax=maxPopulationEnergy)
+            heatmapNormalizer = colors.LogNorm(vmin=0.1, vmax=maxPopulation, clip=True)
 
             for graphObject in graphObjectGroup:
                 if showDistrictNeighborConnections:
                     for neighborGroup in graphObject.allNeighbors:
                         ax.add_line(getLineForPair(graphObject, neighborGroup, grayColor))
-                if showGraphHeatmapForFirstGroup and count is 0:
-                    normalizedEnergy = heatmapNormalizer(graphObject.populationEnergy)
+                if showGraphHeatmapForFirstGroup and graphObjectGroups.index(graphObjectGroup) is 0:
+                    normalizedEnergy = heatmapNormalizer(graphObject.population)
                     heatColor = heatMap(normalizedEnergy)
-                    ax.add_patch(PolygonPatch(graphObject.geometry, fc=heatColor, ec=grayColor, alpha=0.5, zorder=2))
+                    ax.add_patch(PolygonPatch(graphObject.geometry, fc=heatColor, ec=(0,0,0,0), zorder=1))
                 else:
                     ax.add_patch(
                         PolygonPatch(graphObject.geometry, fc=getColor(count), ec=getColor(count), alpha=0.5,
