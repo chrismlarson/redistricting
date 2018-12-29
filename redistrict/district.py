@@ -371,7 +371,10 @@ class District(BlockBorderGraph):
                 candidateGroupsValue = candidateGroupsPolygon.bounds[boundsIndex]
                 difference = directionReferenceValue - candidateGroupsValue
                 difference = math.fabs(difference)
-                score = 1 / difference
+                if difference == 0:
+                    score = math.inf
+                else:
+                    score = 1 / difference
 
                 return score
 
