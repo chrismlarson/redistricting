@@ -442,8 +442,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                                          failedStartingBlocks],
                                       showGraphHeatmapForFirstGroup=True,
                                       saveImages=True,
-                                      saveDescription='SeamFinding{0}'.format(count))
-                temp=0
+                                      saveDescription='SeamFinding{0}-{1}-{2}'.format(count, alignment, id(self)))
 
             blockToActOn = lowestPopulationEnergyNeighbor
 
