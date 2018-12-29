@@ -217,7 +217,7 @@ def plotGraphObjectGroups(graphObjectGroups,
     for graphObjectGroup in graphObjectGroups:
         if len(graphObjectGroup) is not 0:
             maxPopulationEnergy = max([block.populationEnergy for block in graphObjectGroup])
-            heatMap = cm.get_cmap('hot')
+            heatMap = cm.get_cmap('Reds')
             heatmapNormalizer = colors.Normalize(vmin=0.0, vmax=maxPopulationEnergy)
 
             for graphObject in graphObjectGroup:
@@ -227,7 +227,7 @@ def plotGraphObjectGroups(graphObjectGroups,
                 if showGraphHeatmapForFirstGroup and count is 0:
                     normalizedEnergy = heatmapNormalizer(graphObject.populationEnergy)
                     heatColor = heatMap(normalizedEnergy)
-                    ax.add_patch(PolygonPatch(graphObject.geometry, fc=heatColor, ec=heatColor, alpha=0.5, zorder=2))
+                    ax.add_patch(PolygonPatch(graphObject.geometry, fc=heatColor, ec=grayColor, alpha=0.5, zorder=2))
                 else:
                     ax.add_patch(
                         PolygonPatch(graphObject.geometry, fc=getColor(count), ec=getColor(count), alpha=0.5,

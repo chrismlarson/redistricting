@@ -436,18 +436,14 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             lowestPopulationEnergyNeighbor = min(neighborCandidates, key=lambda block: block.populationEnergy)
             if shouldDrawGraph:
                 plotGraphObjectGroups(graphObjectGroups=[self.children,
-                                                         neighborCandidates,
-                                                         startingCandidates,
-                                                         finishCandidates,
-                                                         [],
-                                                         [],
-                                                         [],
                                                          lowestPopulationEnergySeam,
+                                                         neighborCandidates,
                                                          [lowestPopulationEnergyNeighbor],
                                                          failedStartingBlocks],
                                       showGraphHeatmapForFirstGroup=True,
                                       saveImages=True,
                                       saveDescription='SeamFinding{0}'.format(count))
+                temp=0
 
             blockToActOn = lowestPopulationEnergyNeighbor
 
