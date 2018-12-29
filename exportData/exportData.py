@@ -27,6 +27,8 @@ import sys
 #                 'geometry': mapping(geoToExport.geometry),
 #                 'properties': {'id': id},
 #             })
+from geographyHelper import shapelyGeometryToGeoJSON
+
 
 def saveDataToDirectoryWithDescription(data, censusYear, stateName, descriptionOfInfo):
     directoryPath = path.expanduser('~/Documents/{0}-{1}-{2}Info'.format(censusYear, stateName, descriptionOfInfo))
@@ -50,6 +52,19 @@ def saveDataToFile(data, filePath):
     with open(filePath, 'wb') as file:
         pickle.dump(data, file, protocol=pickle.HIGHEST_PROTOCOL)
     tqdm.write('*** Saved: {0} ***'.format(filePath))
+
+
+def saveGeoJSONToDirectoryWithDescription(geographyList, censusYear, stateName, descriptionOfInfo):
+    directoryPath = path.expanduser('~/Documents/{0}-{1}-{2}Info'.format(censusYear, stateName, descriptionOfInfo))
+    if not path.exists(directoryPath):
+        makedirs(directoryPath)
+    count = 1
+    geoJSONObjects = [shapelyGeometryToGeoJSON(geography.geometry) for geography in geographyList]
+    for jsonString in geoJSONObjects:
+        filePath = '{0}/{1:04}.geojson'.format(directoryPath, count)
+        with open(filePath, "w") as jsonFile:
+            print(jsonString, file=jsonFile)
+        count += 1
 
 
 def loadDataFromDirectoryWithDescription(censusYear, stateName, descriptionOfInfo):
