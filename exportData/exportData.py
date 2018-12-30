@@ -1,7 +1,9 @@
-from shapely.geometry import mapping
+from shapely.geometry import mapping, Polygon, MultiPolygon
+from collections import OrderedDict
 from os import path, makedirs
 import glob
 import pickle
+import json
 from tqdm import tqdm
 # import fiona
 import sys
@@ -58,10 +60,25 @@ def saveGeoJSONToDirectoryWithDescription(geographyList, censusYear, stateName, 
     directoryPath = path.expanduser('~/Documents/{0}-{1}-{2}Info'.format(censusYear, stateName, descriptionOfInfo))
     if not path.exists(directoryPath):
         makedirs(directoryPath)
+    geoJSONObjects = []
+    for geography in geographyList:
+        if type(geography.geometry) is MultiPolygon:
+            exteriors = [Polygon(polygon.exterior) for polygon in geography.geometry]
+            exteriorPolygon = MultiPolygon(exteriors)
+        else:
+            exteriorPolygon = Polygon(geography.geometry.exterior)
+        exteriorJSON = shapelyGeometryToGeoJSON(exteriorPolygon)
+        geoJSONObjects.append(exteriorJSON)
     count = 1
-    geoJSONObjects = [shapelyGeometryToGeoJSON(geography.geometry) for geography in geographyList]
     for jsonString in geoJSONObjects:
         filePath = '{0}/{1:04}.geojson'.format(directoryPath, count)
+        jsonObject = json.loads(jsonString)
+        numberProperty = {'number': '{0}'.format(count)}
+        jsonObject['properties'] = numberProperty
+        jsonObject = OrderedDict([('type', jsonObject['type']),
+                                  ('properties', jsonObject['properties']),
+                                  ('coordinates', jsonObject['coordinates'])])
+        jsonString = json.dumps(jsonObject)
         with open(filePath, "w") as jsonFile:
             print(jsonString, file=jsonFile)
         count += 1
