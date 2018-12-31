@@ -5,8 +5,9 @@ import glob
 import pickle
 import json
 from tqdm import tqdm
-# import fiona
+from geographyHelper import shapelyGeometryToGeoJSON
 import sys
+#import fiona
 
 # def exportGeographiesToShapefile(geographyList, descriptionOfInfo):
 #     # Define a polygon feature geometry with one attribute
@@ -29,7 +30,6 @@ import sys
 #                 'geometry': mapping(geoToExport.geometry),
 #                 'properties': {'id': id},
 #             })
-from geographyHelper import shapelyGeometryToGeoJSON
 
 
 def saveDataToDirectoryWithDescription(data, censusYear, stateName, descriptionOfInfo):
