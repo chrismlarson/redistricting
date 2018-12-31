@@ -1,6 +1,7 @@
 from us import states
 from exportData.displayShapes import plotDistricts, plotPolygons
-from exportData.exportData import loadDataFromFileWithDescription, saveDataToFileWithDescription
+from exportData.exportData import loadDataFromFileWithDescription, saveDataToFileWithDescription, \
+    saveGeoJSONToDirectoryWithDescription
 from redistrict.district import createDistrictFromRedistrictingGroups, WeightingMethod, BreakingMethod
 
 stateAbbreviation = 'MI'
@@ -22,12 +23,16 @@ districts = initialDistrict.splitDistrict(numberOfDistricts=14,
                                           shouldMergeIntoFormerRedistrictingGroups=True,
                                           shouldDrawEachStep=False,
                                           shouldRefillEachPass=True,
-                                          fastCalculations=True,
+                                          fastCalculations=False,
                                           showDetailedProgress=False)
 saveDataToFileWithDescription(data=districts,
                               censusYear=censusYear,
                               stateName=stateInfo,
                               descriptionOfInfo='{0}-FederalDistricts'.format(descriptionToWorkWith))
+saveGeoJSONToDirectoryWithDescription(geographyList=districts,
+                                      censusYear=censusYear,
+                                      stateName=stateInfo,
+                                      descriptionOfInfo='FederalDistrictsGeoJSON')
 plotDistricts(districts=districts,
               showPopulationCounts=False,
               showDistrictNeighborConnections=False)
