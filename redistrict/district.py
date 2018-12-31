@@ -9,7 +9,8 @@ from formatData.redistrictingGroup import validateContiguousRedistrictingGroups,
     assignNeighboringRedistrictingGroupsToRedistrictingGroups, validateRedistrictingGroups, SplitType
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, polygonFromMultipleGeometries, \
-    intersectingGeometries, polygonFromMultiplePolygons, findContiguousGroupsOfGraphObjects, boundsIndexFromDirection
+    intersectingGeometries, polygonFromMultiplePolygons, findContiguousGroupsOfGraphObjects, boundsIndexFromDirection, \
+    getOppositeDirection
 
 
 class District(BlockBorderGraph):
@@ -330,6 +331,7 @@ class District(BlockBorderGraph):
         while not candidateDistrictA and i < len(startingGroupCandidates):
             startingObjects = startingGroupCandidates[i][0]
             fillOriginDirection = startingGroupCandidates[i][1]
+            oppositeFillOriginDirection = getOppositeDirection(fillOriginDirection)
 
             def withinIdealDistrictSize(currentGroups, candidateGroups):
                 currentPop = sum(group.population for group in currentGroups)
@@ -364,11 +366,12 @@ class District(BlockBorderGraph):
 
             def cardinalDirectionScoreOfCandidateGroups(currentGroupPolygon, remainingGroups, candidateGroups,
                                                         fastCalculations=True):
-                boundsIndex = boundsIndexFromDirection(fillOriginDirection)
-                directionReferenceValue = self.geometry.bounds[boundsIndex]
+                referenceBoundsIndex = boundsIndexFromDirection(fillOriginDirection)
+                directionReferenceValue = self.geometry.bounds[referenceBoundsIndex]
                 candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
                                                                        useEnvelope=fastCalculations)
-                candidateGroupsValue = candidateGroupsPolygon.bounds[boundsIndex]
+                candidateBoundsIndex = boundsIndexFromDirection(oppositeFillOriginDirection)
+                candidateGroupsValue = candidateGroupsPolygon.bounds[candidateBoundsIndex]
                 difference = directionReferenceValue - candidateGroupsValue
                 difference = math.fabs(difference)
                 if difference == 0:
