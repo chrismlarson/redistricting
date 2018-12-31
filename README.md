@@ -101,7 +101,7 @@ And then it used a simple distance from center comparison. So it choose the clos
 
 But problem arose when districts got smaller. The best result so far has been simply filling north to south or west to east. It chooses which direction based on the orientation of the geometry. For example, since the state of Michigan is taller than it is wide, it will start filling from the north:
 
-![Cardinal Direction Weighted Forest Fire Fill](https://content.screencast.com/media/726be446-97f6-40ac-a5dc-dba2c13ba66b_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_NewCardinal.gif)
+![Cardinal Direction Weighted Forest Fire Fill](https://content.screencast.com/media/2c97a27f-cb17-4a97-b6b4-dcf6c0e04449_9e007f70-eddf-41a3-994c-9b412edca7cd_static_0_0_CardinalFillingBottomDistance.gif)
 
 ### Technical process
 There are two main parts to this algorithm:
