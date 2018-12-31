@@ -391,8 +391,10 @@ def weightedForestFireFillGraphObject(candidateObjects,
                     groupsToRemove = [list(item) for item in set(tuple(row) for row in groupsToRemove)]
                     for groupToRemove in groupsToRemove:
                         fireQueue.remove(groupToRemove)
+                    neighborsOfFireFilledObjects = [group.allNeighbors for group in fireFilledObjects]
                     for remainingItemFromGroups in remainingItemsFromGroups:
-                        fireQueue.append([remainingItemFromGroups])
+                        if remainingItemFromGroups in neighborsOfFireFilledObjects:
+                            fireQueue.append([remainingItemFromGroups])
 
                     # add neighbors to the queue
                     for graphObjectCandidate in graphObjectCandidateGroup:
