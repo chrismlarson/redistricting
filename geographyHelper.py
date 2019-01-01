@@ -42,6 +42,28 @@ def intersectingPolygons(a, b):
         return False
 
 
+def allIntersectingPolygons(a, b):
+    aPolygons = []
+    bPolygons = []
+
+    if type(a) is MultiPolygon:
+        for aPolygon in a:
+            aPolygons.append(aPolygon)
+    else:
+        aPolygons.append(a)
+
+    if type(b) is MultiPolygon:
+        for bPolygon in b:
+            bPolygons.append(bPolygon)
+    else:
+        bPolygons.append(b)
+
+    allIntersecting = all([intersectingPolygons(aPolygon, bPolygon)
+                           for aPolygon in aPolygons for bPolygon in bPolygons])
+    return allIntersecting
+
+
+
 def doesEitherGeographyContainTheOther(a, b):
     aContainsBBoundary = doesGeographyContainTheOther(container=a, target=b)
     bContainsABoundary = doesGeographyContainTheOther(container=b, target=a)

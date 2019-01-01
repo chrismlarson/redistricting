@@ -1,6 +1,6 @@
 from exportData.displayShapes import plotGraphObjectGroups, plotPolygons, plotRedistrictingGroups, \
     plotBlocksForRedistrictingGroup
-from shapely.geometry import Polygon, MultiPolygon
+from shapely.geometry import MultiPolygon
 from exportData.exportData import saveDataToFileWithDescription
 from formatData.atomicBlock import createAtomicBlocksFromBlockList, validateAllAtomicBlocks, \
     assignNeighborBlocksFromCandidateBlocks
@@ -8,7 +8,7 @@ from formatData.blockBorderGraph import BlockBorderGraph
 from formatData.graphObject import GraphObject
 from geographyHelper import findContiguousGroupsOfGraphObjects, findClosestGeometry, intersectingGeometries, Alignment, \
     mostCardinalOfGeometries, CardinalDirection, polygonFromMultipleGeometries, polygonFromMultiplePolygons, \
-    doesPolygonContainTheOther, getPolygonThatContainsGeometry, intersectingPolygons, shapelyGeometryToGeoJSON
+    doesPolygonContainTheOther, getPolygonThatContainsGeometry, intersectingPolygons, allIntersectingPolygons
 from enum import Enum
 from censusData import censusBlock
 from multiprocessing.dummy import Pool
@@ -257,7 +257,15 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             elif not seamOnEdge and doesPolygonContainTheOther(container=seamSplitPolygon, target=block.geometry,
                                                                ignoreInteriors=False):
                 seamSplit.append(block)
+            # elif allIntersectingPolygons(seamSplitPolygon, block.geometry):
+            #     seamSplit.append(block)
+            #     plotPolygons([block.geometry])
             else:
+                saveDataToFileWithDescription(data=[self, alignment, aSplitPolygon, bSplitPolygon, seamSplitPolygon,
+                                                    block.geometry, seamOnEdge, polygonSplitResultType],
+                                              censusYear='',
+                                              stateName='',
+                                              descriptionOfInfo='ErrorCase-CouldNotFindContainerForBlock')
                 plotPolygons([aSplitPolygon, bSplitPolygon, seamSplitPolygon, block.geometry])
                 raise RuntimeError("Couldn't find a container for block: {0}".format(block.geometry))
 
