@@ -72,6 +72,7 @@ def saveGeoJSONToDirectoryWithDescription(geographyList, censusYear, stateName, 
     count = 1
     for jsonString in geoJSONObjects:
         filePath = '{0}/{1:04}.geojson'.format(directoryPath, count)
+        tqdm.write('*** Attempting to save: {0} ***'.format(filePath))
         jsonObject = json.loads(jsonString)
         numberProperty = {'number': '{0}'.format(count)}
         jsonObject['properties'] = numberProperty
@@ -81,6 +82,7 @@ def saveGeoJSONToDirectoryWithDescription(geographyList, censusYear, stateName, 
         jsonString = json.dumps(jsonObject)
         with open(filePath, "w") as jsonFile:
             print(jsonString, file=jsonFile)
+        tqdm.write('*** Saved: {0} ***'.format(filePath))
         count += 1
 
 
