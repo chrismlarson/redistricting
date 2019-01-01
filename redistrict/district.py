@@ -331,7 +331,6 @@ class District(BlockBorderGraph):
         while not candidateDistrictA and i < len(startingGroupCandidates):
             startingObjects = startingGroupCandidates[i][0]
             fillOriginDirection = startingGroupCandidates[i][1]
-            oppositeFillOriginDirection = getOppositeDirection(fillOriginDirection)
 
             def withinIdealDistrictSize(currentGroups, candidateGroups):
                 currentPop = sum(group.population for group in currentGroups)
@@ -366,12 +365,11 @@ class District(BlockBorderGraph):
 
             def cardinalDirectionScoreOfCandidateGroups(currentGroupPolygon, remainingGroups, candidateGroups,
                                                         fastCalculations=True):
-                referenceBoundsIndex = boundsIndexFromDirection(fillOriginDirection)
-                directionReferenceValue = self.geometry.bounds[referenceBoundsIndex]
+                boundsIndex = boundsIndexFromDirection(fillOriginDirection)
+                directionReferenceValue = self.geometry.bounds[boundsIndex]
                 candidateGroupsPolygon = polygonFromMultipleGeometries(candidateGroups,
                                                                        useEnvelope=fastCalculations)
-                candidateBoundsIndex = boundsIndexFromDirection(oppositeFillOriginDirection)
-                candidateGroupsValue = candidateGroupsPolygon.bounds[candidateBoundsIndex]
+                candidateGroupsValue = candidateGroupsPolygon.bounds[boundsIndex]
                 difference = directionReferenceValue - candidateGroupsValue
                 difference = math.fabs(difference)
                 if difference == 0:
