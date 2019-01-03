@@ -178,6 +178,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         else:
             blocksToActOn = self.northernChildBlocks
 
+        # work west to east or north to south
         if len(blocksToActOn) > 0:
             for blockToActOn in blocksToActOn:
                 blockToActOn.populationEnergy = blockToActOn.population
@@ -221,6 +222,12 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                         plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True, showGraphHeatmap=True,
                                                         showBlockGraphIds=True)
                         raise ReferenceError("Can't find previous neighbor for {0}".format(blocksToActOnThisRound))
+
+        # add population to surrounding neighbors population energy
+        # this is to help create smoother graphs in urban areas
+        for block in self.children:
+            for neighborBlock in block.allNeighbors:
+                neighborBlock.populationEnergy += block.population
 
     def clearPopulationEnergyGraph(self):
         for child in self.children:
