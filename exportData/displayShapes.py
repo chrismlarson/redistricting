@@ -332,7 +332,7 @@ startingColors = [colorData.XKCD_COLORS['xkcd:cloudy blue'],
                   colorData.XKCD_COLORS['xkcd:purple'],
                   colorData.XKCD_COLORS['xkcd:orange'],
                   colorData.XKCD_COLORS['xkcd:deep pink'],
-                  colorData.XKCD_COLORS['xkcd:brownish yellow'],
+                  colorData.XKCD_COLORS['xkcd:pale pink'],
                   colorData.XKCD_COLORS['xkcd:twilight']]
 distinctColors = startingColors + [color for color in list(colorData.XKCD_COLORS.values()) if
                                    color not in startingColors]
