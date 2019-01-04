@@ -506,7 +506,7 @@ def splitLowestEnergySeam(candidateDistrictA, candidateDistrictB,
                               if groupToBreakUp not in candidateDistrictA]
     groupBreakUpCandidates = [groupBreakUpCandidate
                               for groupBreakUpCandidate in groupBreakUpCandidates
-                              if len(groupBreakUpCandidate.children) > 1]
+                              if len(groupBreakUpCandidate.children) > 1 and groupBreakUpCandidate.population > 0]
     seamsToEvaluate = []
     for groupBreakUpCandidate in groupBreakUpCandidates:
         westernAndEasternNeighbors = groupBreakUpCandidate.westernNeighbors + groupBreakUpCandidate.easternNeighbors
