@@ -218,7 +218,13 @@ class District(BlockBorderGraph):
                     elif breakingMethod is BreakingMethod.splitLowestEnergySeam:
                         groupsToBreakUp = splitLowestEnergySeam(candidateDistrictA,
                                                                 candidateDistrictB,
-                                                                showDetailedProgress)
+                                                                showDetailedProgress,
+                                                                energyRelativeToPopulation=False)
+                    elif breakingMethod is BreakingMethod.splitLowestRelativeEnergySeam:
+                        groupsToBreakUp = splitLowestEnergySeam(candidateDistrictA,
+                                                                candidateDistrictB,
+                                                                showDetailedProgress,
+                                                                energyRelativeToPopulation=True)
                     else:
                         raise RuntimeError('{0} is not supported'.format(breakingMethod))
 
@@ -492,7 +498,8 @@ def splitGroupsOnEdge(candidateDistrictA,
     return groupsToBreakUp
 
 
-def splitLowestEnergySeam(candidateDistrictA, candidateDistrictB, showDetailedProgress):
+def splitLowestEnergySeam(candidateDistrictA, candidateDistrictB,
+                          showDetailedProgress, energyRelativeToPopulation):
     groupsBetweenCandidates = getRedistrictingGroupsBetweenCandidates(candidateDistrictA,
                                                                       candidateDistrictB)
     groupBreakUpCandidates = [groupToBreakUp for groupToBreakUp in groupsBetweenCandidates
@@ -585,6 +592,18 @@ def splitLowestEnergySeam(candidateDistrictA, candidateDistrictB, showDetailedPr
             [group.graphId for group in groupBreakUpCandidates]))
         tqdm.write("          Switching to backup scores: {0} ***".format(backupEnergyScores))
         energyScores = backupEnergyScores
+
+    if energyRelativeToPopulation:
+        relativeEnergyScores = []
+        for energyScore in energyScores:
+            scoreGroup = energyScore[0]
+            scoreAlignment = energyScore[1]
+            currentScore = energyScore[2]
+            scoreSplitResultType = energyScore[3]
+            newScore = currentScore / scoreGroup.population
+            relativeEnergyScores.append((scoreGroup, scoreAlignment, newScore, scoreSplitResultType))
+        energyScores = relativeEnergyScores
+    
     energyScores.sort(key=lambda x: x[2])
     minimumEnergySeam = energyScores[0]
     groupToBreakUp = minimumEnergySeam[0]
@@ -603,3 +622,4 @@ class BreakingMethod(Enum):
     splitBestCandidateGroup = 0
     splitGroupsOnEdge = 1
     splitLowestEnergySeam = 2
+    splitLowestRelativeEnergySeam = 2
