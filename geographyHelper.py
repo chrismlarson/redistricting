@@ -549,6 +549,25 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
     return combinations
 
 
+def deflatePolygonByATenth(polygon):
+    dimensions = getWidthAndHeightOfPolygonInLatLong(polygon)
+    if dimensions[0] < dimensions[1]:
+        shortestDimension = dimensions[0]
+    else:
+        shortestDimension = dimensions[1]
+    tenthOfShortestDimension = shortestDimension * 0.1
+    deflatedPolygon = polygon.buffer(-tenthOfShortestDimension)
+    return deflatedPolygon
+
+
+def isPolygonAnHourglass(polygon):
+    deflatedPolygon = deflatePolygonByATenth(polygon)
+    if type(deflatedPolygon) is MultiPolygon:
+        return True
+    else:
+        return False
+
+
 def alignmentOfPolygon(polygon):
     boxDimensions = dimensionsOfPolygon(polygon)
     if boxDimensions[0] < boxDimensions[1]:
