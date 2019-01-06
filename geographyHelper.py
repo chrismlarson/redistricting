@@ -576,6 +576,16 @@ def getWidthAndHeightOfBoxOnEarth(minLat, minLon, maxLat, maxLon):
     return maxWidth, maxHeight
 
 
+def getWidthAndHeightOfPolygonInLatLong(polygon):
+    left = polygon.bounds[0]
+    bottom = polygon.bounds[1]
+    right = polygon.bounds[2]
+    top = polygon.bounds[3]
+    width = right - left
+    height = top - bottom
+    return width, height
+
+
 def getDistanceBetweenLatLong(lat1, lon1, lat2, lon2):
     distance = distanceOnEarth((lat1, lon1), (lat2, lon2))
     return distance.km
