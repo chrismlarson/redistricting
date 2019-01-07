@@ -64,7 +64,6 @@ def allIntersectingPolygons(a, b):
     return allIntersecting
 
 
-
 def doesEitherGeographyContainTheOther(a, b):
     aContainsBBoundary = doesGeographyContainTheOther(container=a, target=b)
     bContainsABoundary = doesGeographyContainTheOther(container=b, target=a)
@@ -119,7 +118,8 @@ def doesPolygonContainTheOther(container, target, ignoreInteriors=True, useTarge
                 targetPolygonExterior = Polygon(targetPolygon.exterior)
 
                 if useTargetRepresentativePoint:
-                    containsTarget = containsTarget or containerPolygonExterior.contains(targetPolygon.representative_point())
+                    containsTarget = containsTarget or containerPolygonExterior.contains(
+                        targetPolygon.representative_point())
                 else:
                     containsTarget = containsTarget or containerPolygonExterior.contains(targetPolygonExterior)
             else:
@@ -559,7 +559,7 @@ def deflatePolygonByAtMostATenth(polygon):
         # b = max output
         a = 0.1
         b = 0.01
-        return (((b-a)*(ratio-float_info.min))/(1-float_info.min))+a
+        return (((b - a) * (ratio - float_info.min)) / (1 - float_info.min)) + a
 
     dimensions = getWidthAndHeightOfPolygonInLatLong(polygon)
     if dimensions[0] < dimensions[1]:
@@ -599,7 +599,7 @@ def isPolygonAGoodDistrictShape(districtPolygon, parentPolygon):
                                       if not any([parentSubPolygon
                                                   for parentSubPolygon in parentPolygons
                                                   if polygon == parentSubPolygon])]
-    allGoodDistrictShapes = all([isPolygonAnHourglass(polygon) == False for polygon in districtPolygonsNotFullyFilled])
+    allGoodDistrictShapes = all([isPolygonAnHourglass(polygon) is False for polygon in districtPolygonsNotFullyFilled])
     return allGoodDistrictShapes
 
 
