@@ -286,6 +286,17 @@ def getOppositeDirection(direction):
         return CardinalDirection.east
 
 
+def getCWDirection(direction):
+    if direction is CardinalDirection.north:
+        return CardinalDirection.east
+    elif direction is CardinalDirection.east:
+        return CardinalDirection.south
+    elif direction is CardinalDirection.south:
+        return CardinalDirection.west
+    elif direction is CardinalDirection.west:
+        return CardinalDirection.north
+
+
 def getLineListFromBoundary(boundary):
     lineList = []
     if type(boundary) is MultiLineString:

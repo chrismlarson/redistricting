@@ -10,7 +10,7 @@ from formatData.redistrictingGroup import validateContiguousRedistrictingGroups,
 from geographyHelper import alignmentOfPolygon, Alignment, mostCardinalOfGeometries, CardinalDirection, \
     weightedForestFireFillGraphObject, polsbyPopperScoreOfPolygon, polygonFromMultipleGeometries, \
     intersectingGeometries, polygonFromMultiplePolygons, findContiguousGroupsOfGraphObjects, boundsIndexFromDirection, \
-    getOppositeDirection
+    isPolygonAGoodDistrictShape, getOppositeDirection, getCWDirection
 
 
 class District(BlockBorderGraph):
@@ -76,21 +76,66 @@ class District(BlockBorderGraph):
         bRatio = math.ceil(numberOfDistricts / 2)
         ratio = (aRatio, bRatio)
 
-        cutDistrict = self.cutDistrictIntoExactRatio(ratio=ratio,
-                                                     populationDeviation=populationDeviation,
-                                                     weightingMethod=weightingMethod,
-                                                     breakingMethod=breakingMethod,
-                                                     shouldDrawFillAttempts=shouldDrawFillAttempts,
-                                                     shouldDrawEachStep=shouldDrawEachStep,
-                                                     shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
-                                                     shouldRefillEachPass=shouldRefillEachPass,
-                                                     fastCalculations=fastCalculations,
-                                                     showDetailedProgress=showDetailedProgress,
-                                                     shouldSaveProgress=shouldSaveProgress)
-        count += 1
-        tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
+        districtSplitScores = []
+        fillOriginDirection = None
+        goodSplitsFound = False
+        while not goodSplitsFound:
+            cutDistrictInfo = self.cutDistrictIntoExactRatio(ratio=ratio,
+                                                             populationDeviation=populationDeviation,
+                                                             weightingMethod=weightingMethod,
+                                                             breakingMethod=breakingMethod,
+                                                             fillOriginDirection=fillOriginDirection,
+                                                             shouldDrawFillAttempts=shouldDrawFillAttempts,
+                                                             shouldDrawEachStep=shouldDrawEachStep,
+                                                             shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
+                                                             shouldRefillEachPass=shouldRefillEachPass,
+                                                             fastCalculations=fastCalculations,
+                                                             showDetailedProgress=showDetailedProgress,
+                                                             shouldSaveProgress=shouldSaveProgress)
+            cutDistrict = cutDistrictInfo[0]
+            fillOriginDirection = cutDistrictInfo[1]
+            count += 1
+            tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
 
-        aDistrict = District(childrenGroups=cutDistrict[0])
+            aDistrictCandidate = District(childrenGroups=cutDistrict[0])
+            bDistrictCandidate = District(childrenGroups=cutDistrict[1])
+            isAGood = isPolygonAGoodDistrictShape(districtPolygon=aDistrictCandidate.geometry,
+                                                  parentPolygon=self.geometry)
+            isBGood = isPolygonAGoodDistrictShape(districtPolygon=bDistrictCandidate.geometry,
+                                                  parentPolygon=self.geometry)
+            splitScore = 0
+            if isAGood:
+                splitScore += 1
+            if isBGood:
+                splitScore += 1
+            districtSplitScores.append((aDistrictCandidate, bDistrictCandidate, splitScore, fillOriginDirection))
+            if splitScore is 2:
+                goodSplitsFound = True
+            else:
+                tqdm.write('   *** One or more split candidates is not a good shape! Trying again. ***')
+                saveDataToFileWithDescription(data=[self, aDistrictCandidate, bDistrictCandidate],
+                                              censusYear='',
+                                              stateName='',
+                                              descriptionOfInfo='WarningCase-SplitCandidatesBadShape-{0}-{1}'
+                                              .format(id(self), fillOriginDirection))
+
+            fillOriginDirection = getOppositeDirection(fillOriginDirection)
+            directionsTried = [districtSplitScore[3] for districtSplitScore in districtSplitScores]
+            if fillOriginDirection in directionsTried:
+                fillOriginDirection = getCWDirection(fillOriginDirection)
+                if fillOriginDirection in directionsTried:
+                    fillOriginDirection = getOppositeDirection(fillOriginDirection)
+                    if fillOriginDirection in directionsTried:
+                        goodSplitsFound = True
+
+        districtSplitScores.sort(key=lambda x: x[2], reverse=True)
+        bestDistrictSplit = districtSplitScores[0]
+        aDistrict = bestDistrictSplit[0]
+        bDistrict = bestDistrictSplit[1]
+        splitScore = bestDistrictSplit[2]
+        if splitScore is not 2:
+            tqdm.write('   *** Settled for a bad shaped district! ***')
+
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
                                                   weightingMethod=weightingMethod,
@@ -105,7 +150,6 @@ class District(BlockBorderGraph):
                                                   shouldSaveProgress=shouldSaveProgress)
         districts.extend(aDistrictSplits)
 
-        bDistrict = District(childrenGroups=cutDistrict[1])
         bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
                                                   populationDeviation=populationDeviation,
                                                   weightingMethod=weightingMethod,
@@ -123,7 +167,7 @@ class District(BlockBorderGraph):
         return districts
 
     def cutDistrictIntoExactRatio(self, ratio, populationDeviation, weightingMethod, breakingMethod,
-                                  shouldDrawFillAttempts=False, shouldDrawEachStep=False,
+                                  fillOriginDirection=None, shouldDrawFillAttempts=False, shouldDrawEachStep=False,
                                   shouldMergeIntoFormerRedistrictingGroups=False, shouldRefillEachPass=False,
                                   fastCalculations=True, showDetailedProgress=False, shouldSaveProgress=True):
 
@@ -132,7 +176,6 @@ class District(BlockBorderGraph):
         idealDistrictBSize = int(self.population / (ratioTotal / ratio[1]))
         candidateDistrictA = []
         candidateDistrictB = []
-        fillOriginDirection = None
         districtStillNotExactlyCut = True
         tqdm.write(
             '   *** Attempting forest fire fill for a {0} to {1} ratio on: ***'.format(ratio[0], ratio[1], id(self)))
@@ -228,8 +271,6 @@ class District(BlockBorderGraph):
                     else:
                         raise RuntimeError('{0} is not supported'.format(breakingMethod))
 
-
-
                 groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
                                            if len(groupToBreakUp[0].children) > 1]
                 if len(groupsCapableOfBreaking) == 0:
@@ -320,7 +361,7 @@ class District(BlockBorderGraph):
 
         tqdm.write(
             '   *** Successful fill attempt!!! *** <------------------------------------------------------------')
-        return candidateDistrictA, candidateDistrictB
+        return (candidateDistrictA, candidateDistrictB), fillOriginDirection
 
     def cutDistrictIntoRoughRatio(self, idealDistrictASize, weightingMethod, districtAStartingGroup=None,
                                   fillOriginDirection=None, shouldDrawEachStep=False, returnBestCandidateGroup=False,
@@ -603,7 +644,7 @@ def splitLowestEnergySeam(candidateDistrictA, candidateDistrictB,
             newScore = currentScore / scoreGroup.population
             relativeEnergyScores.append((scoreGroup, scoreAlignment, newScore, scoreSplitResultType))
         energyScores = relativeEnergyScores
-    
+
     energyScores.sort(key=lambda x: x[2])
     minimumEnergySeam = energyScores[0]
     groupToBreakUp = minimumEnergySeam[0]
