@@ -4,6 +4,7 @@ from shapely.ops import shared_paths, nearest_points, cascaded_union
 from geopy.distance import distance as distanceOnEarth
 from enum import Enum
 from math import atan2, degrees, pi, pow
+from sys import float_info
 from json import dumps
 from itertools import groupby
 from tqdm import tqdm
@@ -550,18 +551,33 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
 
 
 def deflatePolygonByATenth(polygon):
+    def scaleBasedOnRatio(ratio):
+        # f(x) = (((b-a)*(x-min))/(max-min))+a
+        # min = min input
+        # max = max input
+        # a = min output
+        # b = max output
+        a = 0.1
+        b = 0.01
+        return (((b-a)*(ratio-float_info.min))/(1-float_info.min))+a
+
     dimensions = getWidthAndHeightOfPolygonInLatLong(polygon)
     if dimensions[0] < dimensions[1]:
         shortestDimension = dimensions[0]
+        ratio = dimensions[0] / dimensions[1]
     else:
         shortestDimension = dimensions[1]
-    tenthOfShortestDimension = shortestDimension * 0.1
-    deflatedPolygon = polygon.buffer(-tenthOfShortestDimension)
+        ratio = dimensions[1] / dimensions[0]
+    tenthOfShortestDimension = shortestDimension * scaleBasedOnRatio(ratio)
+    exteriorPolygon = Polygon(polygon.exterior)
+    deflatedPolygon = exteriorPolygon.buffer(-tenthOfShortestDimension)
     return deflatedPolygon
 
 
 def isPolygonAnHourglass(polygon):
     deflatedPolygon = deflatePolygonByATenth(polygon)
+    from exportData.displayShapes import plotPolygons
+    plotPolygons([polygon, deflatedPolygon])
     if type(deflatedPolygon) is MultiPolygon:
         return True
     else:
