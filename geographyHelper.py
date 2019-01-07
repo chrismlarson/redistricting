@@ -550,7 +550,7 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
     return combinations
 
 
-def deflatePolygonByATenth(polygon):
+def deflatePolygonByAtMostATenth(polygon):
     def scaleBasedOnRatio(ratio):
         # f(x) = (((b-a)*(x-min))/(max-min))+a
         # min = min input
@@ -575,9 +575,7 @@ def deflatePolygonByATenth(polygon):
 
 
 def isPolygonAnHourglass(polygon):
-    deflatedPolygon = deflatePolygonByATenth(polygon)
-    from exportData.displayShapes import plotPolygons
-    plotPolygons([polygon, deflatedPolygon])
+    deflatedPolygon = deflatePolygonByAtMostATenth(polygon)
     if type(deflatedPolygon) is MultiPolygon:
         return True
     else:
