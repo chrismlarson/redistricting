@@ -551,7 +551,7 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
 
 
 def deflatePolygonByAtMostATenth(polygon):
-    def scaleBasedOnRatio(ratio):
+    def scaleBasedOnRatio(scaleRatio):
         # f(x) = (((b-a)*(x-min))/(max-min))+a
         # min = min input
         # max = max input
@@ -559,7 +559,7 @@ def deflatePolygonByAtMostATenth(polygon):
         # b = max output
         a = 0.1
         b = 0.01
-        return (((b - a) * (ratio - float_info.min)) / (1 - float_info.min)) + a
+        return (((b - a) * (scaleRatio - float_info.min)) / (1 - float_info.min)) + a
 
     dimensions = getWidthAndHeightOfPolygonInLatLong(polygon)
     if dimensions[0] < dimensions[1]:
