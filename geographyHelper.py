@@ -582,6 +582,30 @@ def isPolygonAnHourglass(polygon):
         return False
 
 
+def isPolygonAGoodDistrictShape(districtPolygon, parentPolygon):
+    from exportData.displayShapes import plotPolygons
+
+    def listOfPolygons(polygon):
+        if type(polygon) is MultiPolygon:
+            polygons = list(polygon)
+        else:
+            polygons = [polygon]
+        polygons = [Polygon(subPolygon.exterior) for subPolygon in polygons]
+        return polygons
+
+    parentPolygons = listOfPolygons(parentPolygon)
+    districtPolygons = listOfPolygons(districtPolygon)
+
+    districtPolygonsNotFullyFilled = [polygon
+                                      for polygon in districtPolygons
+                                      if not any([parentSubPolygon
+                                                  for parentSubPolygon in parentPolygons
+                                                  if polygon == parentSubPolygon])]
+    plotPolygons([parentPolygon] + districtPolygonsNotFullyFilled)
+    allGoodDistrictShapes = all([isPolygonAnHourglass(polygon) == False for polygon in districtPolygonsNotFullyFilled])
+    return allGoodDistrictShapes
+
+
 def alignmentOfPolygon(polygon):
     boxDimensions = dimensionsOfPolygon(polygon)
     if boxDimensions[0] < boxDimensions[1]:
