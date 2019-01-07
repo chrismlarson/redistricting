@@ -13,7 +13,7 @@ class TestGetGraphSplits(TestCase):
         testRedistrictingGroup = loadDataFromFile(filePath=testDataFilePath)
         graphSplits = testRedistrictingGroup.getGraphSplits()
 
-        self.assertEqual(len(graphSplits), 2)
+        self.assertEqual(len(graphSplits), 4)
 
     def test_getGraphSplits_TooSmallToBreak(self):
         testDataFilePath = os.path.join(os.path.dirname(__file__),
