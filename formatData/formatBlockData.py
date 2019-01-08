@@ -1,9 +1,9 @@
 from us import states
 from exportData.displayShapes import plotBlocksForRedistrictingGroups
-from exportData.exportData import saveDataToFileWithDescription, loadDataFromFileWithDescription, \
-    loadDataFromDirectoryWithDescription, saveDataToDirectoryWithDescription  # , exportGeographiesToShapefile
+from exportData.exportData import saveDataToFileWithDescription,\
+    loadDataFromFileWithDescription  # , exportGeographiesToShapefile
 from formatData.redistrictingGroup import createRedistrictingGroupsWithAtomicBlocksFromCensusData, \
-    prepareGraphsForAllRedistrictingGroups, RedistrictingGroup, prepareBlockGraphsForAllRedistrictingGroups
+    prepareGraphsForRedistrictingGroups, prepareBlockGraphsForRedistrictingGroups
 
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
@@ -13,25 +13,25 @@ descriptionToWorkWith = 'All'
 censusData = loadDataFromFileWithDescription(censusYear=censusYear,
                                              stateName=stateInfo.name,
                                              descriptionOfInfo='{0}Block'.format(descriptionToWorkWith))
-RedistrictingGroup.redistrictingGroupList = createRedistrictingGroupsWithAtomicBlocksFromCensusData(
+redistrictingGroupList = createRedistrictingGroupsWithAtomicBlocksFromCensusData(
     censusData=censusData)
 # exportGeographiesToShapefile(geographyList=AtomicBlock.atomicBlockList, descriptionOfInfo='AtomicGroups')
-saveDataToFileWithDescription(data=RedistrictingGroup.redistrictingGroupList,
+saveDataToFileWithDescription(data=redistrictingGroupList,
                               censusYear=censusYear,
                               stateName=stateInfo.name,
                               descriptionOfInfo='{0}RedistrictingGroupPreGraph'.format(descriptionToWorkWith))
 
-RedistrictingGroup.redistrictingGroupList = prepareBlockGraphsForAllRedistrictingGroups()
-saveDataToFileWithDescription(data=RedistrictingGroup.redistrictingGroupList,
+redistrictingGroupList = prepareBlockGraphsForRedistrictingGroups(redistrictingGroupList)
+saveDataToFileWithDescription(data=redistrictingGroupList,
                               censusYear=censusYear,
                               stateName=stateInfo.name,
                               descriptionOfInfo='{0}RedistrictingGroupBlockGraphsPrepared'
                               .format(descriptionToWorkWith))
 
-RedistrictingGroup.redistrictingGroupList = prepareGraphsForAllRedistrictingGroups()
-saveDataToFileWithDescription(data=RedistrictingGroup.redistrictingGroupList,
+redistrictingGroupList = prepareGraphsForRedistrictingGroups(redistrictingGroupList)
+saveDataToFileWithDescription(data=redistrictingGroupList,
                               censusYear=censusYear,
                               stateName=stateInfo.name,
                               descriptionOfInfo='{0}RedistrictingGroup'.format(descriptionToWorkWith))
-plotBlocksForRedistrictingGroups(redistrictingGroups=RedistrictingGroup.redistrictingGroupList,
+plotBlocksForRedistrictingGroups(redistrictingGroups=redistrictingGroupList,
                                  showDistrictNeighborConnections=True)

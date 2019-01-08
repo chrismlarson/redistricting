@@ -25,14 +25,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             raise AttributeError(
                 "Can't create a redistricting group with no children. GraphId: {0}".format(self.graphId))
         self.previousParentId = None
-        RedistrictingGroup.redistrictingGroupList.append(self)
-
-    redistrictingGroupList = []
 
     def __setstate__(self, state):
-        RedistrictingGroup.redistrictingGroupList.append(self)
-        if not hasattr(state, 'previousParentId'):
-            state['previousParentId'] = None
+        # if not hasattr(state, 'previousParentId'):
+        #     state['previousParentId'] = None
         super(RedistrictingGroup, self).__setstate__(state)
 
     def updateBlockContainerData(self):
@@ -523,8 +519,8 @@ def getNeighborsForGraphObjectsInList(graphObjects, inList):
     return neighborList
 
 
-def attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups():
-    for blockContainer in RedistrictingGroup.redistrictingGroupList:
+def attachOrphanBlocksToClosestNeighborForRedistrictingGroups(redistrictingGroupList):
+    for blockContainer in redistrictingGroupList:
         blockContainer.attachOrphanBlocksToClosestNeighbor()
 
 
@@ -566,56 +562,57 @@ def reorganizeAtomicBlockBetweenRedistrictingGroups(redistrictingGroups):
     return redistrictingGroups
 
 
-def updateAllBlockContainersData():
-    tqdm.write('*** Updating All Block Container Data ***')
-    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
-        for blockContainer in RedistrictingGroup.redistrictingGroupList:
-            tqdm.write('   *** One more ***')
-            blockContainer.updateBlockContainerData()
-            pbar.update(1)
+# def updateAllBlockContainersData():
+#     tqdm.write('*** Updating All Block Container Data ***')
+#     with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
+#         for blockContainer in RedistrictingGroup.redistrictingGroupList:
+#             tqdm.write('   *** One more ***')
+#             blockContainer.updateBlockContainerData()
+#             pbar.update(1)
 
 
-def removeWaterBlocksFromAllRedistrictingGroups():
+def removeWaterBlocksFromRedistrictingGroups(redistrictingGroupList):
     tqdm.write('\n')
     tqdm.write('*** Removing Water Blocks From All Redistricting Groups ***')
-    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
-        for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+    with tqdm(total=len(redistrictingGroupList)) as pbar:
+        for redistrictingGroup in redistrictingGroupList:
             redistrictingGroup.removeWaterBlocks()
             pbar.update(1)
 
 
-def splitNonContiguousRedistrictingGroups():
+def splitNonContiguousRedistrictingGroups(redistrictingGroupList):
     tqdm.write('\n')
     tqdm.write('*** Splitting Non-contiguous Redistricting Groups ***')
     groupsToRemove = []
-    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
-        for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+    with tqdm(total=len(redistrictingGroupList)) as pbar:
+        for redistrictingGroup in redistrictingGroupList:
             contiguousGroups = findContiguousGroupsOfGraphObjects(redistrictingGroup.children)
 
             if len(contiguousGroups) > 1:
                 groupsToRemove.append(redistrictingGroup)
                 for contiguousGroup in contiguousGroups:
-                    RedistrictingGroup(childrenBlocks=contiguousGroup)
+                    splitGroup = RedistrictingGroup(childrenBlocks=contiguousGroup)
+                    redistrictingGroupList.append(splitGroup)
             pbar.update(1)
 
     for groupToRemove in groupsToRemove:
-        RedistrictingGroup.redistrictingGroupList.remove(groupToRemove)
+        redistrictingGroupList.remove(groupToRemove)
 
 
-def assignNeighboringBlocksToBlocksForAllRedistrictingGroups():
+def assignNeighboringBlocksToBlocksForRedistrictingGroups(redistrictingGroupList):
     tqdm.write('\n')
     tqdm.write('*** Assigning Neighbors To All Census Blocks ***')
     count = 1
-    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+    for redistrictingGroup in redistrictingGroupList:
         tqdm.write('\n')
         tqdm.write('    *** Assigning Neighbors To All Census Blocks for Redistricting Group {0} of {1} ***'
-                   .format(count, len(RedistrictingGroup.redistrictingGroupList)))
+                   .format(count, len(redistrictingGroupList)))
         redistrictingGroup.assignNeighboringBlocksToBlocks()
         count += 1
 
     # find single orphaned atomic blocks and attach them to the closest neighbor.
     # That way we don't have too small of redistricting groups for splitting them in the next step.
-    attachOrphanBlocksToClosestNeighborForAllRedistrictingGroups()
+    attachOrphanBlocksToClosestNeighborForRedistrictingGroups(redistrictingGroupList)
 
 
 def attachOrphanRedistrictingGroupsToClosestNeighbor(neighborsToAttach):
@@ -642,16 +639,16 @@ def attachOrphanRedistrictingGroupsToClosestNeighbor(neighborsToAttach):
     tqdm.write('   *** No More Orphaned Redistricting Groups ***')
 
 
-def assignNeighboringRedistrictingGroupsForAllRedistrictingGroups():
+def assignNeighboringRedistrictingGroupsForRedistrictingGroups(redistrictingGroupList):
     assignNeighboringRedistrictingGroupsToRedistrictingGroups(
-        changedRedistrictingGroups=RedistrictingGroup.redistrictingGroupList,
-        allNeighborCandidates=RedistrictingGroup.redistrictingGroupList)
+        changedRedistrictingGroups=redistrictingGroupList,
+        allNeighborCandidates=redistrictingGroupList)
 
 
 def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistrictingGroups, allNeighborCandidates):
     tqdm.write('\n')
     tqdm.write('*** Removing Outdated Neighbor Connections ***')
-    with tqdm(total=len(RedistrictingGroup.redistrictingGroupList)) as pbar:
+    with tqdm(total=len(allNeighborCandidates)) as pbar:
         # remove outdated neighbor connections
         for redistrictingGroup in allNeighborCandidates:
             outdatedNeighborConnections = [neighbor for neighbor in redistrictingGroup.allNeighbors
@@ -678,26 +675,22 @@ def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistricti
     attachOrphanRedistrictingGroupsToClosestNeighbor(unionOfRedistrictingGroups)
 
 
-def getRedistrictingGroupWithCountyFIPS(countyFIPS):
+def getRedistrictingGroupWithCountyFIPS(countyFIPS, redistrictingGroupList):
     # for use when first loading redistricting group
-    return next((item for item in RedistrictingGroup.redistrictingGroupList if item.FIPS == countyFIPS), None)
+    return next((item for item in redistrictingGroupList if item.FIPS == countyFIPS), None)
 
 
-def convertAllCensusBlocksToAtomicBlocks():
+def convertAllCensusBlocksToAtomicBlocks(redistrictingGroupList):
     tqdm.write('\n')
     tqdm.write('*** Converting All Census Blocks to Atomic Blocks ***')
     count = 1
-    for blockContainer in RedistrictingGroup.redistrictingGroupList:
+    for blockContainer in redistrictingGroupList:
         tqdm.write('\n')
         tqdm.write('    *** Converting to Atomic Blocks for Redistricting Group {0} of {1} ***'
-                   .format(count, len(RedistrictingGroup.redistrictingGroupList)))
+                   .format(count, len(redistrictingGroupList)))
         atomicBlocksForGroup = createAtomicBlocksFromBlockList(blockList=blockContainer.children)
         blockContainer.children = atomicBlocksForGroup  # this triggers a block container update
         count += 1
-
-
-def validateAllRedistrictingGroups():
-    validateRedistrictingGroups(RedistrictingGroup.redistrictingGroupList)
 
 
 def validateRedistrictingGroups(groupList):
@@ -722,14 +715,17 @@ def validateContiguousRedistrictingGroups(groupList):
 
 
 def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
+    redistrictingGroupList = []
     tqdm.write('\n')
     tqdm.write('*** Creating Redistricting Groups from Census Data ***')
     with tqdm(total=len(censusData)) as pbar:
         for censusBlockDict in censusData:
-            redistrictingGroupWithCountyFIPS = getRedistrictingGroupWithCountyFIPS(censusBlockDict['county'])
+            redistrictingGroupWithCountyFIPS = getRedistrictingGroupWithCountyFIPS(censusBlockDict['county'],
+                                                                                   redistrictingGroupList)
             if redistrictingGroupWithCountyFIPS is None:
                 redistrictingGroupWithCountyFIPS = RedistrictingGroup(childrenBlocks=[], allowEmpty=True)
                 redistrictingGroupWithCountyFIPS.FIPS = censusBlockDict['county']
+                redistrictingGroupList.append(redistrictingGroupWithCountyFIPS)
 
             isWater = False
             if censusBlockDict['block'][0] == '0':
@@ -744,33 +740,33 @@ def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
             pbar.update(1)
 
     # remove FIPS info from the groups to not pollute data later
-    for redistrictingGroup in RedistrictingGroup.redistrictingGroupList:
+    for redistrictingGroup in redistrictingGroupList:
         del redistrictingGroup.FIPS
 
     # convert census blocks to atomic blocks
-    convertAllCensusBlocksToAtomicBlocks()
+    convertAllCensusBlocksToAtomicBlocks(redistrictingGroupList)
 
-    return RedistrictingGroup.redistrictingGroupList
+    return redistrictingGroupList
 
 
-def prepareBlockGraphsForAllRedistrictingGroups():
+def prepareBlockGraphsForRedistrictingGroups(redistrictingGroupList):
     # remove water blocks
-    removeWaterBlocksFromAllRedistrictingGroups()
+    removeWaterBlocksFromRedistrictingGroups(redistrictingGroupList)
 
     # assign neighboring blocks to atomic blocks
-    assignNeighboringBlocksToBlocksForAllRedistrictingGroups()
+    assignNeighboringBlocksToBlocksForRedistrictingGroups(redistrictingGroupList)
 
-    return RedistrictingGroup.redistrictingGroupList
+    return redistrictingGroupList
 
 
-def prepareGraphsForAllRedistrictingGroups():
+def prepareGraphsForRedistrictingGroups(redistrictingGroupList):
     # split non-contiguous redistricting groups
-    splitNonContiguousRedistrictingGroups()
+    splitNonContiguousRedistrictingGroups(redistrictingGroupList)
 
     # find and set neighboring geometries
-    assignNeighboringRedistrictingGroupsForAllRedistrictingGroups()
+    assignNeighboringRedistrictingGroupsForRedistrictingGroups(redistrictingGroupList)
 
-    validateAllRedistrictingGroups()
+    validateRedistrictingGroups(redistrictingGroupList)
     validateAllAtomicBlocks()
 
-    return RedistrictingGroup.redistrictingGroupList
+    return redistrictingGroupList

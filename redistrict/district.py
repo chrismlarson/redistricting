@@ -305,7 +305,6 @@ class District(BlockBorderGraph):
                                                                                countForProgress=countForProgress)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)
-                    RedistrictingGroup.redistrictingGroupList.remove(groupToBreakUp)
 
                     # assign the previous parent graphId so that we can combine the parts again after the exact split
                     for smallerRedistrictingGroup in smallerRedistrictingGroups:
