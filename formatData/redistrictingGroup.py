@@ -708,6 +708,10 @@ def validateRedistrictingGroups(groupList):
 def validateContiguousRedistrictingGroups(groupList):
     contiguousRegions = findContiguousGroupsOfGraphObjects(groupList)
     if len(contiguousRegions) > 1:
+        saveDataToFileWithDescription(data=contiguousRegions,
+                                      censusYear='',
+                                      stateName='',
+                                      descriptionOfInfo='ErrorCase-GroupsAreNotContiguous')
         plotGraphObjectGroups(contiguousRegions,
                               showDistrictNeighborConnections=True)
         raise ValueError("Don't have a contiguous set of RedistrictingGroups. There are {0} distinct groups".format(
