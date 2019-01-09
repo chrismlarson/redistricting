@@ -135,7 +135,7 @@ class District(BlockBorderGraph):
                     self.children = mergedRedistrictingGroups
 
             fillOriginDirection = getOppositeDirection(fillOriginDirection)
-            directionsTried = [districtSplitScore[3] for districtSplitScore in districtSplitScores]
+            directionsTried = [districtSplitScore[2] for districtSplitScore in districtSplitScores]
             if fillOriginDirection in directionsTried:
                 fillOriginDirection = getCWDirection(fillOriginDirection)
                 if fillOriginDirection in directionsTried:
