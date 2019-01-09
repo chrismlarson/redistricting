@@ -143,8 +143,10 @@ class District(BlockBorderGraph):
                     if fillOriginDirection in directionsTried:
                         goodSplitsFound = True
 
+        districtSplitScores.sort(key=lambda x: x[3], reverse=True)
         districtSplitScores.sort(key=lambda x: x[1], reverse=True)
-        bestDistrictSaveDescription = districtSplitScores[0]
+        bestDistrictSplit = districtSplitScores[0]
+        bestDistrictSaveDescription = bestDistrictSplit[0]
         bestDistrictSplit = loadDataFromFileWithDescription(censusYear='',
                                                             stateName='',
                                                             descriptionOfInfo=bestDistrictSaveDescription)
