@@ -103,7 +103,7 @@ class District(BlockBorderGraph):
                                                   parentPolygon=self.geometry)
             aPolsbyPopperScore = polsbyPopperScoreOfPolygon(aDistrictCandidate.geometry)
             bPolsbyPopperScore = polsbyPopperScoreOfPolygon(bDistrictCandidate.geometry)
-            combinedPolsbyPopperScore = aPolsbyPopperScore + bPolsbyPopperScore
+            minimumPolsbyPopperScore = min(aPolsbyPopperScore, bPolsbyPopperScore)
             splitScore = 0
             if isAGood:
                 splitScore += 1
@@ -118,7 +118,7 @@ class District(BlockBorderGraph):
             aDistrictCandidate = None
             bDistrictCandidate = None
             gc.collect()
-            districtSplitScores.append((saveDescription, splitScore, fillOriginDirection, combinedPolsbyPopperScore))
+            districtSplitScores.append((saveDescription, splitScore, fillOriginDirection, minimumPolsbyPopperScore))
 
             if splitScore is 2:
                 goodSplitsFound = True
