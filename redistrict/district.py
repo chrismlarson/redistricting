@@ -145,14 +145,14 @@ class District(BlockBorderGraph):
 
         districtSplitScores.sort(key=lambda x: x[3], reverse=True)
         districtSplitScores.sort(key=lambda x: x[1], reverse=True)
-        bestDistrictSplit = districtSplitScores[0]
-        bestDistrictSaveDescription = bestDistrictSplit[0]
+        bestDistrictSplitInfo = districtSplitScores[0]
+        bestDistrictSaveDescription = bestDistrictSplitInfo[0]
         bestDistrictSplit = loadDataFromFileWithDescription(censusYear='',
                                                             stateName='',
                                                             descriptionOfInfo=bestDistrictSaveDescription)
         aDistrict = bestDistrictSplit[0]
         bDistrict = bestDistrictSplit[1]
-        splitScore = bestDistrictSplit[2]
+        splitScore = bestDistrictSplitInfo[2]
         if splitScore is not 2:
             tqdm.write('   *** Settled for a bad shaped district! ***')
 
