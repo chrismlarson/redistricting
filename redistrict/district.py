@@ -2,7 +2,7 @@ import math
 import gc
 from tqdm import tqdm
 from enum import Enum
-from exportData.displayShapes import plotGraphObjectGroups
+from exportData.displayShapes import plotGraphObjectGroups, plotDistrict
 from exportData.exportData import saveDataToFileWithDescription, loadDataFromFileWithDescription
 from formatData.atomicBlock import assignNeighborBlocksFromCandidateBlocks
 from formatData.blockBorderGraph import BlockBorderGraph
@@ -93,46 +93,50 @@ class District(BlockBorderGraph):
             cutDistrict = cutDistrictInfo[0]
             fillOriginDirection = cutDistrictInfo[1]
             count += 1
-            tqdm.write('   *** Cut district into exact ratio: {0} ***'.format(count))
-
-            aDistrictCandidate = District(childrenGroups=cutDistrict[0])
-            bDistrictCandidate = District(childrenGroups=cutDistrict[1])
-            isAGood = isPolygonAGoodDistrictShape(districtPolygon=aDistrictCandidate.geometry,
-                                                  parentPolygon=self.geometry)
-            isBGood = isPolygonAGoodDistrictShape(districtPolygon=bDistrictCandidate.geometry,
-                                                  parentPolygon=self.geometry)
-            aPolsbyPopperScore = polsbyPopperScoreOfPolygon(aDistrictCandidate.geometry)
-            bPolsbyPopperScore = polsbyPopperScoreOfPolygon(bDistrictCandidate.geometry)
-            minimumPolsbyPopperScore = min(aPolsbyPopperScore, bPolsbyPopperScore)
-            splitScore = 0
-            if isAGood:
-                splitScore += 1
-            if isBGood:
-                splitScore += 1
-
-            saveDescription = 'SplitCandidate-{0}-{1}-'.format(id(self), fillOriginDirection)
-            saveDataToFileWithDescription(data=[aDistrictCandidate, bDistrictCandidate],
-                                          censusYear='',
-                                          stateName='',
-                                          descriptionOfInfo=saveDescription)
-            aDistrictCandidate = None
-            bDistrictCandidate = None
-            gc.collect()
-            districtSplitScores.append((saveDescription, splitScore, fillOriginDirection, minimumPolsbyPopperScore))
-
-            if splitScore is 2:
-                goodSplitsFound = True
+            if cutDistrict is None:
+                tqdm.write('   *** Failed to cut district. Attempt #:{0} for {1} ***'.format(count, id(self)))
+                districtSplitScores.append((None, 0, fillOriginDirection, 0))
             else:
-                tqdm.write('   *** One or more split candidates is not a good shape! Trying again. ***')
-                if shouldMergeIntoFormerRedistrictingGroups:
-                    tqdm.write('      *** Merging district into starting groups ***')
-                    mergedRedistrictingGroups = mergeCandidatesIntoPreviousGroups(candidates=[self.children])[0]
-                    tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
-                    assignNeighboringRedistrictingGroupsToRedistrictingGroups(
-                        changedRedistrictingGroups=mergedRedistrictingGroups,
-                        allNeighborCandidates=mergedRedistrictingGroups)
-                    validateRedistrictingGroups(mergedRedistrictingGroups)
-                    self.children = mergedRedistrictingGroups
+                tqdm.write('   *** Cut district into exact ratio. Attempt #:{0} for {1} ***'.format(count, id(self)))
+
+                aDistrictCandidate = District(childrenGroups=cutDistrict[0])
+                bDistrictCandidate = District(childrenGroups=cutDistrict[1])
+                isAGood = isPolygonAGoodDistrictShape(districtPolygon=aDistrictCandidate.geometry,
+                                                      parentPolygon=self.geometry)
+                isBGood = isPolygonAGoodDistrictShape(districtPolygon=bDistrictCandidate.geometry,
+                                                      parentPolygon=self.geometry)
+                aPolsbyPopperScore = polsbyPopperScoreOfPolygon(aDistrictCandidate.geometry)
+                bPolsbyPopperScore = polsbyPopperScoreOfPolygon(bDistrictCandidate.geometry)
+                minimumPolsbyPopperScore = min(aPolsbyPopperScore, bPolsbyPopperScore)
+                splitScore = 0
+                if isAGood:
+                    splitScore += 1
+                if isBGood:
+                    splitScore += 1
+
+                saveDescription = 'SplitCandidate-{0}-{1}-'.format(id(self), fillOriginDirection)
+                saveDataToFileWithDescription(data=[aDistrictCandidate, bDistrictCandidate],
+                                              censusYear='',
+                                              stateName='',
+                                              descriptionOfInfo=saveDescription)
+                aDistrictCandidate = None
+                bDistrictCandidate = None
+                gc.collect()
+                districtSplitScores.append((saveDescription, splitScore, fillOriginDirection, minimumPolsbyPopperScore))
+
+                if splitScore is 2:
+                    goodSplitsFound = True
+                else:
+                    tqdm.write('   *** One or more split candidates is not a good shape! Trying again. ***')
+                    if shouldMergeIntoFormerRedistrictingGroups:
+                        tqdm.write('      *** Merging district into starting groups ***')
+                        mergedRedistrictingGroups = mergeCandidatesIntoPreviousGroups(candidates=[self.children])[0]
+                        tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
+                        assignNeighboringRedistrictingGroupsToRedistrictingGroups(
+                            changedRedistrictingGroups=mergedRedistrictingGroups,
+                            allNeighborCandidates=mergedRedistrictingGroups)
+                        validateRedistrictingGroups(mergedRedistrictingGroups)
+                        self.children = mergedRedistrictingGroups
 
             fillOriginDirection = getOppositeDirection(fillOriginDirection)
             directionsTried = [districtSplitScore[2] for districtSplitScore in districtSplitScores]
@@ -147,6 +151,10 @@ class District(BlockBorderGraph):
         districtSplitScores.sort(key=lambda x: x[1], reverse=True)
         bestDistrictSplitInfo = districtSplitScores[0]
         bestDistrictSaveDescription = bestDistrictSplitInfo[0]
+        if bestDistrictSaveDescription is None:
+            plotDistrict(self, showDistrictNeighborConnections=True)
+            raise RuntimeError("Could not find a good split for {0} from list: {1}".format(id(self),
+                                                                                           districtSplitScores))
         bestDistrictSplit = loadDataFromFileWithDescription(censusYear='',
                                                             stateName='',
                                                             descriptionOfInfo=bestDistrictSaveDescription)
@@ -270,8 +278,12 @@ class District(BlockBorderGraph):
                                                       censusYear='',
                                                       stateName='',
                                                       descriptionOfInfo='ErrorCase-NoGroupsCandidatesCapableOfBreaking')
-                        plotGraphObjectGroups([self.children, districtAStartingGroup])
-                        raise RuntimeError("Couldn't fill and all breakup candidates have too few children")
+
+                        tqdm.write(
+                            '   *** Failed fill attempt!!! *** <------------------------------------------------------')
+                        tqdm.write("Couldn't fill and all breakup candidates have too few children!!!! For {0}".format(
+                            id(self)))
+                        return None, fillOriginDirection
                     groupsToBreakUp = [(breakupCandidates[0], Alignment.all)]
                 else:
                     if breakingMethod is BreakingMethod.splitBestCandidateGroup:
@@ -474,7 +486,8 @@ class District(BlockBorderGraph):
             i += 1
 
         candidateDistrictB = [group for group in self.children if group not in candidateDistrictA]
-        return (candidateDistrictA, candidateDistrictB), nextBestGroupFromCandidateDistrictA, fillOriginDirection, startingObjects
+        return (candidateDistrictA,
+                candidateDistrictB), nextBestGroupFromCandidateDistrictA, fillOriginDirection, startingObjects
 
 
 def createDistrictFromRedistrictingGroups(redistrictingGroups):
