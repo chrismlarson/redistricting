@@ -437,8 +437,9 @@ class District(BlockBorderGraph):
 
                 score = polsbyPopperScoreOfPolygon(candidatePolygon)
                 remainingScore = polsbyPopperScoreOfPolygon(combinedRemainingPolygon)
+                minimumPolsbyPopperScore = min(score, remainingScore)
 
-                return score + remainingScore
+                return minimumPolsbyPopperScore
 
             def distanceScoreOfCombinedGeometry(currentGroupPolygon, remainingGroups, candidateGroups,
                                                 fastCalculations=True):
