@@ -76,8 +76,10 @@ class District(BlockBorderGraph):
 
         districtSplitScores = []
         fillOriginDirection = None
-        goodSplitsFound = False
-        while not goodSplitsFound:
+        doneFindingSplits = False
+        while not doneFindingSplits:
+            tqdm.write('   *** Split starting. Using {0} and {1} ***'.format(weightingMethod, breakingMethod))
+
             cutDistrictInfo = self.cutDistrictIntoExactRatio(ratio=ratio,
                                                              populationDeviation=populationDeviation,
                                                              weightingMethod=weightingMethod,
@@ -125,7 +127,7 @@ class District(BlockBorderGraph):
                 districtSplitScores.append((saveDescription, splitScore, fillOriginDirection, minimumPolsbyPopperScore))
 
                 if splitScore is 2:
-                    goodSplitsFound = True
+                    doneFindingSplits = True
                 else:
                     tqdm.write('   *** One or more split candidates is not a good shape! Trying again. ***')
                     if shouldMergeIntoFormerRedistrictingGroups:
@@ -138,14 +140,10 @@ class District(BlockBorderGraph):
                         validateRedistrictingGroups(mergedRedistrictingGroups)
                         self.children = mergedRedistrictingGroups
 
-            fillOriginDirection = getOppositeDirection(fillOriginDirection)
-            directionsTried = [districtSplitScore[2] for districtSplitScore in districtSplitScores]
-            if fillOriginDirection in directionsTried:
-                fillOriginDirection = getCWDirection(fillOriginDirection)
-                if fillOriginDirection in directionsTried:
-                    fillOriginDirection = getOppositeDirection(fillOriginDirection)
-                    if fillOriginDirection in directionsTried:
-                        goodSplitsFound = True
+            if breakingMethod is BreakingMethod.splitLowestRelativeEnergySeam or breakingMethod is BreakingMethod.splitLowestEnergySeam:
+                breakingMethod = BreakingMethod.splitGroupsOnEdge
+            else:
+                doneFindingSplits = True
 
         districtSplitScores.sort(key=lambda x: x[3], reverse=True)
         districtSplitScores.sort(key=lambda x: x[1], reverse=True)
