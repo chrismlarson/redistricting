@@ -162,9 +162,12 @@ class District(BlockBorderGraph):
                                                             descriptionOfInfo=bestDistrictSaveDescription)
         aDistrict = bestDistrictSplit[0]
         bDistrict = bestDistrictSplit[1]
-        splitScore = bestDistrictSplitInfo[2]
+        splitScore = bestDistrictSplitInfo[1]
+        bestFillDirection = bestDistrictSplitInfo[2]
+        polsbyPopperScore = bestDistrictSplitInfo[3]
         if splitScore is not 2:
-            tqdm.write('   *** Settled for a bad shaped district! ***')
+            tqdm.write('   *** Settled for a bad shaped district! Direction: {0} Split score: {1} Polsby-Popper score: {2} ***'
+                       .format(bestFillDirection, splitScore, polsbyPopperScore))
         totalSplitCount += 1
 
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
