@@ -546,6 +546,8 @@ def mergeCandidatesIntoPreviousGroups(candidates):
                         allBlocks.extend(redistrictingGroup.children)
 
                     # assign block neighbors to former border blocks
+                    tqdm.write('      *** Starting a merge with {0} border blocks and {1} total blocks ***'.format(
+                        len(allBorderBlocks), len(allBlocks)))
                     for formerBorderBlock in allBorderBlocks:
                         assignNeighborBlocksFromCandidateBlocks(block=formerBorderBlock,
                                                                 candidateBlocks=allBlocks)
