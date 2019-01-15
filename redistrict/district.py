@@ -133,7 +133,9 @@ class District(BlockBorderGraph):
                     tqdm.write('   *** One or more split candidates is not a good shape! Trying again. ***')
                     if shouldMergeIntoFormerRedistrictingGroups:
                         tqdm.write('      *** Merging district into starting groups ***')
-                        mergedRedistrictingGroups = mergeCandidatesIntoPreviousGroups(candidates=[self.children])[0]
+                        redistrictingGroupsInDistrict = cutDistrict[0] + cutDistrict[1]
+                        mergedRedistrictingGroups = mergeCandidatesIntoPreviousGroups(
+                            candidates=[redistrictingGroupsInDistrict])[0]
                         tqdm.write('      *** Re-attaching new Redistricting Groups to existing Groups ***')
                         assignNeighboringRedistrictingGroupsToRedistrictingGroups(
                             changedRedistrictingGroups=mergedRedistrictingGroups,
