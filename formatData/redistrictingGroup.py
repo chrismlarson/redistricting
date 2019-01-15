@@ -191,6 +191,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                                   censusYear='',
                                                   stateName='',
                                                   descriptionOfInfo='ErrorCase-NoNeighborsForGraphGroups')
+                    plotGraphObjectGroups([self.children, blocksToActOn], showDistrictNeighborConnections=True)
                     plotBlocksForRedistrictingGroup(self, showBlockNeighborConnections=True)
                     raise RuntimeError("Can't find neighbors for graph objects")
 
