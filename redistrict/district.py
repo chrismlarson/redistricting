@@ -362,6 +362,10 @@ class District(BlockBorderGraph):
                 tqdm.write('      *** Updating District Candidate Data ***')
                 self.children = updatedChildren
 
+                # need to make sure the starting group still is in the district
+                if districtAStartingGroup not in self.children:
+                    districtAStartingGroup = None
+
             shouldSaveThisPass = True
             if breakingMethod is BreakingMethod.splitLowestEnergySeam:
                 if count % 10 != 0:

@@ -10,6 +10,5 @@ class TestSplitNonContiguousRedistrictingGroups(TestCase):
         testDataFilePath = os.path.join(os.path.dirname(__file__),
                                         'testData/2010-Michigan-CharlevoixRedistrictingGroupInfoNeedsSplit.redistdata')
         testData = loadDataFromFile(filePath=testDataFilePath)
-        RedistrictingGroup.redistrictingGroupList = testData
-        splitNonContiguousRedistrictingGroups()
-        self.assertEqual(len(RedistrictingGroup.redistrictingGroupList), 2)
+        splitNonContiguousRedistrictingGroups(testData)
+        self.assertEqual(len(testData), 2)
