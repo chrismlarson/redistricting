@@ -76,6 +76,7 @@ class District(BlockBorderGraph):
 
         districtSplitScores = []
         thisSplitCount = 0
+        originalBreakingMethod = breakingMethod
         fillOriginDirection = None
         doneFindingSplits = False
         while not doneFindingSplits:
@@ -169,7 +170,7 @@ class District(BlockBorderGraph):
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
                                                   weightingMethod=weightingMethod,
-                                                  breakingMethod=breakingMethod,
+                                                  breakingMethod=originalBreakingMethod,
                                                   totalSplitCount=totalSplitCount,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
@@ -183,7 +184,7 @@ class District(BlockBorderGraph):
         bDistrictSplits = bDistrict.splitDistrict(numberOfDistricts=bRatio,
                                                   populationDeviation=populationDeviation,
                                                   weightingMethod=weightingMethod,
-                                                  breakingMethod=breakingMethod,
+                                                  breakingMethod=originalBreakingMethod,
                                                   totalSplitCount=totalSplitCount,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
