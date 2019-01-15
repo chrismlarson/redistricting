@@ -53,7 +53,7 @@ class District(BlockBorderGraph):
                       populationDeviation,
                       weightingMethod,
                       breakingMethod,
-                      count=None,
+                      totalSplitCount=None,
                       shouldMergeIntoFormerRedistrictingGroups=False,
                       shouldRefillEachPass=False,
                       shouldDrawFillAttempts=False,
@@ -61,9 +61,9 @@ class District(BlockBorderGraph):
                       fastCalculations=True,
                       showDetailedProgress=False,
                       shouldSaveProgress=True):
-        if count is None:
+        if totalSplitCount is None:
             tqdm.write('*** Splitting into {0} districts ***'.format(numberOfDistricts))
-            count = 0
+            totalSplitCount = 0
 
         districts = []
 
@@ -75,6 +75,7 @@ class District(BlockBorderGraph):
         ratio = (aRatio, bRatio)
 
         districtSplitScores = []
+        thisSplitCount = 0
         fillOriginDirection = None
         doneFindingSplits = False
         while not doneFindingSplits:
@@ -94,12 +95,12 @@ class District(BlockBorderGraph):
                                                              shouldSaveProgress=shouldSaveProgress)
             cutDistrict = cutDistrictInfo[0]
             fillOriginDirection = cutDistrictInfo[1]
-            count += 1
+            thisSplitCount += 1
             if cutDistrict is None:
-                tqdm.write('   *** Failed to cut district. Attempt #:{0} for {1} ***'.format(count, id(self)))
+                tqdm.write('   *** Failed to cut district. Attempt #:{0} for {1} ***'.format(thisSplitCount, id(self)))
                 districtSplitScores.append((None, 0, fillOriginDirection, 0))
             else:
-                tqdm.write('   *** Cut district into exact ratio. Attempt #:{0} for {1} ***'.format(count, id(self)))
+                tqdm.write('   *** Cut district into exact ratio. Attempt #:{0} for {1} ***'.format(thisSplitCount, id(self)))
 
                 aDistrictCandidate = District(childrenGroups=cutDistrict[0])
                 bDistrictCandidate = District(childrenGroups=cutDistrict[1])
@@ -161,12 +162,13 @@ class District(BlockBorderGraph):
         splitScore = bestDistrictSplitInfo[2]
         if splitScore is not 2:
             tqdm.write('   *** Settled for a bad shaped district! ***')
+        totalSplitCount += 1
 
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
                                                   populationDeviation=populationDeviation,
                                                   weightingMethod=weightingMethod,
                                                   breakingMethod=breakingMethod,
-                                                  count=count,
+                                                  totalSplitCount=totalSplitCount,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
@@ -180,7 +182,7 @@ class District(BlockBorderGraph):
                                                   populationDeviation=populationDeviation,
                                                   weightingMethod=weightingMethod,
                                                   breakingMethod=breakingMethod,
-                                                  count=count,
+                                                  totalSplitCount=totalSplitCount,
                                                   shouldMergeIntoFormerRedistrictingGroups=shouldMergeIntoFormerRedistrictingGroups,
                                                   shouldRefillEachPass=shouldRefillEachPass,
                                                   shouldDrawFillAttempts=shouldDrawFillAttempts,
