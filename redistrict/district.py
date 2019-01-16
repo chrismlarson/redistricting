@@ -126,7 +126,8 @@ class District(BlockBorderGraph):
                 aDistrictCandidate = None
                 bDistrictCandidate = None
                 gc.collect()
-                districtSplitScores.append((saveDescription, splitScore, fillOriginDirection, minimumPolsbyPopperScore))
+                districtSplitScores.append((saveDescription, splitScore, fillOriginDirection, minimumPolsbyPopperScore,
+                                            breakingMethod))
 
                 if splitScore is 2:
                     doneFindingSplits = True
@@ -162,12 +163,13 @@ class District(BlockBorderGraph):
                                                             descriptionOfInfo=bestDistrictSaveDescription)
         aDistrict = bestDistrictSplit[0]
         bDistrict = bestDistrictSplit[1]
-        splitScore = bestDistrictSplitInfo[1]
+        bestSplitScore = bestDistrictSplitInfo[1]
         bestFillDirection = bestDistrictSplitInfo[2]
-        polsbyPopperScore = bestDistrictSplitInfo[3]
-        if splitScore is not 2:
-            tqdm.write('   *** Settled for a bad shaped district! Direction: {0} Split score: {1} Polsby-Popper score: {2} ***'
-                       .format(bestFillDirection, splitScore, polsbyPopperScore))
+        bestPolsbyPopperScore = bestDistrictSplitInfo[3]
+        bestBreakingMethod = bestDistrictSplitInfo[4]
+        if bestSplitScore is not 2:
+            tqdm.write('   *** Settled for a bad shaped district! Direction: {0} Split score: {1} Polsby-Popper score: {2} Breaking method: {3} ***'
+                       .format(bestFillDirection, bestSplitScore, bestPolsbyPopperScore, bestBreakingMethod))
         totalSplitCount += 1
 
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
