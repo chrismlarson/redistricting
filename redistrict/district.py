@@ -101,7 +101,8 @@ class District(BlockBorderGraph):
                 tqdm.write('   *** Failed to cut district. Attempt #:{0} for {1} ***'.format(thisSplitCount, id(self)))
                 districtSplitScores.append((None, 0, fillOriginDirection, 0))
             else:
-                tqdm.write('   *** Cut district into exact ratio. Attempt #:{0} for {1} ***'.format(thisSplitCount, id(self)))
+                tqdm.write(
+                    '   *** Cut district into exact ratio. Attempt #:{0} for {1} ***'.format(thisSplitCount, id(self)))
 
                 aDistrictCandidate = District(childrenGroups=cutDistrict[0])
                 bDistrictCandidate = District(childrenGroups=cutDistrict[1])
@@ -145,10 +146,19 @@ class District(BlockBorderGraph):
                         validateRedistrictingGroups(mergedRedistrictingGroups)
                         self.children = mergedRedistrictingGroups
 
-            if breakingMethod is BreakingMethod.splitLowestRelativeEnergySeam or breakingMethod is BreakingMethod.splitLowestEnergySeam:
-                breakingMethod = BreakingMethod.splitGroupsOnEdge
-            else:
-                doneFindingSplits = True
+            splitScoresWithCurrentBreakingMethod = [districtSplitScore for districtSplitScore in districtSplitScores
+                                                    if districtSplitScore[4] is breakingMethod]
+            fillOriginDirection = getOppositeDirection(fillOriginDirection)
+            directionsTried = [districtSplitScore[2] for districtSplitScore in splitScoresWithCurrentBreakingMethod]
+            if fillOriginDirection in directionsTried:
+                fillOriginDirection = getCWDirection(fillOriginDirection)
+                if fillOriginDirection in directionsTried:
+                    fillOriginDirection = getOppositeDirection(fillOriginDirection)
+                    if fillOriginDirection in directionsTried:
+                        if breakingMethod is BreakingMethod.splitLowestRelativeEnergySeam or breakingMethod is BreakingMethod.splitLowestEnergySeam:
+                            breakingMethod = BreakingMethod.splitGroupsOnEdge
+                        else:
+                            doneFindingSplits = True
 
         districtSplitScores.sort(key=lambda x: x[3], reverse=True)
         districtSplitScores.sort(key=lambda x: x[1], reverse=True)
@@ -168,8 +178,9 @@ class District(BlockBorderGraph):
         bestPolsbyPopperScore = bestDistrictSplitInfo[3]
         bestBreakingMethod = bestDistrictSplitInfo[4]
         if bestSplitScore is not 2:
-            tqdm.write('   *** Settled for a bad shaped district! Direction: {0} Split score: {1} Polsby-Popper score: {2} Breaking method: {3} ***'
-                       .format(bestFillDirection, bestSplitScore, bestPolsbyPopperScore, bestBreakingMethod))
+            tqdm.write(
+                '   *** Settled for a bad shaped district! Direction: {0} Split score: {1} Polsby-Popper score: {2} Breaking method: {3} ***'
+                .format(bestFillDirection, bestSplitScore, bestPolsbyPopperScore, bestBreakingMethod))
         totalSplitCount += 1
 
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
