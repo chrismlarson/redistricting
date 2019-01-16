@@ -146,19 +146,19 @@ class District(BlockBorderGraph):
                         validateRedistrictingGroups(mergedRedistrictingGroups)
                         self.children = mergedRedistrictingGroups
 
-            splitScoresWithCurrentBreakingMethod = [districtSplitScore for districtSplitScore in districtSplitScores
-                                                    if districtSplitScore[4] is breakingMethod]
-            fillOriginDirection = getOppositeDirection(fillOriginDirection)
-            directionsTried = [districtSplitScore[2] for districtSplitScore in splitScoresWithCurrentBreakingMethod]
-            if fillOriginDirection in directionsTried:
-                fillOriginDirection = getCWDirection(fillOriginDirection)
-                if fillOriginDirection in directionsTried:
+                    splitScoresWithCurrentBreakingMethod = [districtSplitScore for districtSplitScore in districtSplitScores
+                                                            if districtSplitScore[4] is breakingMethod]
                     fillOriginDirection = getOppositeDirection(fillOriginDirection)
+                    directionsTried = [districtSplitScore[2] for districtSplitScore in splitScoresWithCurrentBreakingMethod]
                     if fillOriginDirection in directionsTried:
-                        if breakingMethod is BreakingMethod.splitLowestRelativeEnergySeam or breakingMethod is BreakingMethod.splitLowestEnergySeam:
-                            breakingMethod = BreakingMethod.splitGroupsOnEdge
-                        else:
-                            doneFindingSplits = True
+                        fillOriginDirection = getCWDirection(fillOriginDirection)
+                        if fillOriginDirection in directionsTried:
+                            fillOriginDirection = getOppositeDirection(fillOriginDirection)
+                            if fillOriginDirection in directionsTried:
+                                if breakingMethod is BreakingMethod.splitLowestRelativeEnergySeam or breakingMethod is BreakingMethod.splitLowestEnergySeam:
+                                    breakingMethod = BreakingMethod.splitGroupsOnEdge
+                                else:
+                                    doneFindingSplits = True
 
         districtSplitScores.sort(key=lambda x: x[3], reverse=True)
         districtSplitScores.sort(key=lambda x: x[1], reverse=True)
