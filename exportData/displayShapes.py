@@ -257,7 +257,7 @@ def plotGraphObjectGroups(graphObjectGroups,
     pyplot.show()
 
 
-def plotPolygons(polygons):
+def plotPolygons(polygons, title=None):
     fig = pyplot.figure(figsize=(8, 8))
     ax = fig.gca()
 
@@ -266,6 +266,9 @@ def plotPolygons(polygons):
         if polygon is not None:
             ax.add_patch(PolygonPatch(polygon, fc=getColor(count), ec=getColor(count), alpha=0.5, zorder=2))
         count += 1
+
+    if title is not None:
+        fig.suptitle(title, fontsize=16)
 
     ax.axis('scaled')
     pyplot.show()
