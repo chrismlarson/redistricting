@@ -124,6 +124,10 @@ class District(BlockBorderGraph):
                                               censusYear='',
                                               stateName='',
                                               descriptionOfInfo=saveDescription)
+                saveGeometry = (saveDescription,
+                                aDistrictCandidate.geometry,
+                                bDistrictCandidate.geometry,
+                                self.geometry)
                 aDistrictCandidate = None
                 bDistrictCandidate = None
                 gc.collect()
@@ -133,8 +137,7 @@ class District(BlockBorderGraph):
                                             'fillOriginDirection': fillOriginDirection,
                                             'minimumPolsbyPopperScore': minimumPolsbyPopperScore,
                                             'breakingMethod': breakingMethod,
-                                            'geometryInfo': (saveDescription, aDistrictCandidate.geometry,
-                                                             bDistrictCandidate.geometry, self.geometry)})
+                                            'geometryInfo': saveGeometry})
 
                 if splitScore is 2:
                     doneFindingSplits = True
