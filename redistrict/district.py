@@ -127,8 +127,14 @@ class District(BlockBorderGraph):
                 aDistrictCandidate = None
                 bDistrictCandidate = None
                 gc.collect()
-                districtSplitScores.append((saveDescription, splitScore, fillOriginDirection, minimumPolsbyPopperScore,
-                                            breakingMethod))
+
+                districtSplitScores.append({'saveDescription': saveDescription,
+                                            'splitScore': splitScore,
+                                            'fillOriginDirection': fillOriginDirection,
+                                            'minimumPolsbyPopperScore': minimumPolsbyPopperScore,
+                                            'breakingMethod': breakingMethod,
+                                            'geometryInfo': (saveDescription, aDistrictCandidate.geometry,
+                                                             bDistrictCandidate.geometry, self.geometry)})
 
                 if splitScore is 2:
                     doneFindingSplits = True
@@ -147,7 +153,7 @@ class District(BlockBorderGraph):
                         self.children = mergedRedistrictingGroups
 
             splitScoresWithCurrentBreakingMethod = [districtSplitScore for districtSplitScore in districtSplitScores
-                                                    if districtSplitScore[4] is breakingMethod]
+                                                    if districtSplitScore['breakingMethod'] is breakingMethod]
             fillOriginDirection = getOppositeDirection(fillOriginDirection)
             directionsTried = [districtSplitScore[2] for districtSplitScore in splitScoresWithCurrentBreakingMethod]
             if fillOriginDirection in directionsTried:
@@ -160,10 +166,13 @@ class District(BlockBorderGraph):
                         else:
                             doneFindingSplits = True
 
-        districtSplitScores.sort(key=lambda x: x[3], reverse=True)
-        districtSplitScores.sort(key=lambda x: x[1], reverse=True)
+        districtSplitScores.sort(key=lambda x: x['minimumPolsbyPopperScore'], reverse=True)
+        saveDataToFileWithDescription(data=districtSplitScores,
+                                      censusYear='',
+                                      stateName='',
+                                      descriptionOfInfo='DistrictSplitScores-{0}'.format(id(self)))
         bestDistrictSplitInfo = districtSplitScores[0]
-        bestDistrictSaveDescription = bestDistrictSplitInfo[0]
+        bestDistrictSaveDescription = bestDistrictSplitInfo['saveDescription']
         if bestDistrictSaveDescription is None:
             plotDistrict(self, showDistrictNeighborConnections=True)
             raise RuntimeError("Could not find a good split for {0} from list: {1}".format(id(self),
@@ -173,14 +182,13 @@ class District(BlockBorderGraph):
                                                             descriptionOfInfo=bestDistrictSaveDescription)
         aDistrict = bestDistrictSplit[0]
         bDistrict = bestDistrictSplit[1]
-        bestSplitScore = bestDistrictSplitInfo[1]
-        bestFillDirection = bestDistrictSplitInfo[2]
-        bestPolsbyPopperScore = bestDistrictSplitInfo[3]
-        bestBreakingMethod = bestDistrictSplitInfo[4]
-        if bestSplitScore is not 2:
-            tqdm.write(
-                '   *** Settled for a bad shaped district! Direction: {0} Split score: {1} Polsby-Popper score: {2} Breaking method: {3} ***'
-                .format(bestFillDirection, bestSplitScore, bestPolsbyPopperScore, bestBreakingMethod))
+        bestSplitScore = bestDistrictSplitInfo['splitScore']
+        bestFillDirection = bestDistrictSplitInfo['fillOriginDirection']
+        bestPolsbyPopperScore = bestDistrictSplitInfo['minimumPolsbyPopperScore']
+        bestBreakingMethod = bestDistrictSplitInfo['breakingMethod']
+        tqdm.write('   *** Chose a district split! Ratio: {0}***'.format(ratio))
+        tqdm.write('   *** Direction: {0} Split score: {1} Polsby-Popper score: {2} Breaking method: {3} ***'
+                   .format(bestFillDirection, bestSplitScore, bestPolsbyPopperScore, bestBreakingMethod))
         totalSplitCount += 1
 
         aDistrictSplits = aDistrict.splitDistrict(numberOfDistricts=aRatio,
