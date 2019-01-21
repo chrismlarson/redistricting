@@ -158,7 +158,8 @@ class District(BlockBorderGraph):
             splitScoresWithCurrentBreakingMethod = [districtSplitScore for districtSplitScore in districtSplitScores
                                                     if districtSplitScore['breakingMethod'] is breakingMethod]
             fillOriginDirection = getOppositeDirection(fillOriginDirection)
-            directionsTried = [districtSplitScore[2] for districtSplitScore in splitScoresWithCurrentBreakingMethod]
+            directionsTried = [districtSplitScore['fillOriginDirection']
+                               for districtSplitScore in splitScoresWithCurrentBreakingMethod]
             if fillOriginDirection in directionsTried:
                 fillOriginDirection = getCWDirection(fillOriginDirection)
                 if fillOriginDirection in directionsTried:
