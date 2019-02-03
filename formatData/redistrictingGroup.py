@@ -754,9 +754,10 @@ def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
     return redistrictingGroupList
 
 
-def prepareBlockGraphsForRedistrictingGroups(redistrictingGroupList):
-    # remove water blocks
-    removeWaterBlocksFromRedistrictingGroups(redistrictingGroupList)
+def prepareBlockGraphsForRedistrictingGroups(redistrictingGroupList, shouldRemoveWaterBlocks=True):
+    if shouldRemoveWaterBlocks:
+        # remove water blocks
+        removeWaterBlocksFromRedistrictingGroups(redistrictingGroupList)
 
     # assign neighboring blocks to atomic blocks
     assignNeighboringBlocksToBlocksForRedistrictingGroups(redistrictingGroupList)
