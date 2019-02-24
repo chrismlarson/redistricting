@@ -45,7 +45,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def attachOrphanBlocksToClosestNeighbor(self):
         orphanBlocks = self.findOrphanBlocks()
         for orphanBlock in orphanBlocks:
-            closestBlock = findClosestGeometry(originGeometry=self, otherGeometries=self.children)
+            otherBlocks = [block for block in self.children if block is not orphanBlock]
+            closestBlock = findClosestGeometry(originGeometry=self, otherGeometries=otherBlocks)
             orphanBlock.addNeighbors(neighbors=[closestBlock])
             closestBlock.addNeighbors(neighbors=[orphanBlock])
 
@@ -542,23 +543,36 @@ def reorganizeAtomicBlockBetweenRedistrictingGroups(redistrictingGroups):
                                            key=lambda contiguousRegion: len(contiguousRegion))
             smallestContiguousRegionPolygon = polygonFromMultipleGeometries(smallestContiguousRegion)
 
+            otherRegion = None
             otherSplitChildrenList = [x for x in atomicBlockGroups if x is not atomicBlockGroup]
             for otherSplitChildren in otherSplitChildrenList:
                 otherSplitChildrenPolygon = polygonFromMultipleGeometries(otherSplitChildren)
                 if intersectingPolygons(smallestContiguousRegionPolygon, otherSplitChildrenPolygon):
-                    for childBlock in smallestContiguousRegion:
-                        atomicBlockGroup.remove(childBlock)
-                        childBlock.removeNeighborConnections()
-
-                        otherSplitChildren.append(childBlock)
-                        assignNeighborBlocksFromCandidateBlocks(block=childBlock, candidateBlocks=otherSplitChildren)
-                    contiguousRegions = findContiguousGroupsOfGraphObjects(atomicBlockGroup)
+                    otherRegion = otherSplitChildren
                     break
+
+            if otherRegion is None:
+                allBlocksInOtherSplits = [block for blockList in otherSplitChildrenList for block in blockList]
+                closestBlock = findClosestGeometry(smallestContiguousRegionPolygon, allBlocksInOtherSplits)
+                closestSplit = next((blockList for blockList in otherSplitChildrenList if closestBlock in blockList),
+                                    None)
+                otherRegion = closestSplit
+
+            for childBlock in smallestContiguousRegion:
+                atomicBlockGroup.remove(childBlock)
+                childBlock.removeNeighborConnections()
+
+                otherRegion.append(childBlock)
+                assignNeighborBlocksFromCandidateBlocks(block=childBlock, candidateBlocks=otherRegion)
+            contiguousRegions = findContiguousGroupsOfGraphObjects(atomicBlockGroup)
 
     for key, value in atomicBlockGroupDict.items():
         groupWithId = next((redistrictingGroup for redistrictingGroup in redistrictingGroups
                             if redistrictingGroup.graphId == key), None)
         groupWithId.children = value
+
+    for redistrictingGroup in redistrictingGroups:
+        redistrictingGroup.attachOrphanBlocksToClosestNeighbor()
 
     return redistrictingGroups
 
