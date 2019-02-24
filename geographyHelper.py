@@ -3,7 +3,7 @@ from shapely.geometry.base import BaseGeometry
 from shapely.ops import shared_paths, nearest_points, cascaded_union
 from geopy.distance import distance as distanceOnEarth
 from enum import Enum
-from math import atan2, degrees, pi, pow
+from math import atan2, degrees, pi, pow, inf
 from sys import float_info
 from json import dumps
 from itertools import groupby
@@ -591,6 +591,28 @@ def isPolygonAnHourglass(polygon):
         return True
     else:
         return False
+
+
+def deflationScore(polygon, shouldPlotResult=False):
+    exteriorPolygon = Polygon(polygon.exterior)
+    stepSize = 1.0 / 60.0 / 60.0
+    stepSize = 0.01
+    count = 0
+    while True:
+        deflateValue = stepSize * count
+        deflatedPolygon = exteriorPolygon.buffer(-deflateValue)
+        if deflatedPolygon.is_empty:
+            deflateValue = inf
+            break
+        if type(deflatedPolygon) is MultiPolygon:
+            break
+        count += 1
+
+    if shouldPlotResult and not deflatedPolygon.is_empty:
+        from exportData.displayShapes import plotPolygons
+        plotPolygons([exteriorPolygon, deflatedPolygon])
+
+    return deflateValue
 
 
 def isPolygonAGoodDistrictShape(districtPolygon, parentPolygon):
