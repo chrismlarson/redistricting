@@ -2,12 +2,15 @@ from us import states
 from exportData.displayShapes import plotDistricts, plotPolygons
 from exportData.exportData import loadDataFromFileWithDescription, saveDataToFileWithDescription, \
     saveGeoJSONToDirectoryWithDescription
+from geographyHelper import populationDeviationFromPercent
 from redistrict.district import createDistrictFromRedistrictingGroups, WeightingMethod, BreakingMethod
 
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
 censusYear = 2010
 descriptionToWorkWith = 'All'
+numberOfDistricts = 110
+overallPercentageOffIdealAllowed = 0.0996
 
 redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
                                                       stateName=stateInfo.name,
@@ -16,8 +19,12 @@ redistrictingGroups = loadDataFromFileWithDescription(censusYear=censusYear,
 
 initialDistrict = createDistrictFromRedistrictingGroups(redistrictingGroups=redistrictingGroups)
 
-districts = initialDistrict.splitDistrict(numberOfDistricts=14,
-                                          populationDeviation=1,
+populationDeviation = populationDeviationFromPercent(overallPercentage=overallPercentageOffIdealAllowed,
+                                                     numberOfDistricts=numberOfDistricts,
+                                                     totalPopulation=initialDistrict.population)
+
+districts = initialDistrict.splitDistrict(numberOfDistricts=numberOfDistricts,
+                                          populationDeviation=populationDeviation,
                                           weightingMethod=WeightingMethod.cardinalDistance,
                                           breakingMethod=BreakingMethod.splitGroupsOnEdge,
                                           shouldMergeIntoFormerRedistrictingGroups=True,
