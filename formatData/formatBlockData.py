@@ -21,7 +21,7 @@ saveDataToFileWithDescription(data=redistrictingGroupList,
                               stateName=stateInfo.name,
                               descriptionOfInfo='{0}RedistrictingGroupPreGraph'.format(descriptionToWorkWith))
 
-redistrictingGroupList = prepareBlockGraphsForRedistrictingGroups(redistrictingGroupList)
+redistrictingGroupList = prepareBlockGraphsForRedistrictingGroups(redistrictingGroupList, shouldRemoveWaterBlocks=False)
 saveDataToFileWithDescription(data=redistrictingGroupList,
                               censusYear=censusYear,
                               stateName=stateInfo.name,
