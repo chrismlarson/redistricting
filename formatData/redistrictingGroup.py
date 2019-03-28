@@ -654,13 +654,16 @@ def attachOrphanRedistrictingGroupsToClosestNeighbor(neighborsToAttach):
     tqdm.write('   *** No More Orphaned Redistricting Groups ***')
 
 
-def assignNeighboringRedistrictingGroupsForRedistrictingGroups(redistrictingGroupList):
+def assignNeighboringRedistrictingGroupsForRedistrictingGroups(redistrictingGroupList, shouldAttachOrphans=True):
     assignNeighboringRedistrictingGroupsToRedistrictingGroups(
         changedRedistrictingGroups=redistrictingGroupList,
-        allNeighborCandidates=redistrictingGroupList)
+        allNeighborCandidates=redistrictingGroupList,
+        shouldAttachOrphans=shouldAttachOrphans)
 
 
-def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistrictingGroups, allNeighborCandidates):
+def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistrictingGroups,
+                                                              allNeighborCandidates,
+                                                              shouldAttachOrphans=True):
     tqdm.write('\n')
     tqdm.write('*** Removing Outdated Neighbor Connections ***')
     with tqdm(total=len(allNeighborCandidates)) as pbar:
@@ -687,7 +690,45 @@ def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistricti
 
         unionOfRedistrictingGroups = list(set(changedRedistrictingGroups) | set(allNeighborCandidates))
 
-    attachOrphanRedistrictingGroupsToClosestNeighbor(unionOfRedistrictingGroups)
+    if shouldAttachOrphans:
+        attachOrphanRedistrictingGroupsToClosestNeighbor(unionOfRedistrictingGroups)
+
+
+def mergeGroupsOfRedistrictingGroups(groupsOfRedistrictingGroups):
+    mergedRedistrictingGroups = []
+    with tqdm(total=len(groupsOfRedistrictingGroups)) as pbar:
+        for groupOfRedistrictingGroups in groupsOfRedistrictingGroups:
+            if len(groupOfRedistrictingGroups) == 1:
+                mergedRedistrictingGroups.append(groupOfRedistrictingGroups[0])
+            else:
+                allBorderBlocks = []
+                allBlocks = []
+                for redistrictingGroup in groupOfRedistrictingGroups:
+                    allBorderBlocks.extend(redistrictingGroup.borderChildren)
+                    allBlocks.extend(redistrictingGroup.children)
+
+                # assign block neighbors to former border blocks
+                tqdm.write('      *** Starting a merge with {0} border blocks and {1} total blocks ***'.format(
+                    len(allBorderBlocks), len(allBlocks)))
+                for formerBorderBlock in allBorderBlocks:
+                    assignNeighborBlocksFromCandidateBlocks(block=formerBorderBlock,
+                                                            candidateBlocks=allBlocks)
+
+                contiguousRegions = findContiguousGroupsOfGraphObjects(allBlocks)
+
+                mergedRedistrictingGroupsForPrevious = []
+                for contiguousRegion in contiguousRegions:
+                    contiguousRegionGroup = RedistrictingGroup(childrenBlocks=contiguousRegion)
+                    # assign block neighbors to former border blocks
+                    for borderBlock in contiguousRegionGroup.borderChildren:
+                        assignNeighborBlocksFromCandidateBlocks(block=borderBlock,
+                                                                candidateBlocks=contiguousRegionGroup.children)
+                    contiguousRegionGroup.validateBlockNeighbors()
+                    mergedRedistrictingGroupsForPrevious.append(contiguousRegionGroup)
+                mergedRedistrictingGroups.extend(mergedRedistrictingGroupsForPrevious)
+            pbar.update(1)
+
+    return mergedRedistrictingGroups
 
 
 def getRedistrictingGroupWithCountyFIPS(countyFIPS, redistrictingGroupList):
@@ -790,3 +831,20 @@ def prepareGraphsForRedistrictingGroups(redistrictingGroupList):
     validateAllAtomicBlocks()
 
     return redistrictingGroupList
+
+
+def mergeContiguousRedistrictingGroups(redistrictingGroupList):
+    for redistrictingGroup in redistrictingGroupList:
+        redistrictingGroup.clearNeighborGraphObjects()
+
+    assignNeighboringRedistrictingGroupsForRedistrictingGroups(redistrictingGroupList, shouldAttachOrphans=False)
+    contiguousRedistrictingGroups = findContiguousGroupsOfGraphObjects(redistrictingGroupList)
+    mergedGroupsOfRedistrictingGroups = mergeGroupsOfRedistrictingGroups(contiguousRedistrictingGroups)
+
+    # find and set neighboring geometries
+    assignNeighboringRedistrictingGroupsForRedistrictingGroups(mergedGroupsOfRedistrictingGroups)
+
+    validateRedistrictingGroups(redistrictingGroupList)
+    validateAllAtomicBlocks()
+
+    return mergedGroupsOfRedistrictingGroups
