@@ -317,25 +317,28 @@ class District(BlockBorderGraph):
                         return None, fillOriginDirection
                     groupsToBreakUp = [(breakupCandidates[0], Alignment.all)]
                 else:
-                    if breakingMethod is BreakingMethod.splitBestCandidateGroup:
-                        groupsToBreakUp = [(nextBest, Alignment.all) for nextBest in nextBestGroupForCandidateDistrictA]
-                    elif breakingMethod is BreakingMethod.splitGroupsOnEdge:
-                        groupsToBreakUp = splitGroupsOnEdge(candidateDistrictA,
-                                                            candidateDistrictB,
-                                                            shouldMergeIntoFormerRedistrictingGroups,
-                                                            shouldRefillEachPass)
-                    elif breakingMethod is BreakingMethod.splitLowestEnergySeam:
-                        groupsToBreakUp = splitLowestEnergySeam(candidateDistrictA,
-                                                                candidateDistrictB,
-                                                                showDetailedProgress,
-                                                                energyRelativeToPopulation=False)
-                    elif breakingMethod is BreakingMethod.splitLowestRelativeEnergySeam:
-                        groupsToBreakUp = splitLowestEnergySeam(candidateDistrictA,
-                                                                candidateDistrictB,
-                                                                showDetailedProgress,
-                                                                energyRelativeToPopulation=True)
+                    if len(candidateDistrictB) == 1:
+                        groupsToBreakUp = [(candidateDistrictB[0], Alignment.all)]
                     else:
-                        raise RuntimeError('{0} is not supported'.format(breakingMethod))
+                        if breakingMethod is BreakingMethod.splitBestCandidateGroup:
+                            groupsToBreakUp = [(nextBest, Alignment.all) for nextBest in nextBestGroupForCandidateDistrictA]
+                        elif breakingMethod is BreakingMethod.splitGroupsOnEdge:
+                            groupsToBreakUp = splitGroupsOnEdge(candidateDistrictA,
+                                                                candidateDistrictB,
+                                                                shouldMergeIntoFormerRedistrictingGroups,
+                                                                shouldRefillEachPass)
+                        elif breakingMethod is BreakingMethod.splitLowestEnergySeam:
+                            groupsToBreakUp = splitLowestEnergySeam(candidateDistrictA,
+                                                                    candidateDistrictB,
+                                                                    showDetailedProgress,
+                                                                    energyRelativeToPopulation=False)
+                        elif breakingMethod is BreakingMethod.splitLowestRelativeEnergySeam:
+                            groupsToBreakUp = splitLowestEnergySeam(candidateDistrictA,
+                                                                    candidateDistrictB,
+                                                                    showDetailedProgress,
+                                                                    energyRelativeToPopulation=True)
+                        else:
+                            raise RuntimeError('{0} is not supported'.format(breakingMethod))
 
                 groupsCapableOfBreaking = [groupToBreakUp for groupToBreakUp in groupsToBreakUp
                                            if len(groupToBreakUp[0].children) > 1]
