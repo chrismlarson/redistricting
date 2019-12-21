@@ -10,6 +10,15 @@ from exportData.exportData import saveDataToFileWithDescription
 def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf, specificCountiesOnly=None):
     requestedCounties = censusRequest.sf1.get(fields=('NAME'),
                                               geo={'for': 'county:*', 'in': 'state:{0}'.format(stateFIPSCode)})
+
+    # clean up county names after API update
+    ## remove ", StateName"
+    requestedState = states.lookup(stateFIPSCode)
+    stateName = requestedState.name
+    for requestedCounty in requestedCounties:
+        countyName = requestedCounty['NAME'].replace(', {0}'.format(stateName), '')
+        requestedCounty['NAME'] = countyName
+
     if specificCountiesOnly != None:
         listOfSpecificCounties = []
         for specificCounty in specificCountiesOnly:
