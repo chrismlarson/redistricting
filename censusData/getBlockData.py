@@ -35,8 +35,10 @@ def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf, specificCoun
 
 
 def getBlocksInCounty(stateFIPSCode, countyFIPSCode):
-    # P0010001 is the total population as defined by: https://api.census.gov/data/2010/sf1/variables.html
-    countyBlocks = censusRequest.sf1.get(fields=('P0010001'),
+    # DEPRECATED: P0010001 is the total population as defined by: https://api.census.gov/data/2010/sf1/variables.html
+    # The API now defaults to: https://api.census.gov/data/2010/dec/sf1/variables.html
+    # Which now uses: P001001 for total population
+    countyBlocks = censusRequest.sf1.get(fields=('P001001'),
                                          geo={'for': 'block:*', 'in': 'state:{0} county:{1}'.format(
                                              stateFIPSCode, countyFIPSCode)})
     return countyBlocks
