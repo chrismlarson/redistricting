@@ -793,7 +793,7 @@ def createRedistrictingGroupsWithAtomicBlocksFromCensusData(censusData):
             blockFromData = censusBlock.CensusBlock(countyFIPS=censusBlockDict['county'],
                                                     tractFIPS=censusBlockDict['tract'],
                                                     blockFIPS=censusBlockDict['block'],
-                                                    population=int(censusBlockDict['P0010001']),
+                                                    population=int(censusBlockDict['P001001']),
                                                     isWater=isWater,
                                                     geoJSONGeometry=censusBlockDict['geometry'])
             redistrictingGroupWithCountyFIPS.children.append(blockFromData)
