@@ -844,7 +844,7 @@ def mergeContiguousRedistrictingGroups(redistrictingGroupList):
     # find and set neighboring geometries
     assignNeighboringRedistrictingGroupsForRedistrictingGroups(mergedGroupsOfRedistrictingGroups)
 
-    validateRedistrictingGroups(redistrictingGroupList)
+    validateRedistrictingGroups(mergedGroupsOfRedistrictingGroups)
     validateAllAtomicBlocks()
 
     return mergedGroupsOfRedistrictingGroups
