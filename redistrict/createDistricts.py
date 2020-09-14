@@ -26,7 +26,7 @@ populationDeviation = populationDeviationFromPercent(overallPercentage=overallPe
 districts = initialDistrict.splitDistrict(numberOfDistricts=numberOfDistricts,
                                           populationDeviation=populationDeviation,
                                           weightingMethod=WeightingMethod.cardinalDistance,
-                                          breakingMethod=BreakingMethod.splitGroupsOnEdge,
+                                          breakingMethod=BreakingMethod.splitBestCandidateGroup,
                                           shouldMergeIntoFormerRedistrictingGroups=True,
                                           shouldDrawEachStep=False,
                                           shouldRefillEachPass=True,

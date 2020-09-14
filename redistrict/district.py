@@ -285,8 +285,16 @@ class District(BlockBorderGraph):
             candidateDistrictAPop = sum(group.population for group in candidateDistrictA)
             candidateDistrictBPop = sum(group.population for group in candidateDistrictB)
 
-            if idealDistrictASize - populationDeviation <= candidateDistrictAPop <= idealDistrictASize + populationDeviation and \
-                    idealDistrictBSize - populationDeviation <= candidateDistrictBPop <= idealDistrictBSize + populationDeviation:
+            # calculate how far off population we are in our fill so far
+            minDistrictASize = idealDistrictASize - populationDeviation
+            maxDistrictASize = idealDistrictASize + populationDeviation
+            minDistrictBSize = idealDistrictBSize - populationDeviation
+            maxDistrictBSize = idealDistrictBSize + populationDeviation
+            currentDistrictASizeDiff = idealDistrictASize - candidateDistrictAPop
+            currentDistrictBSizeDiff = idealDistrictBSize - candidateDistrictBPop
+
+            if minDistrictASize <= candidateDistrictAPop <= maxDistrictASize and \
+                    minDistrictBSize <= candidateDistrictBPop <= maxDistrictBSize:
                 districtStillNotExactlyCut = False
             else:
                 tqdm.write('      *** Unsuccessful fill attempt. {0} off the count. ***'
@@ -369,9 +377,12 @@ class District(BlockBorderGraph):
                         countForProgress = None
                     groupToBreakUp = groupToBreakUpItem[0]
                     alignmentForSplits = groupToBreakUpItem[1]
-                    smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep,
-                                                                               alignment=alignmentForSplits,
-                                                                               countForProgress=countForProgress)
+                    smallerRedistrictingGroups = groupToBreakUp.getPrecisePopulationEnergySplit(desiredPopulation=currentDistrictASizeDiff,
+                                                                                                populationDeviation=populationDeviation,
+                                                                                                direction=fillOriginDirection)
+                    # smallerRedistrictingGroups = groupToBreakUp.getGraphSplits(shouldDrawGraph=shouldDrawEachStep,
+                    #                                                            alignment=alignmentForSplits,
+                    #                                                            countForProgress=countForProgress)
                     updatedChildren.extend(smallerRedistrictingGroups)
                     updatedChildren.remove(groupToBreakUp)
 

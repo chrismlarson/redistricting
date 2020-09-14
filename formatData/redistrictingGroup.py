@@ -231,6 +231,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         for child in self.children:
             child.populationEnergy = 0
 
+    def getPrecisePopulationEnergySplit(self, desiredPopulation, populationDeviation, direction):
+        raise NotImplemented('getPrecisePopulationEnergySplit: This method is not yet implemented')
+
     def getPopulationEnergySplit(self, alignment, shouldDrawGraph=False):
         polygonSplitResult = self.getPopulationEnergyPolygonSplit(alignment=alignment, shouldDrawGraph=shouldDrawGraph)
         polygonSplitResultType = polygonSplitResult[0]
