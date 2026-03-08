@@ -309,6 +309,25 @@ def plotDistricts(districts,
     pyplot.show()
 
 
+def plotDistrictComparison(districts2010, districts2020):
+    fig, (ax1, ax2) = pyplot.subplots(1, 2, figsize=(20, 10))
+    cmap = colormaps['tab20']
+    for ax, districts, title in [
+        (ax1, districts2010, '2010 Districts'),
+        (ax2, districts2020, '2020 Districts'),
+    ]:
+        for i, district in enumerate(districts):
+            color = cmap(i % 20)
+            for redistrictingGroup in district.children:
+                ax.add_patch(patch_from_polygon(redistrictingGroup.geometry,
+                                                facecolor=color, edgecolor='black', linewidth=0.5))
+        ax.autoscale()
+        ax.set_aspect('equal')
+        ax.set_title(title)
+    pyplot.tight_layout()
+    pyplot.show()
+
+
 def getColor(index):
     if index >= len(distinctColors):
         index -= len(distinctColors)

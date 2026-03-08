@@ -1,3 +1,4 @@
+import sys
 from us import states
 from exportData.displayShapes import plotDistricts, plotPolygons
 from exportData.exportData import loadDataFromFileWithDescription, saveDataToFileWithDescription, \
@@ -7,7 +8,7 @@ from redistrict.district import createDistrictFromRedistrictingGroups, Weighting
 
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
-censusYear = 2010
+censusYear = int(sys.argv[1]) if len(sys.argv) > 1 else 2010
 descriptionToWorkWith = 'All'
 numberOfDistricts = 110
 overallPercentageOffIdealAllowed = 0.0996
