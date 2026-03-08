@@ -1,9 +1,9 @@
 from shapely.geometry import shape, mapping, Point, Polygon, MultiPolygon, LineString, MultiLineString
 from shapely.geometry.base import BaseGeometry
-from shapely.ops import shared_paths, nearest_points, cascaded_union
+from shapely.ops import shared_paths, nearest_points, unary_union
 from geopy.distance import distance as distanceOnEarth
 from enum import Enum
-from math import atan2, degrees, pi, pow, inf
+from math import atan2, degrees, pi, inf
 from sys import float_info
 from json import dumps
 from itertools import groupby
@@ -11,19 +11,8 @@ from tqdm import tqdm
 from exportData.displayShapes import plotGraphObjectGroups
 
 
-# On Windows, I needed to install Shapely manually
-# Found whl file here: https://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
-# And then ran:
-# from pip._internal import main
-# def install_whl(path):
-#     main(['install', path])
-# install_whl("path_to_file\\Shapely-1.6.4.post1-cp37-cp37m-win32.whl")
-# but not sure if this worked...
-
-
 def convertGeoJSONToShapely(geoJSON):
-    shapelyShape = shape(geoJSON)
-    return shapelyShape
+    return shape(geoJSON)
 
 
 def intersectingGeometries(a, b):
@@ -36,44 +25,26 @@ def intersectingPolygons(a, b):
         # does one contain the other?
         if doesEitherPolygonContainTheOther(a, b):
             return True
-        else:
-            # do they touch by just a point or do they share an edge?
-            return len(findCommonEdges(a, b)) > 0
-    else:
-        return False
+        # do they touch by just a point or do they share an edge?
+        return len(findCommonEdges(a, b)) > 0
+    return False
 
 
 def allIntersectingPolygons(a, b):
-    aPolygons = []
-    bPolygons = []
-
-    if type(a) is MultiPolygon:
-        for aPolygon in a:
-            aPolygons.append(aPolygon)
-    else:
-        aPolygons.append(a)
-
-    if type(b) is MultiPolygon:
-        for bPolygon in b:
-            bPolygons.append(bPolygon)
-    else:
-        bPolygons.append(b)
-
-    allIntersecting = all([intersectingPolygons(aPolygon, bPolygon)
-                           for aPolygon in aPolygons for bPolygon in bPolygons])
-    return allIntersecting
+    aPolygons = list(a.geoms) if isinstance(a, MultiPolygon) else [a]
+    bPolygons = list(b.geoms) if isinstance(b, MultiPolygon) else [b]
+    return all(intersectingPolygons(aPolygon, bPolygon)
+               for aPolygon in aPolygons for bPolygon in bPolygons)
 
 
 def doesEitherGeographyContainTheOther(a, b):
-    aContainsBBoundary = doesGeographyContainTheOther(container=a, target=b)
-    bContainsABoundary = doesGeographyContainTheOther(container=b, target=a)
-    return aContainsBBoundary or bContainsABoundary
+    return doesGeographyContainTheOther(container=a, target=b) or \
+           doesGeographyContainTheOther(container=b, target=a)
 
 
 def doesEitherPolygonContainTheOther(a, b):
-    aContainsBBoundary = doesPolygonContainTheOther(container=a, target=b)
-    bContainsABoundary = doesPolygonContainTheOther(container=b, target=a)
-    return aContainsBBoundary or bContainsABoundary
+    return doesPolygonContainTheOther(container=a, target=b) or \
+           doesPolygonContainTheOther(container=b, target=a)
 
 
 def getPolygonThatIntersectsGeometry(polygonList, targetGeometry):
@@ -95,32 +66,24 @@ def getPolygonThatContainsGeometry(polygonList, targetGeometry, useTargetReprese
 
 
 def doesGeographyContainTheOther(container, target, useTargetRepresentativePoint=False):
-    containsTargetBoundary = doesPolygonContainTheOther(container=container.geometry,
-                                                        target=target.geometry,
-                                                        useTargetRepresentativePoint=useTargetRepresentativePoint)
-    return containsTargetBoundary
+    return doesPolygonContainTheOther(container=container.geometry,
+                                      target=target.geometry,
+                                      useTargetRepresentativePoint=useTargetRepresentativePoint)
 
 
 def doesPolygonContainTheOther(container, target, ignoreInteriors=True, useTargetRepresentativePoint=False):
-    if type(container) is MultiPolygon:
-        containerPolygons = list(container)
-    else:
-        containerPolygons = [container]
-    if type(target) is MultiPolygon:
-        targetPolygons = list(target)
-    else:
-        targetPolygons = [target]
+    containerPolygons = list(container.geoms) if isinstance(container, MultiPolygon) else [container]
+    targetPolygons = list(target.geoms) if isinstance(target, MultiPolygon) else [target]
     containsTarget = False
     for containerPolygon in containerPolygons:
         for targetPolygon in targetPolygons:
             if containerPolygon.interiors and ignoreInteriors:
                 containerPolygonExterior = Polygon(containerPolygon.exterior)
-                targetPolygonExterior = Polygon(targetPolygon.exterior)
-
                 if useTargetRepresentativePoint:
                     containsTarget = containsTarget or containerPolygonExterior.contains(
                         targetPolygon.representative_point())
                 else:
+                    targetPolygonExterior = Polygon(targetPolygon.exterior)
                     containsTarget = containsTarget or containerPolygonExterior.contains(targetPolygonExterior)
             else:
                 if useTargetRepresentativePoint:
@@ -131,15 +94,9 @@ def doesPolygonContainTheOther(container, target, ignoreInteriors=True, useTarge
 
 
 def isBoundaryGeometry(parent, child):
-    if type(parent.geometry) is MultiPolygon:
-        containerPolygons = list(parent.geometry)
-    else:
-        containerPolygons = [parent.geometry]
-    isChildBoundaryGeometry = False
-    for containerPolygon in containerPolygons:
-        isChildBoundaryGeometry = isChildBoundaryGeometry or containerPolygon.exterior.intersects(
-            child.geometry.boundary)
-    return isChildBoundaryGeometry
+    containerPolygons = list(parent.geometry.geoms) if isinstance(parent.geometry, MultiPolygon) else [parent.geometry]
+    return any(containerPolygon.exterior.intersects(child.geometry.boundary)
+               for containerPolygon in containerPolygons)
 
 
 def polygonFromMultipleGeometries(geometryList, useEnvelope=False, simplificationTolerance=0.0):
@@ -150,11 +107,8 @@ def polygonFromMultipleGeometries(geometryList, useEnvelope=False, simplificatio
 
 
 def polygonFromMultiplePolygons(polygonList, useEnvelope=False, simplificationTolerance=0.0):
-    if useEnvelope:
-        polygonsToCombine = [polygon.envelope for polygon in polygonList]
-    else:
-        polygonsToCombine = polygonList
-    union = cascaded_union(polygonsToCombine)
+    polygonsToCombine = [polygon.envelope for polygon in polygonList] if useEnvelope else polygonList
+    union = unary_union(polygonsToCombine)
     union = union.simplify(tolerance=simplificationTolerance)  # to remove excessive points
     return union
 
@@ -179,9 +133,7 @@ def findCommonEdges(a, b):
         bLines = getLineListFromBoundary(b.boundary)
         for bLine in bLines:
             edgesInCommon.append(shared_paths(aLine, bLine))
-
-    edgesInCommon = [edge for edge in edgesInCommon if not edge.is_empty]
-    return edgesInCommon
+    return [edge for edge in edgesInCommon if not edge.is_empty]
 
 
 def findDirection(basePoint, targetPoint, topAngleFromCenter=45.0):
@@ -221,15 +173,13 @@ def findDirectionOfShape(baseShape, targetShape):
     dimensionsOfBaseShape = dimensionsOfPolygon(baseShape)
     topAngleFromCenterOfBaseShape = topAngleFromCenterOfRectangle(width=dimensionsOfBaseShape[0],
                                                                   height=dimensionsOfBaseShape[1])
-    direction = findDirection(basePoint=basePoint, targetPoint=targetPoint,
-                              topAngleFromCenter=topAngleFromCenterOfBaseShape)
-    return direction
+    return findDirection(basePoint=basePoint, targetPoint=targetPoint,
+                         topAngleFromCenter=topAngleFromCenterOfBaseShape)
 
 
 def findDirectionOfShapeFromPoint(basePoint, targetShape):
     targetPoint = targetShape.centroid
-    direction = findDirection(basePoint=basePoint, targetPoint=targetPoint)
-    return direction
+    return findDirection(basePoint=basePoint, targetPoint=targetPoint)
 
 
 def findDirectionOfBorderGeometries(parentGeometry, targetGeometries):
@@ -252,8 +202,7 @@ def topAngleFromCenterOfRectangle(width, height):
     if sideAngle < 0:
         sideAngle = sideAngle + (2 * pi)
 
-    sideAngleDegrees = degrees(sideAngle)
-    return sideAngleDegrees
+    return degrees(sideAngle)
 
 
 def mostCardinalOfGeometries(geometryList, direction):
@@ -298,34 +247,28 @@ def getCWDirection(direction):
 
 
 def getLineListFromBoundary(boundary):
-    lineList = []
-    if type(boundary) is MultiLineString:
-        lineList = boundary.geoms
-    elif type(boundary) is LineString:
-        lineList.append(boundary)
-    return lineList
+    if isinstance(boundary, MultiLineString):
+        return list(boundary.geoms)
+    elif isinstance(boundary, LineString):
+        return [boundary]
+    return []
 
 
 def shapelyGeometryToGeoJSON(geometry):
-    geoDict = mapping(geometry)
-    geoString = dumps(geoDict)
-    return geoString
+    return dumps(mapping(geometry))
 
 
 def distanceBetweenGeometries(a, b):
-    if type(a) is list:
+    if isinstance(a, list):
         a = polygonFromMultipleGeometries(a)
-    elif isinstance(a, BaseGeometry):
-        a = a
-    else:
+    elif not isinstance(a, BaseGeometry):
         a = a.geometry
 
-    if type(b) is list:
+    if isinstance(b, list):
         b = polygonFromMultipleGeometries(b)
-    elif isinstance(b, BaseGeometry):
-        b = b
-    else:
+    elif not isinstance(b, BaseGeometry):
         b = b.geometry
+
     return a.distance(b)
 
 
@@ -336,20 +279,18 @@ def findClosestGeometry(originGeometry, otherGeometries):
         distance = distanceBetweenGeometries(originGeometry, candidateGeometry)
         distanceDict[distance] = candidateGeometry
     shortestDistance = min(distanceDict.keys())
-    closestGeometry = distanceDict[shortestDistance]
-    return closestGeometry
+    return distanceDict[shortestDistance]
 
 
 def findContiguousGroupsOfGraphObjects(graphObjects):
     if graphObjects:
         remainingObjects = graphObjects.copy()
         contiguousObjectGroups = []
-        while len(remainingObjects) > 0:
+        while remainingObjects:
             contiguousObjectGroups.append(
                 forestFireFillGraphObject(candidateObjects=remainingObjects))
         return contiguousObjectGroups
-    else:
-        return []
+    return []
 
 
 def forestFireFillGraphObject(candidateObjects, startingObject=None, notInList=None):
@@ -359,7 +300,7 @@ def forestFireFillGraphObject(candidateObjects, startingObject=None, notInList=N
         startingObject = candidateObjects[0]
     fireQueue.append(startingObject)
 
-    while len(fireQueue) > 0:
+    while fireQueue:
         graphObject = fireQueue.pop(0)
         candidateObjects.remove(graphObject)
         fireFilledObjects.append(graphObject)
@@ -392,11 +333,11 @@ def weightedForestFireFillGraphObject(candidateObjects,
 
     count = 1
     with tqdm() as pbar:
-        while len(fireQueue) > 0:
+        while fireQueue:
             pbar.update(1)
             pbar.set_description(
-                'FireFilled: {0} - FireQueue: {1} - Remaining: {2} - Off count: {3}'.format(
-                    len(fireFilledObjects), len(fireQueue), len(remainingObjects), offCount))
+                f'FireFilled: {len(fireFilledObjects)} - FireQueue: {len(fireQueue)} - '
+                f'Remaining: {len(remainingObjects)} - Off count: {offCount}')
 
             # pull from the top of the queue
             graphObjectCandidateGroup = fireQueue.pop(0)
@@ -408,8 +349,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                 plotGraphObjectGroups([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
                                       showDistrictNeighborConnections=True,
                                       saveImages=True,
-                                      saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(
-                                          id(candidateObjects), count))
+                                      saveDescription=f'WeightedForestFireFillGraphObject-{id(candidateObjects)}-{count}')
                 count += 1
 
             potentiallyIsolatedGroups = findContiguousGroupsOfGraphObjects(remainingObjects)
@@ -432,7 +372,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                             groupsToRemove.append(queueItemGroup)
                     # remove duplicates from the lists
                     remainingItemsFromGroups = set(remainingItemsFromGroups)
-                    # crazy way to remove duplicates from a list of lists
+                    # remove duplicates from a list of lists
                     groupsToRemove = [list(item) for item in set(tuple(row) for row in groupsToRemove)]
                     for groupToRemove in groupsToRemove:
                         fireQueue.remove(groupToRemove)
@@ -477,8 +417,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
                              potentiallyIsolatedObjects],
                             showDistrictNeighborConnections=True,
                             saveImages=True,
-                            saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects),
-                                                                                               count))
+                            saveDescription=f'WeightedForestFireFillGraphObject-{id(candidateObjects)}-{count}')
                         count += 1
 
                     groupAndIsolatedObjects = potentiallyIsolatedObjects + graphObjectCandidateGroup
@@ -511,7 +450,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
             [fireFilledObjects, [], remainingObjects],
             showDistrictNeighborConnections=True,
             saveImages=True,
-            saveDescription='WeightedForestFireFillGraphObject-{0}-{1}'.format(id(candidateObjects), count))
+            saveDescription=f'WeightedForestFireFillGraphObject-{id(candidateObjects)}-{count}')
 
     return fireFilledObjects, bestGraphObjectCandidateGroupThisPass
 
@@ -526,7 +465,7 @@ def combinationsFromGroup(candidateGroups, mustTouchGroup, startingGroup):
 
         neighborsInCandidates = [groupNeighbor for group in startingGroup for groupNeighbor in group.allNeighbors if
                                  groupNeighbor in candidateGroups]
-        if len(neighborsInCandidates) > 0:
+        if neighborsInCandidates:
             for neighbor in neighborsInCandidates:
                 neighborCombinations = combinationsFromGroup(
                     candidateGroups=[candidateGroup for candidateGroup in candidateGroups if
@@ -581,21 +520,15 @@ def deflatePolygonByAtMostATenth(polygon):
         ratio = dimensions[1] / dimensions[0]
     tenthOfShortestDimension = shortestDimension * scaleBasedOnRatio(ratio)
     exteriorPolygon = Polygon(polygon.exterior)
-    deflatedPolygon = exteriorPolygon.buffer(-tenthOfShortestDimension)
-    return deflatedPolygon
+    return exteriorPolygon.buffer(-tenthOfShortestDimension)
 
 
 def isPolygonAnHourglass(polygon):
-    deflatedPolygon = deflatePolygonByAtMostATenth(polygon)
-    if type(deflatedPolygon) is MultiPolygon:
-        return True
-    else:
-        return False
+    return isinstance(deflatePolygonByAtMostATenth(polygon), MultiPolygon)
 
 
 def deflationScore(polygon, shouldPlotResult=False):
     exteriorPolygon = Polygon(polygon.exterior)
-    stepSize = 1.0 / 60.0 / 60.0
     stepSize = 0.01
     count = 0
     while True:
@@ -604,7 +537,7 @@ def deflationScore(polygon, shouldPlotResult=False):
         if deflatedPolygon.is_empty:
             deflateValue = inf
             break
-        if type(deflatedPolygon) is MultiPolygon:
+        if isinstance(deflatedPolygon, MultiPolygon):
             break
         count += 1
 
@@ -617,23 +550,17 @@ def deflationScore(polygon, shouldPlotResult=False):
 
 def isPolygonAGoodDistrictShape(districtPolygon, parentPolygon):
     def listOfPolygons(polygon):
-        if type(polygon) is MultiPolygon:
-            polygons = list(polygon)
-        else:
-            polygons = [polygon]
-        polygons = [Polygon(subPolygon.exterior) for subPolygon in polygons]
-        return polygons
+        polygons = list(polygon.geoms) if isinstance(polygon, MultiPolygon) else [polygon]
+        return [Polygon(subPolygon.exterior) for subPolygon in polygons]
 
     parentPolygons = listOfPolygons(parentPolygon)
     districtPolygons = listOfPolygons(districtPolygon)
 
     districtPolygonsNotFullyFilled = [polygon
                                       for polygon in districtPolygons
-                                      if not any([parentSubPolygon
-                                                  for parentSubPolygon in parentPolygons
-                                                  if polygon == parentSubPolygon])]
-    allGoodDistrictShapes = all([isPolygonAnHourglass(polygon) is False for polygon in districtPolygonsNotFullyFilled])
-    return allGoodDistrictShapes
+                                      if not any(polygon == parentSubPolygon
+                                                 for parentSubPolygon in parentPolygons)]
+    return all(not isPolygonAnHourglass(polygon) for polygon in districtPolygonsNotFullyFilled)
 
 
 def alignmentOfPolygon(polygon):
@@ -645,12 +572,8 @@ def alignmentOfPolygon(polygon):
 
 
 def dimensionsOfPolygon(polygon):
-    minLon = polygon.bounds[0]
-    minLat = polygon.bounds[1]
-    maxLon = polygon.bounds[2]
-    maxLat = polygon.bounds[3]
-    boxDimensions = getWidthAndHeightOfBoxOnEarth(minLat=minLat, minLon=minLon, maxLat=maxLat, maxLon=maxLon)
-    return boxDimensions
+    minLon, minLat, maxLon, maxLat = polygon.bounds
+    return getWidthAndHeightOfBoxOnEarth(minLat=minLat, minLon=minLon, maxLat=maxLat, maxLon=maxLon)
 
 
 def getWidthAndHeightOfBoxOnEarth(minLat, minLon, maxLat, maxLon):
@@ -664,23 +587,17 @@ def getWidthAndHeightOfBoxOnEarth(minLat, minLon, maxLat, maxLon):
 
 
 def getWidthAndHeightOfPolygonInLatLong(polygon):
-    left = polygon.bounds[0]
-    bottom = polygon.bounds[1]
-    right = polygon.bounds[2]
-    top = polygon.bounds[3]
-    width = right - left
-    height = top - bottom
-    return width, height
+    left, bottom, right, top = polygon.bounds
+    return right - left, top - bottom
 
 
 def getDistanceBetweenLatLong(lat1, lon1, lat2, lon2):
-    distance = distanceOnEarth((lat1, lon1), (lat2, lon2))
-    return distance.km
+    return distanceOnEarth((lat1, lon1), (lat2, lon2)).km
 
 
 def polsbyPopperScoreOfPolygon(polygon):
-    # score= 4 * pi() * (area/(perimeter^2))
-    return 4 * pi * (polygon.area / (pow(polygon.length, 2)))
+    # score = 4 * pi * (area / perimeter^2)
+    return 4 * pi * (polygon.area / (polygon.length ** 2))
 
 
 def simplifyPolygonsBasedOnAnotherPolygon(polygonsToSimplify, referencePolygon):
@@ -713,5 +630,4 @@ def snapPolygonToPolygon(polygonToSnap, referencePolygon, tolerance):
 def populationDeviationFromPercent(overallPercentage, numberOfDistricts, totalPopulation):
     idealDistrictSize = int(totalPopulation / numberOfDistricts)
     populationDeviation = int((overallPercentage * idealDistrictSize) / 2)
-    populationDeviation = max(1, populationDeviation)
-    return populationDeviation
+    return max(1, populationDeviation)

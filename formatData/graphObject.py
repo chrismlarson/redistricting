@@ -22,13 +22,8 @@ class GraphObject:
 
     @property
     def hasNeighbors(self):
-        if self.northernNeighbors or \
-                self.westernNeighbors or \
-                self.easternNeighbors or \
-                self.southernNeighbors:
-            return True
-        else:
-            return False
+        return bool(self.northernNeighbors or self.westernNeighbors or
+                    self.easternNeighbors or self.southernNeighbors)
 
 
     @property
@@ -55,13 +50,8 @@ class GraphObject:
         self.__centerOfObject = center
 
     def isNeighbor(self, graphObject):
-        if graphObject in self.northernNeighbors or \
-                graphObject in self.westernNeighbors or \
-                graphObject in self.easternNeighbors or \
-                graphObject in self.southernNeighbors:
-            return True
-        else:
-            return False
+        return (graphObject in self.northernNeighbors or graphObject in self.westernNeighbors or
+                graphObject in self.easternNeighbors or graphObject in self.southernNeighbors)
 
     def clearNeighborGraphObjects(self):
         self.__northernNeighbors = []
@@ -117,7 +107,7 @@ class GraphObject:
 
     def validateNeighborLists(self):
         if len(self.allNeighbors) != len(set(self.allNeighbors)):
-            raise ValueError('Found a duplicate neighbor for GraphObject:{0}'.format(self.graphId))
+            raise ValueError(f'Found a duplicate neighbor for GraphObject:{self.graphId}')
 
 def getNextUniqueId():
     if GraphObject.graphObjectDict:

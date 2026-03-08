@@ -1,7 +1,7 @@
 from os import path, makedirs
-from matplotlib import pyplot, lines, cm, colors
+from matplotlib import pyplot, lines, colors, colormaps
 import matplotlib._color_data as colorData
-from descartes import PolygonPatch
+from shapely.plotting import patch_from_polygon
 from shapely.geometry import LineString
 
 blueColor = '#6699cc'
@@ -55,17 +55,17 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
             ax.scatter(centroid.x, centroid.y)
 
         maxPopulationEnergy = max([block.populationEnergy for block in redistrictingGroup.children])
-        heatMap = cm.get_cmap('hot')
+        heatMap = colormaps['hot']
         heatmapNormalizer = colors.Normalize(vmin=0.0, vmax=maxPopulationEnergy)
 
         for block in redistrictingGroup.children:
             if block.isWater:
-                ax.add_patch(PolygonPatch(block.geometry, fc=blueColor, ec=blueColor, alpha=0.5, zorder=2))
+                ax.add_patch(patch_from_polygon(block.geometry, facecolor=blueColor, edgecolor=blueColor, alpha=0.5, zorder=2))
             else:
                 if showGraphHeatmap:
                     normalizedEnergy = heatmapNormalizer(block.populationEnergy)
                     heatColor = heatMap(normalizedEnergy)
-                    ax.add_patch(PolygonPatch(block.geometry, fc=heatColor, ec=heatColor, alpha=0.5, zorder=2))
+                    ax.add_patch(patch_from_polygon(block.geometry, facecolor=heatColor, edgecolor=heatColor, alpha=0.5, zorder=2))
                 else:
                     if redistrictingGroup.isBorderBlock(block):
                         if block in redistrictingGroup.northernChildBlocks:
@@ -77,10 +77,10 @@ def plotBlocksForRedistrictingGroups(redistrictingGroups,
                         else:
                             borderBlockColor = turquoiseColor
 
-                        ax.add_patch(PolygonPatch(block.geometry, fc=borderBlockColor, ec=borderBlockColor,
-                                                  alpha=0.5, zorder=2))
+                        ax.add_patch(patch_from_polygon(block.geometry, facecolor=borderBlockColor, edgecolor=borderBlockColor,
+                                                        alpha=0.5, zorder=2))
                     else:
-                        ax.add_patch(PolygonPatch(block.geometry, fc=greenColor, ec=greenColor, alpha=0.5, zorder=2))
+                        ax.add_patch(patch_from_polygon(block.geometry, facecolor=greenColor, edgecolor=greenColor, alpha=0.5, zorder=2))
             centerOfBlock = block.geometry.centroid
 
             if showPopulationCounts:
@@ -112,10 +112,10 @@ def plotBlocksWithEdgesRedistrictingGroups(redistrictingGroup, edges):
             else:
                 borderBlockColor = turquoiseColor
 
-            ax.add_patch(PolygonPatch(block.geometry, fc=borderBlockColor, ec=borderBlockColor,
-                                      alpha=0.5, zorder=2))
+            ax.add_patch(patch_from_polygon(block.geometry, facecolor=borderBlockColor, edgecolor=borderBlockColor,
+                                            alpha=0.5, zorder=2))
         else:
-            ax.add_patch(PolygonPatch(block.geometry, fc=greenColor, ec=greenColor, alpha=0.5, zorder=2))
+            ax.add_patch(patch_from_polygon(block.geometry, facecolor=greenColor, edgecolor=greenColor, alpha=0.5, zorder=2))
 
     for edge in edges:
         if edge is LineString:
@@ -148,11 +148,11 @@ def plotRedistrictingGroups(redistrictingGroups,
                 if neighborGroup in redistrictingGroups:
                     ax.add_line(getLineForPair(redistrictingGroup, neighborGroup, grayColor))
 
-        ax.add_patch(PolygonPatch(redistrictingGroup.geometry,
-                                  fc=getColor(colorIndex),
-                                  ec=getColor(colorIndex),
-                                  alpha=0.5,
-                                  zorder=2))
+        ax.add_patch(patch_from_polygon(redistrictingGroup.geometry,
+                                        facecolor=getColor(colorIndex),
+                                        edgecolor=getColor(colorIndex),
+                                        alpha=0.5,
+                                        zorder=2))
 
         if showPopulationCounts:
             centerOfGroup = redistrictingGroup.geometry.centroid
@@ -176,7 +176,7 @@ def plotDistrict(district,
     ax = fig.gca()
 
     if showDistrictEnvelope:
-        ax.add_patch(PolygonPatch(district.geometry.envelope, fc=grayColor, ec=grayColor, alpha=0.2, zorder=1))
+        ax.add_patch(patch_from_polygon(district.geometry.envelope, facecolor=grayColor, edgecolor=grayColor, alpha=0.2, zorder=1))
 
     for redistrictingGroup in district.children:
         if showDistrictNeighborConnections:
@@ -193,7 +193,7 @@ def plotDistrict(district,
                 groupColor = purpleColor
             elif redistrictingGroup in district.southernChildBlocks:
                 groupColor = orangeColor
-        ax.add_patch(PolygonPatch(redistrictingGroup.geometry, fc=groupColor, ec=groupColor, alpha=0.5, zorder=2))
+        ax.add_patch(patch_from_polygon(redistrictingGroup.geometry, facecolor=groupColor, edgecolor=groupColor, alpha=0.5, zorder=2))
 
         if showPopulationCounts:
             centerOfGroup = redistrictingGroup.geometry.centroid
@@ -218,23 +218,23 @@ def plotGraphObjectGroups(graphObjectGroups,
     else:
         count = 0
     for graphObjectGroup in graphObjectGroups:
-        if len(graphObjectGroup) is not 0:
+        if len(graphObjectGroup) != 0:
             maxPopulation = max([block.population for block in graphObjectGroup])
-            heatMap = cm.get_cmap('Reds')
+            heatMap = colormaps['Reds']
             heatmapNormalizer = colors.LogNorm(vmin=0.1, vmax=maxPopulation, clip=True)
 
             for graphObject in graphObjectGroup:
                 if showDistrictNeighborConnections:
                     for neighborGroup in graphObject.allNeighbors:
                         ax.add_line(getLineForPair(graphObject, neighborGroup, grayColor))
-                if showGraphHeatmapForFirstGroup and graphObjectGroups.index(graphObjectGroup) is 0:
+                if showGraphHeatmapForFirstGroup and graphObjectGroups.index(graphObjectGroup) == 0:
                     normalizedEnergy = heatmapNormalizer(graphObject.population)
                     heatColor = heatMap(normalizedEnergy)
-                    ax.add_patch(PolygonPatch(graphObject.geometry, fc=heatColor, ec=(0,0,0,0), zorder=1))
+                    ax.add_patch(patch_from_polygon(graphObject.geometry, facecolor=heatColor, edgecolor=(0, 0, 0, 0), zorder=1))
                 else:
                     ax.add_patch(
-                        PolygonPatch(graphObject.geometry, fc=getColor(count), ec=getColor(count), alpha=0.5,
-                                     zorder=2))
+                        patch_from_polygon(graphObject.geometry, facecolor=getColor(count), edgecolor=getColor(count), alpha=0.5,
+                                           zorder=2))
 
                 if showPopulationCounts:
                     centerOfGroup = graphObject.geometry.centroid
@@ -252,7 +252,7 @@ def plotGraphObjectGroups(graphObjectGroups,
         directoryPath = path.expanduser('~/Documents/RedistrictingImages')
         if not path.exists(directoryPath):
             makedirs(directoryPath)
-        filePath = path.expanduser('{0}/{1}.png'.format(directoryPath, saveDescription))
+        filePath = path.join(directoryPath, f'{saveDescription}.png')
         pyplot.savefig(filePath)
     pyplot.show()
 
@@ -264,7 +264,7 @@ def plotPolygons(polygons, title=None):
     count = 0
     for polygon in polygons:
         if polygon is not None:
-            ax.add_patch(PolygonPatch(polygon, fc=getColor(count), ec=getColor(count), alpha=0.5, zorder=2))
+            ax.add_patch(patch_from_polygon(polygon, facecolor=getColor(count), edgecolor=getColor(count), alpha=0.5, zorder=2))
         count += 1
 
     if title is not None:
@@ -290,8 +290,8 @@ def plotDistricts(districts,
                     ax.add_line(getLineForPair(redistrictingGroup, neighborGroup, grayColor))
 
             ax.add_patch(
-                PolygonPatch(redistrictingGroup.geometry, fc=getColor(colorIndex), ec=getColor(colorIndex), alpha=0.5,
-                             zorder=2))
+                patch_from_polygon(redistrictingGroup.geometry, facecolor=getColor(colorIndex), edgecolor=getColor(colorIndex),
+                                   alpha=0.5, zorder=2))
 
             if showPopulationCounts:
                 centerOfGroup = redistrictingGroup.geometry.centroid
@@ -304,7 +304,7 @@ def plotDistricts(districts,
         directoryPath = path.expanduser('~/Documents/RedistrictingImages')
         if not path.exists(directoryPath):
             makedirs(directoryPath)
-        filePath = path.expanduser('{0}/{1}.png'.format(directoryPath, saveDescription))
+        filePath = path.join(directoryPath, f'{saveDescription}.png')
         pyplot.savefig(filePath)
     pyplot.show()
 
