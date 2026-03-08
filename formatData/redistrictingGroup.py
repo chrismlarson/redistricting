@@ -169,7 +169,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         return splitGroups
 
     def fillPopulationEnergyGraph(self, alignment):
-        remainingObjects = self.children.copy()
+        remainingObjects = set(self.children)
         if alignment is Alignment.northSouth:
             blocksToActOn = self.westernChildBlocks
         else:
@@ -179,7 +179,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
         if len(blocksToActOn) > 0:
             for blockToActOn in blocksToActOn:
                 blockToActOn.populationEnergy = blockToActOn.population
-                remainingObjects.remove(blockToActOn)
+                remainingObjects.discard(blockToActOn)
 
             filledBlocks = blocksToActOn.copy()
             while len(remainingObjects) > 0:
@@ -198,7 +198,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
 
                 blocksToActOnThisRound = blocksToActOn.copy()
                 while len(blocksToActOnThisRound) > 0:
-                    blocksActedUpon = []
+                    blocksActedUpon = set()
                     for blockToActOn in blocksToActOnThisRound:
                         previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn],
                                                                               inList=filledBlocks)
@@ -207,8 +207,8 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                                                  key=lambda block: block.populationEnergy)
 
                             blockToActOn.populationEnergy = lowestPopulationEnergyNeighbor.populationEnergy + blockToActOn.population
-                            remainingObjects.remove(blockToActOn)
-                            blocksActedUpon.append(blockToActOn)
+                            remainingObjects.discard(blockToActOn)
+                            blocksActedUpon.add(blockToActOn)
                             filledBlocks.append(blockToActOn)
                     blocksToActOnThisRound = [block for block in blocksToActOnThisRound if block not in blocksActedUpon]
                     if len(blocksActedUpon) == 0:
@@ -513,12 +513,16 @@ class SplitType(Enum):
 
 
 def getNeighborsForGraphObjectsInList(graphObjects, inList):
-    neighborList = []
+    inSet = set(inList)
+    graphObjectsSet = set(graphObjects)
+    seen = set()
+    result = []
     for graphObject in graphObjects:
         for neighborObject in graphObject.allNeighbors:
-            if neighborObject in inList and neighborObject not in neighborList and neighborObject not in graphObjects:
-                neighborList.append(neighborObject)
-    return neighborList
+            if neighborObject in inSet and neighborObject not in graphObjectsSet and neighborObject not in seen:
+                seen.add(neighborObject)
+                result.append(neighborObject)
+    return result
 
 
 def attachOrphanBlocksToClosestNeighborForRedistrictingGroups(redistrictingGroupList):

@@ -1,3 +1,4 @@
+from collections import deque
 from shapely.geometry import shape, mapping, Point, Polygon, MultiPolygon, LineString, MultiLineString
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import shared_paths, nearest_points, unary_union
@@ -284,7 +285,7 @@ def findClosestGeometry(originGeometry, otherGeometries):
 
 def findContiguousGroupsOfGraphObjects(graphObjects):
     if graphObjects:
-        remainingObjects = graphObjects.copy()
+        remainingObjects = set(graphObjects)
         contiguousObjectGroups = []
         while remainingObjects:
             contiguousObjectGroups.append(
@@ -295,20 +296,25 @@ def findContiguousGroupsOfGraphObjects(graphObjects):
 
 def forestFireFillGraphObject(candidateObjects, startingObject=None, notInList=None):
     fireFilledObjects = []
-    fireQueue = []
+    fireQueue = deque()
+    fireQueueSet = set()
+    notInSet = set(notInList) if notInList else None
     if not startingObject:
-        startingObject = candidateObjects[0]
+        startingObject = next(iter(candidateObjects))
     fireQueue.append(startingObject)
+    fireQueueSet.add(startingObject)
 
     while fireQueue:
-        graphObject = fireQueue.pop(0)
-        candidateObjects.remove(graphObject)
+        graphObject = fireQueue.popleft()
+        fireQueueSet.discard(graphObject)
+        candidateObjects.discard(graphObject)
         fireFilledObjects.append(graphObject)
 
         for neighborObject in graphObject.allNeighbors:
-            if neighborObject in candidateObjects and neighborObject not in fireQueue:
-                if notInList is None or neighborObject not in notInList:
+            if neighborObject in candidateObjects and neighborObject not in fireQueueSet:
+                if notInSet is None or neighborObject not in notInSet:
                     fireQueue.append(neighborObject)
+                    fireQueueSet.add(neighborObject)
 
     return fireFilledObjects
 
@@ -325,11 +331,13 @@ def weightedForestFireFillGraphObject(candidateObjects,
     candidateGroupsThatDidNotMeetConditionThisPass = []
     fireFilledObjects = []
     fireQueue = []
+    _queuedSet = set()
     remainingObjects = candidateObjects.copy()
     if not startingObjects:
         # this doesn't occur during the forest fire fill when creating districts
         startingObjects = [remainingObjects[0]]
     fireQueue.append(startingObjects)
+    _queuedSet.update(startingObjects)
 
     count = 1
     with tqdm() as pbar:
@@ -341,9 +349,11 @@ def weightedForestFireFillGraphObject(candidateObjects,
 
             # pull from the top of the queue
             graphObjectCandidateGroup = fireQueue.pop(0)
+            _queuedSet.difference_update(graphObjectCandidateGroup)
 
             # remove objects that we pulled from the queue from the remaining list
-            remainingObjects = [object for object in remainingObjects if object not in graphObjectCandidateGroup]
+            groupSet = set(graphObjectCandidateGroup)
+            remainingObjects = [o for o in remainingObjects if o not in groupSet]
 
             if shouldDrawEachStep:
                 plotGraphObjectGroups([fireFilledObjects, graphObjectCandidateGroup, remainingObjects],
@@ -376,24 +386,26 @@ def weightedForestFireFillGraphObject(candidateObjects,
                     groupsToRemove = [list(item) for item in set(tuple(row) for row in groupsToRemove)]
                     for groupToRemove in groupsToRemove:
                         fireQueue.remove(groupToRemove)
+                        _queuedSet.difference_update(groupToRemove)
                     neighborsOfFireFilledObjects = [group.allNeighbors for group in fireFilledObjects]
                     for remainingItemFromGroups in remainingItemsFromGroups:
                         if remainingItemFromGroups in neighborsOfFireFilledObjects:
                             fireQueue.append([remainingItemFromGroups])
+                            _queuedSet.add(remainingItemFromGroups)
 
                     # add neighbors to the queue
                     for graphObjectCandidate in graphObjectCandidateGroup:
                         for neighborObject in graphObjectCandidate.allNeighbors:
-                            flatFireQueue = [graphObject for graphObjectGroup in fireQueue
-                                             for graphObject in graphObjectGroup]
-                            if neighborObject in remainingObjects and neighborObject not in flatFireQueue:
+                            if neighborObject in remainingObjects and neighborObject not in _queuedSet:
                                 fireQueue.append([neighborObject])
+                                _queuedSet.add(neighborObject)
 
                     # if we don't need to return the next best candidate, we can remove groups from the queue
                     # that don't meet the condition right now to speed up processing
                     if not returnBestCandidateGroup:
                         fireQueue = [fireQueueGroup for fireQueueGroup in fireQueue if
                                      condition(fireFilledObjects, fireQueueGroup)[0]]
+                        _queuedSet = {o for grp in fireQueue for o in grp}
                 else:
                     if returnBestCandidateGroup and bestGraphObjectCandidateGroupThisPass is None:
                         if all([len(graphObjectCandidate.children) > 1
@@ -424,6 +436,7 @@ def weightedForestFireFillGraphObject(candidateObjects,
 
                     if groupAndIsolatedObjects not in candidateGroupsThatDidNotMeetConditionThisPass:
                         fireQueue.append(groupAndIsolatedObjects)
+                        _queuedSet.update(groupAndIsolatedObjects)
                 else:
                     candidateGroupsThatDidNotMeetConditionThisPass.append(graphObjectCandidateGroup)
 
