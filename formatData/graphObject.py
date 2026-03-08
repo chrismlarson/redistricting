@@ -1,5 +1,7 @@
 from geographyHelper import findDirectionOfShapeFromPoint, CardinalDirection, intersectingGeometries
 
+_nextGraphId = -1
+
 
 class GraphObject:
     def __init__(self, centerOfObject):
@@ -9,6 +11,8 @@ class GraphObject:
         self.__westernNeighbors = []
         self.__easternNeighbors = []
         self.__southernNeighbors = []
+        self.__allNeighborIds = set()
+        self._neighborsCache = None
         self.populationEnergy = 0
         self.updateCenterOfObject(centerOfObject)
 
@@ -18,6 +22,13 @@ class GraphObject:
     def __setstate__(self, state):
         GraphObject.graphObjectDict[state['graphId']] = self
         self.__dict__ = state
+        if '_neighborsCache' not in self.__dict__:
+            self._neighborsCache = None
+        if '_GraphObject__allNeighborIds' not in self.__dict__:
+            self.__allNeighborIds = set(
+                self.__northernNeighbors + self.__westernNeighbors +
+                self.__easternNeighbors + self.__southernNeighbors
+            )
 
 
     @property
@@ -44,7 +55,10 @@ class GraphObject:
 
     @property
     def allNeighbors(self):
-        return self.northernNeighbors + self.westernNeighbors + self.easternNeighbors + self.southernNeighbors
+        if self._neighborsCache is None:
+            self._neighborsCache = (self.northernNeighbors + self.westernNeighbors +
+                                    self.easternNeighbors + self.southernNeighbors)
+        return self._neighborsCache
 
     def updateCenterOfObject(self, center):
         self.__centerOfObject = center
@@ -58,6 +72,8 @@ class GraphObject:
         self.__westernNeighbors = []
         self.__easternNeighbors = []
         self.__southernNeighbors = []
+        self.__allNeighborIds = set()
+        self._neighborsCache = None
 
     def addNeighbors(self, neighbors):
         for neighbor in neighbors:
@@ -67,7 +83,7 @@ class GraphObject:
         if direction is None:
             direction = findDirectionOfShapeFromPoint(basePoint=self.__centerOfObject,
                                                       targetShape=graphObject.geometry)
-        if graphObject not in self.allNeighbors:
+        if graphObject.graphId not in self.__allNeighborIds:
             if direction == CardinalDirection.north:
                 self.__northernNeighbors.append(graphObject.graphId)
             elif direction == CardinalDirection.west:
@@ -76,24 +92,24 @@ class GraphObject:
                 self.__easternNeighbors.append(graphObject.graphId)
             elif direction == CardinalDirection.south:
                 self.__southernNeighbors.append(graphObject.graphId)
+            self.__allNeighborIds.add(graphObject.graphId)
+            self._neighborsCache = None
 
     def removeNeighbors(self, neighbors):
         for neighbor in neighbors:
             self.removeNeighbor(neighbor)
 
     def removeNeighbor(self, neighbor):
-        for northernNeighbor in self.northernNeighbors:
-            if neighbor is northernNeighbor:
-                self.__northernNeighbors.remove(neighbor.graphId)
-        for westernNeighbor in self.westernNeighbors:
-            if neighbor is westernNeighbor:
-                self.__westernNeighbors.remove(neighbor.graphId)
-        for easternNeighbor in self.easternNeighbors:
-            if neighbor is easternNeighbor:
-                self.__easternNeighbors.remove(neighbor.graphId)
-        for southernNeighbor in self.southernNeighbors:
-            if neighbor is southernNeighbor:
-                self.__southernNeighbors.remove(neighbor.graphId)
+        nid = neighbor.graphId
+        if nid not in self.__allNeighborIds:
+            return
+        for lst in (self.__northernNeighbors, self.__westernNeighbors,
+                    self.__easternNeighbors, self.__southernNeighbors):
+            if nid in lst:
+                lst.remove(nid)
+                break
+        self.__allNeighborIds.discard(nid)
+        self._neighborsCache = None
 
     def removeNonIntersectingNeighbors(self):
         for neighbor in self.allNeighbors:
@@ -110,6 +126,6 @@ class GraphObject:
             raise ValueError(f'Found a duplicate neighbor for GraphObject:{self.graphId}')
 
 def getNextUniqueId():
-    if GraphObject.graphObjectDict:
-        return max(GraphObject.graphObjectDict.keys()) + 1
-    return 0
+    global _nextGraphId
+    _nextGraphId += 1
+    return _nextGraphId
