@@ -580,9 +580,12 @@ def mergeCandidatesIntoPreviousGroups(candidates):
                     # assign block neighbors to former border blocks
                     tqdm.write('      *** Starting a merge with {0} border blocks and {1} total blocks ***'.format(
                         len(allBorderBlocks), len(allBlocks)))
+                    from shapely import STRtree
+                    candidateTree = STRtree([b.geometry for b in allBlocks])
                     for formerBorderBlock in allBorderBlocks:
                         assignNeighborBlocksFromCandidateBlocks(block=formerBorderBlock,
-                                                                candidateBlocks=allBlocks)
+                                                                candidateBlocks=allBlocks,
+                                                                candidateTree=candidateTree)
 
                     contiguousRegions = findContiguousGroupsOfGraphObjects(allBlocks)
 
@@ -590,9 +593,11 @@ def mergeCandidatesIntoPreviousGroups(candidates):
                     for contiguousRegion in contiguousRegions:
                         contiguousRegionGroup = RedistrictingGroup(childrenBlocks=contiguousRegion)
                         # assign block neighbors to former border blocks
+                        candidateTree = STRtree([b.geometry for b in contiguousRegionGroup.children])
                         for borderBlock in contiguousRegionGroup.borderChildren:
                             assignNeighborBlocksFromCandidateBlocks(block=borderBlock,
-                                                                    candidateBlocks=contiguousRegionGroup.children)
+                                                                    candidateBlocks=contiguousRegionGroup.children,
+                                                                    candidateTree=candidateTree)
                         contiguousRegionGroup.validateBlockNeighbors()
                         mergedRedistrictingGroupsForPrevious.append(contiguousRegionGroup)
                     mergedRedistrictingGroups.extend(mergedRedistrictingGroupsForPrevious)

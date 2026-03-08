@@ -1,3 +1,4 @@
+from shapely import STRtree
 from shapely.geometry import MultiPolygon
 from censusData.censusBlock import CensusBlock
 from exportData.displayShapes import plotPolygons
@@ -32,10 +33,16 @@ class AtomicBlock(CensusContainer, GraphObject):
         return all(block.isWater for block in self.children)
 
 
-def assignNeighborBlocksFromCandidateBlocks(block, candidateBlocks, progressObject=None):
+def assignNeighborBlocksFromCandidateBlocks(block, candidateBlocks, progressObject=None,
+                                            candidateTree=None):
     block.clearNeighborGraphObjects()
     neighborBlocks = []
-    for candidateBlock in candidateBlocks:
+    if candidateTree is not None:
+        indices = candidateTree.query(block.geometry, predicate='intersects')
+        nearby = [candidateBlocks[i] for i in indices]
+    else:
+        nearby = candidateBlocks
+    for candidateBlock in nearby:
         if candidateBlock is not block:
             if intersectingGeometries(block, candidateBlock):
                 neighborBlocks.append(candidateBlock)
