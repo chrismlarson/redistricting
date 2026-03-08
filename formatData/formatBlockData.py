@@ -1,3 +1,4 @@
+import sys
 from us import states
 from exportData.displayShapes import plotBlocksForRedistrictingGroups
 from exportData.exportData import saveDataToFileWithDescription,\
@@ -7,7 +8,7 @@ from formatData.redistrictingGroup import createRedistrictingGroupsWithAtomicBlo
 
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
-censusYear = 2010
+censusYear = int(sys.argv[1]) if len(sys.argv) > 1 else 2010
 descriptionToWorkWith = 'All'
 
 censusData = loadDataFromFileWithDescription(censusYear=censusYear,

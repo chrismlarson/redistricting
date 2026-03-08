@@ -1,3 +1,4 @@
+import sys
 from census import Census
 from us import states
 import math
@@ -35,12 +36,19 @@ def getCountiesInState(stateFIPSCode, maxNumberOfCounties=math.inf, specificCoun
 
 
 def getBlocksInCounty(stateFIPSCode, countyFIPSCode):
-    # DEPRECATED: P0010001 is the total population as defined by: https://api.census.gov/data/2010/sf1/variables.html
-    # The API now defaults to: https://api.census.gov/data/2010/dec/sf1/variables.html
-    # Which now uses: P001001 for total population
-    countyBlocks = censusRequest.sf1.get(fields=('P001001'),
-                                         geo={'for': 'block:*', 'in': 'state:{0} county:{1}'.format(
-                                             stateFIPSCode, countyFIPSCode)})
+    if censusYear == 2020:
+        countyBlocks = censusRequest.pl.get(fields=('P1_001N'),
+                                            geo={'for': 'block:*', 'in': 'state:{0} county:{1}'.format(
+                                                stateFIPSCode, countyFIPSCode)})
+        for block in countyBlocks:
+            block['P001001'] = block.pop('P1_001N')  # normalize field name for downstream use
+    else:
+        # DEPRECATED: P0010001 is the total population as defined by: https://api.census.gov/data/2010/sf1/variables.html
+        # The API now defaults to: https://api.census.gov/data/2010/dec/sf1/variables.html
+        # Which now uses: P001001 for total population
+        countyBlocks = censusRequest.sf1.get(fields=('P001001'),
+                                             geo={'for': 'block:*', 'in': 'state:{0} county:{1}'.format(
+                                                 stateFIPSCode, countyFIPSCode)})
     return countyBlocks
 
 
@@ -74,8 +82,10 @@ def allGeoDataForEachBlock(countyInfoList, existingBlockData):
             startTimeForProcessingCounty = time.localtime()
             countyFIPSCode = county['county']
 
+            TIGER_BLOCK_LAYER = 10 if censusYear == 2020 else 14
+            TIGER_SERVICE = f'Census{censusYear}/tigerWMS_Census{censusYear}'
             blockGeometries = EsriDumper(
-                url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/14',
+                url=f'https://tigerweb.geo.census.gov/arcgis/rest/services/{TIGER_SERVICE}/MapServer/{TIGER_BLOCK_LAYER}',
                 extra_query_args={'where': 'STATE=\'{0}\' AND COUNTY=\'{1}\''.format(stateFIPSCode, countyFIPSCode),
                                   'orderByFields': 'TRACT, BLKGRP, BLOCK'},
                 timeout=120)  # extending timeout because there were some long load times
@@ -126,8 +136,10 @@ def allGeoDataForEachCounty(existingCountyData):
                 whereArgument = '{0} OR '.format(whereArgument)
         whereArgument = '{0})'.format(whereArgument)
 
+        TIGER_COUNTY_LAYER = 82 if censusYear == 2020 else 90
+        TIGER_SERVICE = f'Census{censusYear}/tigerWMS_Census{censusYear}'
         countyGeometries = EsriDumper(
-            url='https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_Census2010/MapServer/90',
+            url=f'https://tigerweb.geo.census.gov/arcgis/rest/services/{TIGER_SERVICE}/MapServer/{TIGER_COUNTY_LAYER}',
             extra_query_args={'where': whereArgument,
                               'orderByFields': 'COUNTY'})
         # https://github.com/openaddresses/pyesridump
@@ -155,7 +167,7 @@ def allGeoDataForEachCounty(existingCountyData):
 
 stateAbbreviation = 'MI'
 stateInfo = states.lookup(stateAbbreviation)
-censusYear = 2010
+censusYear = int(sys.argv[1]) if len(sys.argv) > 1 else 2010
 descriptionToWorkWith = 'All'
 
 censusRequest = Census(apiKeys.censusAPIKey, year=censusYear)
