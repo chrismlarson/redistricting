@@ -492,12 +492,15 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                 raise RuntimeError("Some blocks have neighbor connections with block outside the redistricting group")
 
     def assignNeighboringBlocksToBlocks(self):
+        from shapely import STRtree
+        candidateTree = STRtree([child.geometry for child in self.children])
         with tqdm(total=len(self.children)) as pbar:
             threadPool = Pool(4)
             threadPool.starmap(assignNeighborBlocksFromCandidateBlocks,
                                zip(self.children,
                                    repeat(self.children),
-                                   repeat(pbar)))
+                                   repeat(pbar),
+                                   repeat(candidateTree)))
 
     def __lt__(self, other):
         if isinstance(other, RedistrictingGroup):
@@ -668,31 +671,40 @@ def assignNeighboringRedistrictingGroupsForRedistrictingGroups(redistrictingGrou
 def assignNeighboringRedistrictingGroupsToRedistrictingGroups(changedRedistrictingGroups,
                                                               allNeighborCandidates,
                                                               shouldAttachOrphans=True):
+    from shapely import STRtree
+    candidateList = list(allNeighborCandidates)
+    candidateSet = set(candidateList)
+
     tqdm.write('\n')
     tqdm.write('*** Removing Outdated Neighbor Connections ***')
-    with tqdm(total=len(allNeighborCandidates)) as pbar:
-        # remove outdated neighbor connections
-        for redistrictingGroup in allNeighborCandidates:
-            outdatedNeighborConnections = [neighbor for neighbor in redistrictingGroup.allNeighbors
-                                           if neighbor not in allNeighborCandidates]
+    with tqdm(total=len(candidateList)) as pbar:
+        for redistrictingGroup in candidateList:
+            outdatedNeighborConnections = [n for n in redistrictingGroup.allNeighbors
+                                           if n not in candidateSet]
             if outdatedNeighborConnections:
                 redistrictingGroup.removeNeighbors(outdatedNeighborConnections)
             pbar.update(1)
 
+    candidateTree = STRtree([g.geometry for g in candidateList])
+
     tqdm.write('\n')
     tqdm.write('*** Assign Neighbors to Changed Redistricting Groups ***')
     with tqdm(total=len(changedRedistrictingGroups)) as pbar:
-        # assign neighbors to changed groups and those that they touch
         for changedRedistrictingGroup in changedRedistrictingGroups:
             changedRedistrictingGroup.clearNeighborGraphObjects()
-            for redistrictingGroupToCheckAgainst in [aGroup for aGroup in allNeighborCandidates
-                                                     if aGroup is not changedRedistrictingGroup]:
-                if intersectingGeometries(changedRedistrictingGroup, redistrictingGroupToCheckAgainst):
+            indices = candidateTree.query(changedRedistrictingGroup.geometry,
+                                          predicate='intersects')
+            for i in indices:
+                redistrictingGroupToCheckAgainst = candidateList[i]
+                if redistrictingGroupToCheckAgainst is changedRedistrictingGroup:
+                    continue
+                if intersectingGeometries(changedRedistrictingGroup,
+                                          redistrictingGroupToCheckAgainst):
                     changedRedistrictingGroup.addNeighbors([redistrictingGroupToCheckAgainst])
                     redistrictingGroupToCheckAgainst.addNeighbors([changedRedistrictingGroup])
             pbar.update(1)
 
-        unionOfRedistrictingGroups = list(set(changedRedistrictingGroups) | set(allNeighborCandidates))
+        unionOfRedistrictingGroups = list(set(changedRedistrictingGroups) | set(candidateList))
 
     if shouldAttachOrphans:
         attachOrphanRedistrictingGroupsToClosestNeighbor(unionOfRedistrictingGroups)
