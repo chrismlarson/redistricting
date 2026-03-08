@@ -24,7 +24,7 @@ class CensusContainer:
                                           censusYear='',
                                           stateName='',
                                           descriptionOfInfo='ErrorCase-DuplicateChildren')
-            raise RuntimeError("Children contains duplicates: {0}".format(self))
+            raise RuntimeError(f"Children contains duplicates: {self}")
 
         self.__children = children
         self.updateBlockContainerData()

@@ -34,6 +34,6 @@ class TestIsPolygonAnHourglass(TestCase):
                                            'testData/UPDistrictSplit-ReferenceDistrictCandidatePolygons.redistdata')
         candidateShapes = loadDataFromFile(filePath=candidatesShapeFilePath)
         candidateWithUP = candidateShapes[0]
-        polygonsInCandidateWithUP = list(candidateWithUP)
+        polygonsInCandidateWithUP = list(candidateWithUP.geoms)
         lowerPortionOfCandidate = polygonsInCandidateWithUP[3]
         self.assertFalse(isPolygonAnHourglass(lowerPortionOfCandidate))

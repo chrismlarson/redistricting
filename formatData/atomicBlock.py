@@ -20,7 +20,7 @@ class AtomicBlock(CensusContainer, GraphObject):
     atomicBlockList = []
 
     def updateBlockContainerData(self):
-        super(AtomicBlock, self).updateBlockContainerData()
+        super().updateBlockContainerData()
         self.updateCenterOfObject(self.geometry.centroid)
 
     def importCensusBlock(self, censusBlock):

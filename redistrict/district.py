@@ -21,7 +21,7 @@ class District(BlockBorderGraph):
         self.removeOutdatedNeighborConnections()
 
     def updateBlockContainerData(self):
-        super(District, self).updateBlockContainerData()
+        super().updateBlockContainerData()
         validateContiguousRedistrictingGroups(self.children)
 
     def getCutStartingCandidates(self):
@@ -139,7 +139,7 @@ class District(BlockBorderGraph):
                                             'breakingMethod': breakingMethod,
                                             'geometryInfo': saveGeometry})
 
-                if splitScore is 2:
+                if splitScore == 2:
                     doneFindingSplits = True
                 else:
                     tqdm.write('   *** One or more split candidates is not a good shape! Trying again. ***')

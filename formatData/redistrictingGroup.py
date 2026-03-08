@@ -29,10 +29,10 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
     def __setstate__(self, state):
         # if not hasattr(state, 'previousParentId'):
         #     state['previousParentId'] = None
-        super(RedistrictingGroup, self).__setstate__(state)
+        super().__setstate__(state)
 
     def updateBlockContainerData(self):
-        super(RedistrictingGroup, self).updateBlockContainerData()
+        super().updateBlockContainerData()
         self.updateCenterOfObject(self.geometry.centroid)
 
     def removeWaterBlocks(self):
@@ -202,7 +202,7 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                     for blockToActOn in blocksToActOnThisRound:
                         previousNeighbors = getNeighborsForGraphObjectsInList(graphObjects=[blockToActOn],
                                                                               inList=filledBlocks)
-                        if len(previousNeighbors) is not 0:
+                        if previousNeighbors:
                             lowestPopulationEnergyNeighbor = min(previousNeighbors,
                                                                  key=lambda block: block.populationEnergy)
 
@@ -306,9 +306,9 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
             if polygonWithoutSeam.is_empty:
                 return SplitType.ForceSplitAllBlocks, None
 
-            if type(polygonWithoutSeam) is MultiPolygon:
+            if isinstance(polygonWithoutSeam, MultiPolygon):
                 seamOnEdge = False
-                splitPolygons = list(polygonWithoutSeam)
+                splitPolygons = list(polygonWithoutSeam.geoms)
             else:
                 seamOnEdge = True
                 splitPolygons = [polygonWithoutSeam, seamSplitPolygon]
@@ -412,21 +412,21 @@ class RedistrictingGroup(BlockBorderGraph, GraphObject):
                                   if block not in lowestPopulationEnergySeam and
                                   block not in borderBlocksToAvoid]
 
-            if len(neighborCandidates) is 0:
+            if not neighborCandidates:
                 neighborCandidates = [block for block in blockToActOn.allNeighbors
                                       if block not in lowestPopulationEnergySeam and
                                       block not in borderBlocksToAvoid]
 
             # If we don't have any neighbors in the direction we're headed,
             # we need to find the next best block candidate
-            if len(neighborCandidates) is 0:
+            if not neighborCandidates:
                 failedStartingBlocks.append(startingBlock)
 
                 remainingStartingCandidates = [startingCandidate for startingCandidate in startingCandidates if
                                                startingCandidate not in failedStartingBlocks]
 
                 # If there are no more starting candidates, remove the adjacent border blocks to avoid rule
-                if len(remainingStartingCandidates) is 0:
+                if not remainingStartingCandidates:
                     if avoidingAdjacentBorderBlocks:
                         avoidingAdjacentBorderBlocks = False
                         borderBlocksToAvoid = startingCandidates

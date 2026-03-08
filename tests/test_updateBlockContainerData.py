@@ -61,7 +61,7 @@ class TestCensusBlockContainer(TestCase):
         blockContainer.children = blocks
 
         self.assertEqual(blockContainer.population, 2)
-        self.assertEqual(blockContainer.geometry, Polygon(exterior))
+        self.assertTrue(blockContainer.geometry.equals(Polygon(exterior)))
 
 
     def test_updateBlockContainerData_singleCircle(self):
