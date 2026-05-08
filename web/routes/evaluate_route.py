@@ -35,9 +35,9 @@ def _make_slug(name: str, csv_bytes: bytes) -> str:
 @router.get("/evaluate", response_class=HTMLResponse)
 def evaluate_form(request: Request):
     return templates.TemplateResponse(
+        request,
         "evaluate.html",
         {
-            "request": request,
             "states": supported_states(),
             "chambers": CHAMBERS,
             "error": None,
@@ -97,9 +97,9 @@ async def evaluate_submit(
             )
         except (ValueError, KeyError) as exc:
             return templates.TemplateResponse(
+                request,
                 "evaluate.html",
                 {
-                    "request": request,
                     "states": supported_states(),
                     "chambers": CHAMBERS,
                     "error": str(exc),

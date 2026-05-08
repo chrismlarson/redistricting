@@ -29,6 +29,7 @@ def result_page(slug: str, request: Request, session: Session = Depends(get_sess
     ev = _get_or_404(session, slug)
     report = json.loads(ev.report_json)
     return templates.TemplateResponse(
+        request,
         "results.html",
-        {"request": request, "evaluation": ev, "report": report},
+        {"evaluation": ev, "report": report},
     )

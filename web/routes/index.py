@@ -18,6 +18,7 @@ def index(request: Request, session: Session = Depends(get_session)):
         select(Evaluation).where(Evaluation.is_seed == False).order_by(Evaluation.created_at.desc()).limit(10)
     ).all()
     return templates.TemplateResponse(
+        request,
         "index.html",
-        {"request": request, "case_studies": case_studies, "recent": recent},
+        {"case_studies": case_studies, "recent": recent},
     )

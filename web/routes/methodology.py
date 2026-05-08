@@ -8,4 +8,4 @@ router = APIRouter()
 
 @router.get("/methodology", response_class=HTMLResponse)
 def methodology(request: Request):
-    return templates.TemplateResponse("methodology.html", {"request": request})
+    return templates.TemplateResponse(request, "methodology.html", {})
