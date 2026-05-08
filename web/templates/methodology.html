@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}methodology · redistricting{% endblock %}
+
+{% block content %}
+<article class="prose">
+    <h1>Methodology</h1>
+    <p class="meta">How each metric is computed, what it captures, and what it doesn't.</p>
+
+    <h2>What this measures (and doesn't)</h2>
+    <p>
+        Every metric here scores the <em>output</em> of a districting process — the map
+        itself — against widely-cited fairness benchmarks. None of them prove intent,
+        and none of them compute Voting Rights Act compliance, which requires Citizen
+        Voting-Age Population disaggregation this tool does not perform. Race columns
+        are not in the precinct dataset and are not joined in.
+    </p>
+    <p>
+        Numbers without context can mislead. Every metric below has a known
+        failure mode; read those alongside the headline value before drawing conclusions.
+    </p>
+
+    <h2>Compactness</h2>
+    <ul>
+        <li>
+            <strong>Polsby-Popper</strong>: <code>4πA / P²</code>. Range 0–1, higher is more
+            compact. Sensitive to the coastline-paradox effect on perimeter — a district
+            with a jagged but uncontroversial border (rivers, mountains) scores low even
+            when nothing is wrong with it. Always interpret with eyes on the map.
+        </li>
+        <li>
+            <strong>Reock</strong>: ratio of district area to its smallest bounding circle.
+            Range 0–1; long thin districts score low even if the perimeter is smooth.
+        </li>
+        <li>
+            <strong>Schwartzberg</strong>: <code>1 / (P / circumference of equal-area circle)</code>.
+            Different scaling of the same idea as Polsby-Popper.
+        </li>
+        <li>
+            <strong>Convex hull</strong>: ratio of district area to the area of its convex
+            hull. Penalizes concavity (cracking and tendrils) more than perimeter shape.
+        </li>
+    </ul>
+    <p>
+        Rule of thumb: Polsby-Popper above 0.30 is typical, Reock above 0.40 is acceptable,
+        convex-hull above 0.60 is acceptable. None of these are legal thresholds.
+    </p>
+
+    <h2>Partisan symmetry</h2>
+    <ul>
+        <li>
+            <strong>Efficiency gap</strong> (Stephanopoulos &amp; McGhee 2015):
+            <code>(wasted_D − wasted_R) / total votes</code>, where a vote is "wasted" if
+            cast for a losing candidate or in excess of the 50% needed to win. Positive
+            values indicate a pro-R map under the PlanScore convention used here.
+            The 7% threshold is the academic presumptive-gerrymander line; it has
+            <em>no</em> federal legal force after <em>Rucho v. Common Cause</em> (2019).
+            State-court doctrines vary.
+        </li>
+        <li>
+            <strong>Mean-median difference</strong>: <code>median(D share) − mean(D share)</code>.
+            A positive value means the median seat sits above the statewide mean —
+            generally pro-D. Values above ±2–3% are suggestive.
+        </li>
+        <li>
+            <strong>Partisan bias</strong>: shift every district's two-party share so the
+            statewide mean lands at 50%, then count how many districts the favored party
+            still wins above 50%. Positive values are pro-D.
+        </li>
+        <li>
+            <strong>Declination</strong> (Warrington 2018): an angle-based asymmetry
+            measure. <em>Undefined when one party wins zero districts</em> — there's no
+            second cluster to compare against. Flagged as <code>null</code> in the JSON
+            contract with a sibling reason field.
+        </li>
+        <li>
+            <strong>Lopsided margins</strong>: Welch's t-test on D-win margins vs. R-win
+            margins. A significant difference suggests one side's votes are being packed
+            (wasted in lopsided wins) more than the other's.
+        </li>
+    </ul>
+    <p>
+        All of these treat 2020 presidential precinct returns as the reference election.
+        Other cycles would produce different numbers; they are not currently joined in.
+    </p>
+
+    <h2>Competitiveness</h2>
+    <p>
+        Count of districts whose two-party D share falls in [45%, 55%] and the tighter
+        [47%, 53%] band. Both bands are reported because the wider band is the standard
+        academic competitiveness threshold and the tighter band shows truly close races.
+    </p>
+
+    <h2>County splits</h2>
+    <p>
+        County boundaries are intersected with district boundaries; fragments below 0.1%
+        of a county's area are treated as slivers and ignored. Output: the count of split
+        counties, the maximum number of districts touching any single county, and the
+        per-county detail.
+    </p>
+    <p>
+        Some state constitutions explicitly value county integrity, and some do not.
+        Whether a particular split count is unusual depends on the state's geography and
+        rules; comparison to neighbor maps is more informative than the absolute number.
+    </p>
+
+    <h2>Population deviation</h2>
+    <p>
+        The ideal district size is the state's total relevant population divided by seat
+        count. <code>max |deviation|</code> is the largest fractional gap from ideal across
+        districts. Federal courts strike congressional plans whose maximum deviation
+        exceeds roughly 1% without a strong justification (<em>Karcher v. Daggett</em>,
+        1983); state legislative plans are presumptively acceptable up to 10% total
+        deviation.
+    </p>
+    <p>
+        Deviation is only computed when the precinct dataset carries a population
+        column. VEST 2020 omits population for several states (Tennessee included), so
+        the field is reported as <code>not computed</code> rather than zero.
+    </p>
+
+    <h2>Legal context</h2>
+    <p>
+        <em>Rucho v. Common Cause</em> (2019) held that partisan-gerrymandering claims
+        are nonjusticiable in federal court. <em>Gill v. Whitford</em> (2018) sent the
+        Wisconsin case back on standing without reaching the merits. The metrics on this
+        page are academic and journalistic tools — they describe a map's properties.
+        State courts and state constitutions still vary, and several state high courts
+        have adjudicated partisan-gerrymandering claims under state law since
+        <em>Rucho</em>.
+    </p>
+
+    <h2>Data sources</h2>
+    <ul>
+        <li>
+            <strong>Precinct returns &amp; population</strong>:
+            <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/K7760H">VEST 2020 on Harvard Dataverse</a>
+            (DOI: 10.7910/DVN/K7760H), columns <code>G20PREDBID</code>, <code>G20PRERTRU</code>,
+            <code>TOTPOP</code>.
+        </li>
+        <li>
+            <strong>Counties and VTDs</strong>:
+            <a href="https://www.census.gov/cgi-bin/geo/shapefiles/index.php">Census TIGER/Line</a>.
+        </li>
+        <li>
+            <strong>Plan source per case</strong>: linked from the case study page. State
+            bill PDFs are <em>not</em> redistributed here.
+        </li>
+        <li>
+            <strong>Reference for cleaned plans</strong>:
+            <a href="https://redistrictingdatahub.org/">Redistricting Data Hub</a> posts
+            machine-readable shapefiles within days of enactment.
+        </li>
+    </ul>
+    <p>
+        Precincts are joined to districts by representative-point spatial join, then
+        aggregated. Split VTDs (where the bill assigns blocks within one VTD to multiple
+        districts) are mapped wholly to the dominant district when uploads come in as
+        VTD-equivalency CSVs. This is an approximation; for fine-grained accuracy use a
+        prebuilt district shapefile that respects block-level assignments.
+    </p>
+
+    <h2>Source code</h2>
+    <p>
+        The metric pipeline (<code>evaluate/</code>) and the web app (<code>web/</code>)
+        live together at
+        <a href="https://github.com/chrismlarson/redistricting">chrismlarson/redistricting</a>.
+        The exact commit a given evaluation was computed under is recorded in its
+        <code>code_version.repo_commit</code> field.
+    </p>
+</article>
+{% endblock %}

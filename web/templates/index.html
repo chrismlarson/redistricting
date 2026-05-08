@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="lead">
+    <h1>Scoring district maps for fairness.</h1>
+    <p>
+        This page evaluates a U.S. district map against the standard quantitative fairness metrics:
+        compactness, partisan symmetry, competitiveness, county splits, and population deviation.
+        It does not adjudicate intent, race-based claims, or VRA compliance — those require evidence and
+        disaggregation this tool does not have.
+    </p>
+    <p>
+        For details on every metric, what it captures, and where it fails, see the
+        <a href="{{ URL_PREFIX }}/methodology">methodology page</a>. To score a plan yourself,
+        <a href="{{ URL_PREFIX }}/evaluate">upload a VTD-equivalency CSV</a>.
+    </p>
+</section>
+
+{% if case_studies %}
+<section class="grid">
+    <h2>Case studies</h2>
+    {% for ev in case_studies %}
+    <a class="card" href="{{ URL_PREFIX }}/r/{{ ev.slug }}">
+        <span class="card-title">{{ ev.name }}</span>
+        <span class="card-sub">{{ ev.state_abbr }} · {{ ev.chamber.replace('_', ' ') }} · {{ ev.seat_count }} seats</span>
+        <span class="arrow">→</span>
+    </a>
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if recent %}
+<section class="grid">
+    <h2>Recent uploads</h2>
+    {% for ev in recent %}
+    <a class="card" href="{{ URL_PREFIX }}/r/{{ ev.slug }}">
+        <span class="card-title">{{ ev.name }}</span>
+        <span class="card-sub">{{ ev.state_abbr }} · {{ ev.chamber.replace('_', ' ') }}</span>
+        <span class="arrow">→</span>
+    </a>
+    {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

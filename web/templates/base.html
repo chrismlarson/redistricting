@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}redistricting · chrislarson.com{% endblock %}</title>
+    <link rel="stylesheet" href="{{ URL_PREFIX }}/static/css/site.css" />
+</head>
+<body>
+<header>
+    <nav>
+        <a href="{{ URL_PREFIX }}/" class="brand">redistricting</a>
+        <span class="nav-links">
+            <a href="{{ URL_PREFIX }}/methodology">methodology</a>
+            <a href="{{ URL_PREFIX }}/evaluate">evaluate a plan</a>
+            <a href="https://chrislarson.com/projects" class="muted">← projects</a>
+        </span>
+    </nav>
+</header>
+<main>
+    {% block content %}{% endblock %}
+</main>
+<footer>
+    <p>
+        Source: <a href="https://github.com/chrismlarson/redistricting">chrismlarson/redistricting</a>.
+        Methodology details on <a href="{{ URL_PREFIX }}/methodology">the methodology page</a>.
+    </p>
+</footer>
+</body>
+</html>
