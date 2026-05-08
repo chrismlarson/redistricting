@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}{{ report.name }} · redistricting{% endblock %}
+
+{% block content %}
+{% set m = report.metrics %}
+{% set pp_min = m.compactness.summary.polsby_popper.min %}
+{% set pp_min_district = (report.metrics.compactness.per_district | sort(attribute='polsby_popper'))[0].district if report.metrics.compactness.per_district else None %}
+<article class="prose">
+    <h1>{{ report.name }}</h1>
+    <p class="meta">
+        {{ report.state.name }} ({{ report.state.abbr }}) ·
+        {{ report.chamber.replace('_', ' ') }} ·
+        {{ report.seat_count }} seats ·
+        computed {{ report.computed_at[:10] }}
+        · <a href="{{ URL_PREFIX }}/r/{{ report.slug }}.json">json</a>
+    </p>
+
+    {% if report.links.plan_source.url %}
+    <p class="meta">Plan source: <a href="{{ report.links.plan_source.url }}">{{ report.links.plan_source.label }}</a></p>
+    {% elif report.links.plan_source.label %}
+    <p class="meta">Plan source: {{ report.links.plan_source.label }}</p>
+    {% endif %}
+
+    {% if evaluation.notes %}
+    <p class="notes">{{ evaluation.notes }}</p>
+    {% endif %}
+
+    <section class="headline">
+        <div class="stat">
+            <span class="stat-label">Efficiency gap</span>
+            <span class="stat-value">{{ m.partisan.efficiency_gap | fmt_pct(2, true) }}</span>
+            <span class="stat-note">positive = pro-R; 7% academic threshold</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Competitive districts</span>
+            <span class="stat-value">{{ m.competitiveness.districts_in_45_55_band }} / {{ m.competitiveness.total_districts }}</span>
+            <span class="stat-note">D share in 45–55%</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Mean Polsby-Popper</span>
+            <span class="stat-value">{{ m.compactness.summary.polsby_popper.mean | fmt_decimal(3) }}</span>
+            <span class="stat-note">min {{ pp_min | fmt_decimal(3) }}{% if pp_min_district is not none %} (D{{ pp_min_district }}){% endif %}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Counties split</span>
+            <span class="stat-value">{{ m.splits.split_county_count }} / {{ m.splits.total_counties }}</span>
+            <span class="stat-note">max {{ m.splits.max_splits_in_one_county }}-way</span>
+        </div>
+    </section>
+
+    <h2>Compactness map</h2>
+    <figure>
+        <img src="{{ report.images.compactness_choropleth }}" alt="Polsby-Popper compactness choropleth" />
+        <figcaption>Polsby-Popper per district. Darker (lower values) = less compact.</figcaption>
+    </figure>
+
+    <h2>2020 Democratic vote share</h2>
+    <figure>
+        <img src="{{ report.images.dem_share_choropleth }}" alt="Democratic vote share choropleth" />
+        <figcaption>2020 presidential two-party D share per district. Red = R-leaning, Blue = D-leaning.</figcaption>
+    </figure>
+
+    <h2>Partisan symmetry</h2>
+    <table>
+        <tr><th>Metric</th><th>Value</th><th>Note</th></tr>
+        <tr>
+            <td>Efficiency gap</td>
+            <td>{{ m.partisan.efficiency_gap | fmt_pct(2, true) }}</td>
+            <td>positive = pro-R; |EG| &gt; 7% is the academic presumptive-gerrymander threshold</td>
+        </tr>
+        <tr>
+            <td>Mean-median</td>
+            <td>{{ m.partisan.mean_median | fmt_pct(2, true) }}</td>
+            <td>positive = pro-D in median seat</td>
+        </tr>
+        <tr>
+            <td>Partisan bias</td>
+            <td>{{ m.partisan.partisan_bias | fmt_pct(2, true) }}</td>
+            <td>positive = pro-D</td>
+        </tr>
+        <tr>
+            <td>Declination</td>
+            <td>
+                {% if m.partisan.declination is none %}
+                undefined
+                {% else %}
+                {{ m.partisan.declination | fmt_decimal(3) }}
+                {% endif %}
+            </td>
+            <td>
+                {% if m.partisan.declination_undefined_reason %}
+                {{ m.partisan.declination_undefined_reason }}
+                {% else %}
+                |δ| &gt; 0.3 concerning
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <h2>Per-district detail</h2>
+    <table>
+        <tr>
+            <th>District</th>
+            <th>Polsby-Popper</th>
+            <th>Reock</th>
+            <th>D votes</th>
+            <th>R votes</th>
+            <th>D share</th>
+        </tr>
+        {% set comp_lookup = {} %}
+        {% for c in m.compactness.per_district %}{% set _ = comp_lookup.update({c.district: c}) %}{% endfor %}
+        {% for d in report.per_district %}
+        {% set comp = comp_lookup.get(d.district, {}) %}
+        <tr>
+            <td>{{ d.district }}</td>
+            <td>{{ comp.polsby_popper | fmt_decimal(3) }}</td>
+            <td>{{ comp.reock | fmt_decimal(3) }}</td>
+            <td>{{ d.dem_votes | fmt_int }}</td>
+            <td>{{ d.rep_votes | fmt_int }}</td>
+            <td>{{ d.dem_share | fmt_pct(1) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>County splits</h2>
+    {% if m.splits.detail %}
+    <table>
+        <tr><th>County</th><th>Districts touched</th></tr>
+        {% for row in m.splits.detail %}
+        <tr><td>{{ row.county }}</td><td>{{ row.districts_touched_count }}</td></tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No counties are split by this plan.</p>
+    {% endif %}
+
+    <h2>Population deviation</h2>
+    {% if m.population.available %}
+    <table>
+        <tr><th>Total population</th><td>{{ m.population.total_population | fmt_int }}</td></tr>
+        <tr><th>Ideal per district</th><td>{{ m.population.ideal_population | fmt_int }}</td></tr>
+        <tr><th>Max |deviation|</th><td>{{ m.population.max_abs_deviation | fmt_pct(3) }} (threshold {{ m.population.threshold | fmt_pct(1) }})</td></tr>
+        <tr><th>Exceeds threshold</th><td>{{ "yes" if m.population.exceeds_threshold else "no" }}</td></tr>
+    </table>
+    {% else %}
+    <p>Not computed — {{ m.population.reason }}.</p>
+    {% endif %}
+
+    {% if report.warnings %}
+    <h2>Warnings</h2>
+    <ul>
+        {% for w in report.warnings %}<li>{{ w }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <h2>Sources</h2>
+    <ul>
+        {% if report.links.plan_source.url %}
+        <li><a href="{{ report.links.plan_source.url }}">{{ report.links.plan_source.label }}</a> (plan source)</li>
+        {% elif report.links.plan_source.label %}
+        <li>{{ report.links.plan_source.label }} (plan source)</li>
+        {% endif %}
+        <li><a href="{{ report.links.precinct_data.url }}">{{ report.links.precinct_data.label }}</a></li>
+        <li><a href="{{ report.links.shapefiles.url }}">{{ report.links.shapefiles.label }}</a></li>
+    </ul>
+
+    <p class="meta">
+        Schema {{ report.schema_version }} ·
+        {% if report.code_version.repo_commit %}
+        repo commit <code>{{ report.code_version.repo_commit[:10] }}</code>
+        {% else %}
+        commit unknown
+        {% endif %}
+        · <a href="{{ URL_PREFIX }}/methodology">methodology</a>
+    </p>
+</article>
+{% endblock %}

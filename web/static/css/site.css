@@ -1,0 +1,365 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --bg: #030712;
+    --fg: #f9fafb;
+    --fg-dim: #9ca3af;
+    --fg-muted: #6b7280;
+    --line: #1f2937;
+    --line-strong: #374151;
+    --panel: #111827;
+    --panel-hover: #1a2332;
+    --accent-warn: #fca5a5;
+    --accent-warn-bg: #2a1414;
+}
+
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    padding: 2rem 1.25rem 4rem;
+}
+
+header,
+main,
+footer {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+header {
+    margin-bottom: 2.5rem;
+}
+
+header nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    font-size: 0.875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+header nav .brand {
+    font-weight: 700;
+    color: var(--fg);
+}
+
+header nav .nav-links {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    color: var(--fg-muted);
+}
+
+header nav a {
+    color: var(--fg-muted);
+    text-decoration: none;
+}
+
+header nav a:hover {
+    color: var(--fg);
+}
+
+header nav a.muted {
+    color: var(--line-strong);
+}
+
+a {
+    color: #93c5fd;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(147, 197, 253, 0.25);
+}
+
+a:hover {
+    color: #bfdbfe;
+    border-bottom-color: rgba(191, 219, 254, 0.6);
+}
+
+h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin: 1rem 0 1rem;
+}
+
+h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 2.25rem 0 0.75rem;
+}
+
+h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.5rem;
+}
+
+p {
+    margin: 0 0 0.85rem;
+}
+
+ul {
+    margin: 0 0 1rem 1.25rem;
+}
+
+li {
+    margin-bottom: 0.4rem;
+}
+
+code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.875em;
+    background: var(--panel);
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+    color: #d1d5db;
+}
+
+.lead h1 {
+    margin-top: 0;
+}
+
+.lead p {
+    color: #d1d5db;
+    font-size: 1.05rem;
+}
+
+.prose {
+    color: #d1d5db;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+    color: var(--fg);
+}
+
+.prose .meta {
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.prose .notes {
+    color: #d1d5db;
+    border-left: 2px solid var(--line);
+    padding-left: 1rem;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.95rem;
+}
+
+.grid {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1rem 0 2rem;
+}
+
+.grid h2 {
+    grid-column: 1 / -1;
+    margin: 1.25rem 0 0.25rem;
+    color: var(--fg);
+}
+
+.card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: inherit;
+    border-bottom-color: var(--line);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.card:hover {
+    border-color: var(--line-strong);
+    background: var(--panel-hover);
+}
+
+.card .card-title {
+    flex: 1;
+    font-weight: 600;
+    color: var(--fg);
+}
+
+.card .card-sub {
+    color: var(--fg-dim);
+    font-size: 0.875rem;
+    margin-right: 0.5rem;
+}
+
+.card .arrow {
+    color: var(--line-strong);
+    font-size: 1.1rem;
+    transition: color 0.15s, transform 0.15s;
+}
+
+.card:hover .arrow {
+    color: var(--fg-muted);
+    transform: translateX(3px);
+}
+
+.headline {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0 2rem;
+}
+
+.stat {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.stat-label {
+    color: var(--fg-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    color: var(--fg);
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-note {
+    color: var(--fg-dim);
+    font-size: 0.75rem;
+}
+
+figure {
+    margin: 1rem 0 1.75rem;
+}
+
+figure img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    background: #f9fafb;
+}
+
+figcaption {
+    color: var(--fg-muted);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0 1.5rem;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+}
+
+th, td {
+    text-align: left;
+    padding: 0.5rem 0.65rem;
+    border-bottom: 1px solid var(--line);
+}
+
+th {
+    color: var(--fg-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+
+td {
+    color: #d1d5db;
+}
+
+.form {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.form label {
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--fg-dim);
+}
+
+.form input[type=text],
+.form input[type=number],
+.form input[type=file],
+.form select,
+.form textarea {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 0.4rem;
+    padding: 0.55rem 0.7rem;
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+.form input:focus,
+.form select:focus,
+.form textarea:focus {
+    outline: none;
+    border-color: var(--line-strong);
+}
+
+.form button {
+    background: #1d4ed8;
+    color: #f9fafb;
+    border: 0;
+    padding: 0.65rem 1.25rem;
+    border-radius: 0.4rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    justify-self: start;
+}
+
+.form button:hover {
+    background: #2563eb;
+}
+
+.error {
+    background: var(--accent-warn-bg);
+    border: 1px solid #7f1d1d;
+    color: var(--accent-warn);
+    padding: 0.75rem 1rem;
+    border-radius: 0.4rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+footer {
+    margin-top: 3rem;
+    color: var(--fg-muted);
+    font-size: 0.8125rem;
+}
+
+footer a {
+    color: var(--fg-muted);
+    border-bottom-color: rgba(107, 114, 128, 0.4);
+}
+
+@media (max-width: 520px) {
+    body { padding: 1.5rem 1rem 3rem; }
+    h1 { font-size: 1.5rem; }
+    .stat-value { font-size: 1.25rem; }
+    table { font-size: 0.825rem; }
+    th, td { padding: 0.4rem 0.5rem; }
+}

@@ -1,0 +1,58 @@
+name: Deploy redistricting web
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'web/**'
+      - 'evaluate/**'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-redistricting-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rsync code (web/ + evaluate/) to server
+        run: |
+          rsync -az --delete \
+              --exclude='__pycache__' \
+              --exclude='*.pyc' \
+              --exclude='.pytest_cache' \
+              web/ \
+              ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/redistricting/web/
+          rsync -az --delete \
+              --exclude='__pycache__' \
+              --exclude='*.pyc' \
+              evaluate/ \
+              ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/redistricting/evaluate/
+
+      - name: Install or update venv and restart service
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} bash -s <<'EOF'
+          set -euo pipefail
+          cd /var/www/redistricting
+          if [ ! -d .venv ]; then
+              python3 -m venv .venv
+          fi
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r web/requirements.txt
+          .venv/bin/pip install geopandas scipy matplotlib pandas
+          mkdir -p storage/images
+          chown -R www-data:www-data storage
+          systemctl restart redistricting
+          systemctl status redistricting --no-pager | head -20
+          EOF

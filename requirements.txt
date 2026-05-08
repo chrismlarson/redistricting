@@ -3,3 +3,12 @@ geopy
 tqdm
 matplotlib>=3.5
 us
+census
+esridump
+
+# Evaluation module (evaluate/) — score externally-provided district plans
+geopandas>=0.14
+gerrychain>=0.3
+pandas
+numpy
+scipy

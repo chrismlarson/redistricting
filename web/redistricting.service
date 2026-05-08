@@ -1,0 +1,19 @@
+[Unit]
+Description=Redistricting Fairness Evaluator (FastAPI)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/redistricting
+Environment=PYTHONPATH=/var/www/redistricting
+Environment=REDISTRICTING_STORAGE=/var/www/redistricting/storage
+Environment=REDISTRICTING_WEB_DATA=/var/www/redistricting/web-data
+Environment=REDISTRICTING_URL_PREFIX=/redistricting
+ExecStart=/var/www/redistricting/.venv/bin/uvicorn web.main:app --host 127.0.0.1 --port 3006
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

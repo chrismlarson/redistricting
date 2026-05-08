@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}evaluate a plan · redistricting{% endblock %}
+
+{% block content %}
+<article class="prose">
+    <h1>Evaluate a plan</h1>
+    <p>
+        Upload a CSV with two columns — <code>GEOID20</code> (the 12-character Census VTD
+        identifier) and <code>district</code> (an integer) — one row per VTD in the state.
+        The server joins to that state's VTD shapefile, dissolves to district polygons,
+        and runs the same metric pipeline used in the case studies. You'll be redirected
+        to a permanent shareable URL when it finishes.
+    </p>
+    <p class="muted">
+        For details on the metrics, see the
+        <a href="{{ URL_PREFIX }}/methodology">methodology page</a>. Adding a new state
+        requires server-side data files; the dropdown below lists what's currently supported.
+    </p>
+
+    {% if error %}
+    <div class="error">
+        <strong>Could not evaluate:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="{{ URL_PREFIX }}/evaluate" method="post" enctype="multipart/form-data" class="form">
+        <label>
+            <span>State</span>
+            <select name="state_abbr" required>
+                {% for s in states %}
+                <option value="{{ s.abbr }}">{{ s.name }} ({{ s.abbr }})</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label>
+            <span>Chamber</span>
+            <select name="chamber" required>
+                {% for value, label in chambers %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label>
+            <span>Seat count</span>
+            <input type="number" name="seat_count" min="1" max="200" value="9" required />
+        </label>
+
+        <label>
+            <span>Plan name</span>
+            <input type="text" name="name" maxlength="120" placeholder="e.g. Tennessee 2026 congressional" required />
+        </label>
+
+        <label>
+            <span>Notes (optional)</span>
+            <textarea name="notes" rows="3" maxlength="1000" placeholder="Source bill, vintage, context"></textarea>
+        </label>
+
+        <label>
+            <span>VTD-equivalency CSV</span>
+            <input type="file" name="plan_csv" accept=".csv,text/csv" required />
+        </label>
+
+        <button type="submit">Evaluate</button>
+    </form>
+</article>
+{% endblock %}

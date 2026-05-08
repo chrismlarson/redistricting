@@ -1,5 +1,9 @@
 .idea/
 
+# Evaluation module — downloaded shapefiles and generated reports
+data/
+reports/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
