@@ -19,40 +19,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure SSH
+      - name: Sync code to server
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+          echo "$SSH_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          SSH_OPTS=(-i /tmp/deploy_key -o StrictHostKeyChecking=no)
 
-      - name: Rsync code (web/ + evaluate/) to server
-        run: |
           rsync -az --delete \
-              --exclude='__pycache__' \
-              --exclude='*.pyc' \
-              --exclude='.pytest_cache' \
-              web/ \
-              ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/redistricting/web/
-          rsync -az --delete \
-              --exclude='__pycache__' \
-              --exclude='*.pyc' \
-              evaluate/ \
-              ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/redistricting/evaluate/
+            -e "ssh ${SSH_OPTS[*]}" \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            --exclude='.pytest_cache' \
+            --exclude='storage' \
+            --exclude='seeds/*.csv' \
+            web/ "$SSH_USER@$SSH_HOST:/var/www/redistricting/web/"
 
-      - name: Install or update venv and restart service
-        run: |
-          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} bash -s <<'EOF'
+          rsync -az --delete \
+            -e "ssh ${SSH_OPTS[*]}" \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            evaluate/ "$SSH_USER@$SSH_HOST:/var/www/redistricting/evaluate/"
+
+          ssh "${SSH_OPTS[@]}" "$SSH_USER@$SSH_HOST" bash <<'REMOTE'
           set -euo pipefail
           cd /var/www/redistricting
           if [ ! -d .venv ]; then
-              python3 -m venv .venv
+            python3 -m venv .venv
           fi
-          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install --upgrade pip wheel >/dev/null
           .venv/bin/pip install -r web/requirements.txt
-          .venv/bin/pip install geopandas scipy matplotlib pandas
+          .venv/bin/pip install pandas numpy scipy matplotlib geopandas
           mkdir -p storage/images
           chown -R www-data:www-data storage
           systemctl restart redistricting
-          systemctl status redistricting --no-pager | head -20
-          EOF
+          systemctl is-active redistricting
+          REMOTE
+
+          rm /tmp/deploy_key
